@@ -1,15 +1,168 @@
+###############################################################################
+# Proyecto Atlas
+# Archivo: .gitignore
+#
+# Descripción:
+#     Indica a Git qué archivos y carpetas NO deben incluirse
+#     en el repositorio.
+#
+#     Esto evita subir:
+#
+#     - Archivos temporales.
+#     - Caché de Python.
+#     - Entornos virtuales.
+#     - Configuración del IDE.
+#     - Bases de datos locales.
+#     - Registros (logs).
+#     - Memorias personales de los usuarios.
+#
+#     Gracias a ello el repositorio permanece limpio y únicamente
+#     contiene el código fuente del proyecto.
+###############################################################################
+
+
+###############################################################################
+# CACHÉ DE PYTHON
+###############################################################################
+
+# Carpeta generada automáticamente por Python al ejecutar módulos.
+#
+# Contiene archivos compilados (.pyc) que pueden volver a generarse
+# en cualquier momento.
 __pycache__/
+
+
+# Archivos compilados de Python.
+#
+# No forman parte del código fuente.
 *.pyc
 
+
+###############################################################################
+# VARIABLES DE ENTORNO
+###############################################################################
+
+# Archivo que suele contener:
+#
+# - Claves API
+# - Contraseñas
+# - Tokens
+# - Configuración privada
+#
+# Nunca debe subirse a Git.
 .env
 
+
+###############################################################################
+# ENTORNOS VIRTUALES
+###############################################################################
+
+# Entornos virtuales creados para instalar dependencias.
+#
+# Cada desarrollador puede crear el suyo propio.
 venv/
+
 .venv/
 
+
+###############################################################################
+# CONFIGURACIÓN DE LOS EDITORES
+###############################################################################
+
+# Configuración específica de PyCharm.
 .idea/
+
+# Configuración específica de Visual Studio Code.
 .vscode/
 
+
+###############################################################################
+# ARCHIVOS DE LOG
+###############################################################################
+
+# Registros generados durante la ejecución.
+#
+# Ejemplo:
+#
+# logs/atlas.log
+#
+# No es necesario compartirlos mediante Git.
 *.log
 
+
+###############################################################################
+# BASES DE DATOS LOCALES
+###############################################################################
+
+# Bases de datos SQLite creadas durante el desarrollo.
+#
+# Normalmente contienen información local de pruebas.
 *.sqlite3
+
 *.db
+
+
+###############################################################################
+# MEMORIA PERSONAL DE LOS USUARIOS
+###############################################################################
+
+# Atlas guarda aquí los recuerdos personales.
+#
+# Nunca deben compartirse en un repositorio público.
+memory/data/*.json
+
+
+# Archivo principal de memoria.
+#
+# Se mantiene explícitamente para dejar claro
+# que también queda excluido.
+memory/data/memories.json
+
+
+###############################################################################
+# ARCHIVOS DEL SISTEMA OPERATIVO
+###############################################################################
+
+# Windows
+Thumbs.db
+
+# macOS
+.DS_Store
+
+
+###############################################################################
+# ARCHIVOS DE PRUEBAS
+###############################################################################
+
+.coverage
+htmlcov/
+
+.pytest_cache/
+
+
+###############################################################################
+# MODELOS DE IA (FUTURO)
+###############################################################################
+
+models/
+
+ollama_models/
+
+*.gguf
+
+
+###############################################################################
+# BACKUPS
+###############################################################################
+
+*.bak
+*.old
+*.backup
+
+
+###############################################################################
+# ARCHIVOS TEMPORALES
+###############################################################################
+
+*.tmp
+*.temp
