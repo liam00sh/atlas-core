@@ -1,0 +1,15 @@
+# Proyecto Atlas - dependencias de Python
+#
+# Instalación:
+#     pip install -r requirements.txt
+#
+# Fase 2:
+# Atlas utiliza únicamente la biblioteca estándar de Python.
+# Mantener este archivo permite reproducir la instalación y añadir futuras
+# dependencias de forma controlada.
+
+# Futuras dependencias previstas, todavía NO requeridas:
+# requests          # Comunicación HTTP con servicios locales como Ollama
+# pydantic          # Validación de configuración y datos
+# python-dotenv     # Variables de entorno y secretos locales
+# pytest            # Pruebas automatizadas
