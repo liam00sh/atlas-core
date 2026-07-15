@@ -1,5 +1,19 @@
 # Conversación
 
-Contiene la conversación básica basada en reglas, la detección de intenciones y la personalidad provisional de Daxter.
+Este paquete contiene la conversación local basada en reglas y los componentes
+históricos de intención y respuesta que pueden funcionar sin un modelo de IA.
 
-Este módulo funciona sin inteligencia artificial y proporciona respuestas locales para interacciones conocidas.
+La identidad activa del asistente, sus modos de comportamiento y sus bancos de
+frases se gestionan en `assistant_identity/`. Los módulos de personalidad que
+permanecen en esta carpeta se conservan por compatibilidad con código anterior
+y no deben utilizarse para nuevas integraciones.
+
+## Responsabilidades actuales
+
+- Resolver intenciones y respuestas locales simples.
+- Mantener compatibilidad con la conversación básica sin IA.
+- Proporcionar mensajes de denegación y respuestas auxiliares usadas por el
+  núcleo.
+
+La identidad conversacional de las personas, sus permisos y relaciones se
+gestionan desde `identity/`.

@@ -4,15 +4,14 @@ Proyecto Atlas
 Archivo: ai/providers/base_provider.py
 
 Descripción:
-    Define la interfaz común para todos los proveedores de inteligencia
-    artificial que pueda utilizar Atlas.
+    Define la interfaz común que deben implementar todos los proveedores
+    de inteligencia artificial compatibles con Atlas.
 
-    Un proveedor será responsable de enviar prompts a un modelo y
-    devolver la respuesta generada.
+    El núcleo no debería depender directamente de Ollama, OpenAI,
+    LM Studio u otro motor concreto.
 
-Estado:
-    Interfaz preparada.
-    No contiene ninguna conexión real.
+    Atlas trabajará siempre con un proveedor que respete esta interfaz.
+
 ===============================================================================
 """
 
@@ -23,10 +22,14 @@ from abc import abstractmethod
 
 class BaseAIProvider(ABC):
     """
-    Clase base para proveedores de inteligencia artificial.
+    Clase base abstracta para proveedores de inteligencia artificial.
 
-    Cualquier proveedor futuro deberá heredar de esta clase
-    e implementar sus métodos obligatorios.
+    Una clase abstracta no se utiliza directamente.
+
+    Debe heredarse desde una implementación concreta, por ejemplo:
+
+        class OllamaProvider(BaseAIProvider):
+            ...
     """
 
     @abstractmethod
@@ -36,11 +39,10 @@ class BaseAIProvider(ABC):
 
         Devuelve:
             True:
-                El proveedor puede utilizarse.
+                El proveedor responde correctamente.
 
             False:
-                El proveedor no está instalado, configurado
-                o disponible.
+                El proveedor no está instalado, iniciado o accesible.
         """
 
         raise NotImplementedError
@@ -55,10 +57,11 @@ class BaseAIProvider(ABC):
 
         Parámetros:
             prompt:
-                Texto completo que se enviará al modelo.
+                Texto completo que debe procesar el modelo.
 
         Devuelve:
-            Respuesta generada por el modelo.
+            str:
+                Texto generado por la inteligencia artificial.
         """
 
         raise NotImplementedError
@@ -67,6 +70,20 @@ class BaseAIProvider(ABC):
     def get_provider_name(self) -> str:
         """
         Devuelve el nombre del proveedor.
+
+        Ejemplo:
+            Ollama
+        """
+
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_model_name(self) -> str:
+        """
+        Devuelve el nombre del modelo configurado.
+
+        Ejemplo:
+            qwen2.5:7b
         """
 
         raise NotImplementedError

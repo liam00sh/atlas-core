@@ -1,5 +1,27 @@
 # Inteligencia artificial
 
-Contiene la arquitectura preparada para integrar modelos de IA sin acoplar el núcleo a un proveedor concreto.
+Este paquete agrupa la integración de Atlas con modelos locales, proveedores,
+prompts, contexto conversacional, caché y herramientas controladas.
 
-Incluye proveedores, registro de modelos, construcción de prompts, contexto temporal y registro futuro de herramientas. En la Fase 2 la IA permanece desactivada y no realiza conexiones reales.
+## Componentes
+
+- `providers/`: comunicación con proveedores locales, como Ollama.
+- `models/`: registro y selección de modelos disponibles.
+- `prompts/`: construcción segura del prompt final.
+- `context/`: historial temporal separado por interlocutor.
+- `cache/`: reutilización controlada de respuestas y resúmenes.
+- `tools/`: herramientas que consultan datos reales del sistema o ejecutan
+  acciones permitidas.
+
+## Principios
+
+- El modelo no decide por sí solo qué permisos tiene una persona.
+- Las capacidades declaradas deben coincidir con funciones realmente
+  disponibles.
+- La identidad activa del asistente y su modo se incorporan dinámicamente.
+- Los recuerdos y contextos solo se incluyen tras aplicar las reglas de acceso.
+- Una respuesta nunca debe afirmar que se ejecutó una acción cuando Atlas no la
+  realizó.
+
+El resultado final puede ser generado por Daxter o Coco, según las preferencias
+del interlocutor y el estado de `IdentityManager`.

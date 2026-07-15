@@ -12,7 +12,7 @@ Descripción:
     2. Comprobar la estructura de carpetas.
     3. Comprobar si Docker está disponible.
     4. Mostrar mensajes de inicialización.
-    5. Saludar al usuario activo con la personalidad de Daxter.
+    5. Saludar al usuario activo con la identidad seleccionada.
 
 Flujo de ejecución:
 
@@ -40,7 +40,7 @@ Solo prepara y presenta el entorno antes de abrir la consola interactiva.
 import time
 
 
-# Importamos la función que genera el saludo inicial de Daxter.
+# Importamos la función que genera el saludo inicial del asistente.
 #
 # El saludo puede variar según la personalidad configurada
 # y el usuario que esté activo.
@@ -65,12 +65,11 @@ from core.checks.folders import check_project_folders
 from core.system_info import get_system_info
 
 # Importamos las constantes generales del proyecto.
-from core.version import ASSISTANT_NAME
 from core.version import PROJECT_NAME
 from core.version import VERSION
 
 
-def show_banner():
+def show_banner(atlas):
     """
     Muestra la cabecera principal del Proyecto Atlas.
 
@@ -83,8 +82,10 @@ def show_banner():
     - Versión de Python.
     - Fecha y hora actuales.
 
-    Esta función no recibe parámetros porque obtiene toda la
-    información necesaria desde otros módulos.
+    Parámetros:
+        atlas:
+            Instancia principal utilizada para consultar la identidad
+            activa del asistente.
     """
 
     # Obtenemos un diccionario con la información del sistema.
@@ -113,7 +114,7 @@ def show_banner():
     print()
 
     # Muestra el nombre del asistente.
-    print(f"Asistente............. {ASSISTANT_NAME}")
+    print(f"Asistente............. {atlas.get_name()}")
 
     # Muestra la versión actual del proyecto.
     print(f"Versión............... {VERSION}")
@@ -245,7 +246,7 @@ def initialize():
 
 def welcome(atlas):
     """
-    Muestra el saludo inicial de Daxter.
+    Muestra el saludo inicial de la identidad activa.
 
     Parámetros:
         atlas:
@@ -304,7 +305,7 @@ def startup(atlas):
     """
 
     # Muestra la información general del proyecto y del sistema.
-    show_banner()
+    show_banner(atlas)
 
     # Ejecuta las comprobaciones de arranque.
     initialize()

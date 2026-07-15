@@ -1,27 +1,36 @@
 # Sistema de prompts
 
-Este directorio contendrá las instrucciones enviadas a los modelos de inteligencia artificial.
+Este directorio contiene las instrucciones y constructores que preparan el
+prompt enviado al modelo de inteligencia artificial.
 
 ## Componentes
 
 ### `system_prompt.py`
 
-Define las instrucciones generales del asistente.
+Define únicamente las reglas generales y permanentes: precisión, privacidad,
+seguridad, uso responsable de capacidades y formato de respuesta.
 
 ### `builder.py`
 
-Combina el prompt del sistema con el contexto y la petición del usuario.
+Construye el prompt final combinando:
 
-## Información futura del prompt
+- identidad activa del asistente: Daxter o Coco;
+- modo activo: clásico, trabajo, divertido o empático;
+- interlocutor real y usuario autenticado;
+- permisos e identidad conversacional;
+- capacidades disponibles;
+- información real del sistema;
+- recuerdos autorizados;
+- conversación reciente;
+- mensaje actual.
 
-- Identidad de Daxter.
-- Personalidad.
-- Usuario activo.
-- Capacidades disponibles.
-- Memoria autorizada.
-- Contexto de la conversación.
-- Instrucción actual.
+### `tool_prompt.py`
 
-## Estado
+Prepara instrucciones específicas para la selección y ejecución controlada de
+herramientas.
 
-El sistema puede construir texto, pero no está conectado a ningún modelo.
+## Regla de diseño
+
+La identidad y los permisos no deben quedar fijados en el prompt base. Se
+inyectan dinámicamente después de haber sido resueltos por los gestores de
+Atlas.

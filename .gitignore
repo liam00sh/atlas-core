@@ -25,43 +25,25 @@
 # CACHÉ DE PYTHON
 ###############################################################################
 
-# Carpeta generada automáticamente por Python al ejecutar módulos.
-#
-# Contiene archivos compilados (.pyc) que pueden volver a generarse
-# en cualquier momento.
 __pycache__/
-
-
-# Archivos compilados de Python.
-#
-# No forman parte del código fuente.
 *.pyc
+*.pyo
+*.pyd
 
 
 ###############################################################################
 # VARIABLES DE ENTORNO
 ###############################################################################
 
-# Archivo que suele contener:
-#
-# - Claves API
-# - Contraseñas
-# - Tokens
-# - Configuración privada
-#
-# Nunca debe subirse a Git.
 .env
+.env.*
 
 
 ###############################################################################
 # ENTORNOS VIRTUALES
 ###############################################################################
 
-# Entornos virtuales creados para instalar dependencias.
-#
-# Cada desarrollador puede crear el suyo propio.
 venv/
-
 .venv/
 
 
@@ -69,10 +51,7 @@ venv/
 # CONFIGURACIÓN DE LOS EDITORES
 ###############################################################################
 
-# Configuración específica de PyCharm.
 .idea/
-
-# Configuración específica de Visual Studio Code.
 .vscode/
 
 
@@ -80,13 +59,6 @@ venv/
 # ARCHIVOS DE LOG
 ###############################################################################
 
-# Registros generados durante la ejecución.
-#
-# Ejemplo:
-#
-# logs/atlas.log
-#
-# No es necesario compartirlos mediante Git.
 *.log
 
 
@@ -94,11 +66,7 @@ venv/
 # BASES DE DATOS LOCALES
 ###############################################################################
 
-# Bases de datos SQLite creadas durante el desarrollo.
-#
-# Normalmente contienen información local de pruebas.
 *.sqlite3
-
 *.db
 
 
@@ -106,16 +74,7 @@ venv/
 # MEMORIA PERSONAL DE LOS USUARIOS
 ###############################################################################
 
-# Atlas guarda aquí los recuerdos personales.
-#
-# Nunca deben compartirse en un repositorio público.
 memory/data/*.json
-
-
-# Archivo principal de memoria.
-#
-# Se mantiene explícitamente para dejar claro
-# que también queda excluido.
 memory/data/memories.json
 
 
@@ -136,7 +95,6 @@ Thumbs.db
 
 .coverage
 htmlcov/
-
 .pytest_cache/
 
 
@@ -145,10 +103,16 @@ htmlcov/
 ###############################################################################
 
 models/
-
 ollama_models/
-
 *.gguf
+
+
+###############################################################################
+# ARCHIVOS DE RESPALDO DE EDITORES
+###############################################################################
+
+*.orig
+*.rej
 
 
 ###############################################################################
@@ -166,3 +130,18 @@ ollama_models/
 
 *.tmp
 *.temp
+
+
+###############################################################################
+# CACHÉ DE HERRAMIENTAS DE IA (FUTURO)
+###############################################################################
+
+.cache/
+.cache/**
+
+
+###############################################################################
+# NOTEBOOKS (SI ALGÚN DÍA SE UTILIZAN)
+###############################################################################
+
+.ipynb_checkpoints/

@@ -36,6 +36,23 @@ Importante:
     Este módulo no comprende el significado completo de una frase.
 
     Solo realiza normalización y comparación aproximada.
+
+    Las correcciones se aplican palabra por palabra.
+
+    Esto evita reemplazos incorrectos dentro de palabras válidas.
+
+    Ejemplo:
+
+        "recuerdos"
+
+    debe mantenerse como:
+
+        "recuerdos"
+
+    y no convertirse erróneamente en:
+
+        "recuerdas"
+
 ===============================================================================
 """
 
@@ -53,6 +70,7 @@ Importante:
 # - Reducir letras repetidas.
 import re
 
+
 # unicodedata permite analizar caracteres Unicode.
 #
 # Se utiliza principalmente para eliminar acentos.
@@ -61,6 +79,7 @@ import re
 #
 # "qué" -> "que"
 import unicodedata
+
 
 # get_close_matches busca textos parecidos dentro de una lista.
 #
@@ -74,31 +93,48 @@ from difflib import get_close_matches
 
 # Diccionario de errores conocidos y su forma correcta.
 #
-# Cada clave representa una forma incorrecta.
-# Cada valor representa la corrección.
+# Cada clave representa una palabra incorrecta completa.
+# Cada valor representa su corrección.
+#
+# Estas sustituciones nunca deben aplicarse mediante replace()
+# sobre una frase completa, porque eso podría modificar fragmentos
+# contenidos dentro de palabras válidas.
 COMMON_REPLACEMENTS = {
 
-    # Errores habituales al escribir "que".
+    # -------------------------------------------------------------------------
+    # ERRORES HABITUALES AL ESCRIBIR "QUE"
+    # -------------------------------------------------------------------------
+
     "qeu": "que",
     "qe": "que",
     "ue": "que",
     "ke": "que",
 
-    # Errores habituales al escribir "soy".
+    # -------------------------------------------------------------------------
+    # ERRORES HABITUALES AL ESCRIBIR "SOY"
+    # -------------------------------------------------------------------------
+
     "spy": "soy",
     "siy": "soy",
 
-    # Formas frecuentes de órdenes.
+    # -------------------------------------------------------------------------
+    # FORMAS FRECUENTES DE ÓRDENES
+    # -------------------------------------------------------------------------
+
     "sbaes": "sabes",
     "sabesr": "sabes",
+
     "recuerads": "recuerdas",
     "recuardas": "recuerdas",
     "recuerad": "recuerda",
     "recuerdame": "recuerda",
 
+    "contecto": "contexto",
+
     # -------------------------------------------------------------------------
     # EJEMPLOS DE ERRORES INDICADOS PARA ATLAS
     # -------------------------------------------------------------------------
+
     "ospital": "hospital",
     "hermita": "ermita",
     "corer": "correr",
@@ -116,24 +152,118 @@ COMMON_REPLACEMENTS = {
 #
 # Se utiliza como base para intentar corregir palabras similares.
 #
-# Un set es adecuado porque:
+# Es importante incluir tanto verbos como sustantivos relacionados.
 #
-# - Evita duplicados.
-# - Permite búsquedas rápidas.
+# Por ejemplo:
+#
+# - recuerda
+# - recuerdas
+# - recuerdo
+# - recuerdos
+#
+# De lo contrario, la búsqueda aproximada podría transformar
+# incorrectamente "recuerdos" en "recuerdas".
 COMMON_VOCABULARY = {
 
-    "que",
-    "sabes",
-    "recuerdas",
-    "recuerda",
+    # -------------------------------------------------------------------------
+    # PALABRAS GENERALES
+    # -------------------------------------------------------------------------
+
+    "a",
+    "al",
+    "algo",
+    "como",
+    "con",
+    "cual",
+    "cuando",
+    "cuanta",
+    "cuantas",
+    "cuanto",
+    "cuantos",
     "de",
+    "del",
+    "dime",
+    "donde",
+    "el",
+    "en",
+    "es",
+    "esta",
+    "estado",
+    "hay",
+    "la",
+    "las",
+    "lo",
+    "los",
+    "me",
     "mi",
+    "mis",
+    "para",
+    "por",
+    "que",
+    "quien",
+    "se",
     "sobre",
     "soy",
+    "su",
+    "sus",
+    "te",
+    "tengo",
+    "tiene",
+    "tu",
+    "un",
+    "una",
     "usuario",
-    "salir",
+    "y",
+    "yo",
+
+    # -------------------------------------------------------------------------
+    # MEMORIA Y CONTEXTO
+    # -------------------------------------------------------------------------
+
+    "memoria",
+    "memorias",
+    "recuerda",
+    "recuerdas",
+    "recuerdo",
+    "recuerdos",
+    "recordar",
+    "contexto",
+    "conversacion",
+
+    # -------------------------------------------------------------------------
+    # COMANDOS Y ACCIONES
+    # -------------------------------------------------------------------------
+
     "adios",
     "ayuda",
+    "cancelar",
+    "confirmar",
+    "salir",
+    "sabes",
+
+    # -------------------------------------------------------------------------
+    # SISTEMA Y HERRAMIENTAS
+    # -------------------------------------------------------------------------
+
+    "bateria",
+    "cpu",
+    "disco",
+    "gpu",
+    "hora",
+    "informacion",
+    "internet",
+    "memoria",
+    "ordenador",
+    "python",
+    "ram",
+    "red",
+    "sistema",
+    "version",
+
+    # -------------------------------------------------------------------------
+    # VOCABULARIO DE EJEMPLO
+    # -------------------------------------------------------------------------
+
     "hospital",
     "ermita",
     "correr",
@@ -141,6 +271,10 @@ COMMON_VOCABULARY = {
     "querer",
 }
 
+
+# =============================================================================
+# ELIMINACIÓN DE ACENTOS
+# =============================================================================
 
 def remove_accents(
     text: str,
@@ -178,9 +312,10 @@ def remove_accents(
     # cuya categoría Unicode sea "Mn".
     #
     # "Mn" significa:
+    #
     #     Marca no espaciada.
     #
-    # En este caso, representa los acentos.
+    # En este caso representa los acentos.
     return "".join(
         character
         for character in normalized
@@ -189,6 +324,10 @@ def remove_accents(
         ) != "Mn"
     )
 
+
+# =============================================================================
+# REDUCCIÓN DE CARACTERES REPETIDOS
+# =============================================================================
 
 def _reduce_repeated_characters(
     word: str,
@@ -229,13 +368,88 @@ def _reduce_repeated_characters(
     # En total detecta tres o más caracteres iguales seguidos.
     #
     # r"\1\1"
-    #     Los sustituye por solo dos repeticiones.
+    #     Los sustituye por dos repeticiones.
     return re.sub(
         r"(.)\1{2,}",
         r"\1\1",
         word,
     )
 
+
+# =============================================================================
+# PREPARACIÓN DEL VOCABULARIO ADICIONAL
+# =============================================================================
+
+def _extract_extra_vocabulary_words(
+    extra_vocabulary,
+) -> set[str]:
+    """
+    Convierte un vocabulario adicional en palabras normalizadas.
+
+    Parámetros:
+        extra_vocabulary:
+            Colección de comandos, alias, palabras o frases.
+
+    Devuelve:
+        set[str]:
+            Palabras individuales normalizadas.
+
+    Ejemplo:
+        Entrada:
+
+            [
+                "cambiar usuario",
+                "estado",
+            ]
+
+        Salida:
+
+            {
+                "cambiar",
+                "usuario",
+                "estado",
+            }
+
+    Esto evita guardar una frase completa como un único elemento
+    cuando posteriormente la corrección se realiza palabra por palabra.
+    """
+
+    vocabulary_words = set()
+
+    if not extra_vocabulary:
+        return vocabulary_words
+
+    for item in extra_vocabulary:
+
+        normalized_item = remove_accents(
+            str(item).lower().strip()
+        )
+
+        normalized_item = re.sub(
+            r"[^\w\s]",
+            " ",
+            normalized_item,
+        )
+
+        normalized_item = re.sub(
+            r"\s+",
+            " ",
+            normalized_item,
+        ).strip()
+
+        if not normalized_item:
+            continue
+
+        vocabulary_words.update(
+            normalized_item.split()
+        )
+
+    return vocabulary_words
+
+
+# =============================================================================
+# CORRECCIÓN DE PALABRAS
+# =============================================================================
 
 def _correct_word(
     word: str,
@@ -257,19 +471,22 @@ def _correct_word(
             si no se encuentra una coincidencia fiable.
 
     Orden de corrección:
-
         1. Buscar una sustitución manual exacta.
         2. Reducir letras repetidas.
         3. Volver a buscar una sustitución manual.
         4. Comprobar si ya pertenece al vocabulario.
-        5. Buscar una palabra similar.
-        6. Mantener la palabra si no hay coincidencia.
+        5. Mantener números sin cambios.
+        6. Evitar correcciones arriesgadas en palabras cortas.
+        7. Buscar una palabra similar.
+        8. Mantener la palabra si no hay coincidencia.
     """
 
     # -------------------------------------------------------------------------
     # 1. SUSTITUCIÓN MANUAL DIRECTA
     # -------------------------------------------------------------------------
+
     if word in COMMON_REPLACEMENTS:
+
         return COMMON_REPLACEMENTS[
             word
         ]
@@ -277,6 +494,7 @@ def _correct_word(
     # -------------------------------------------------------------------------
     # 2. REDUCCIÓN DE LETRAS REPETIDAS
     # -------------------------------------------------------------------------
+
     reduced_word = _reduce_repeated_characters(
         word
     )
@@ -284,7 +502,9 @@ def _correct_word(
     # -------------------------------------------------------------------------
     # 3. SUSTITUCIÓN DESPUÉS DE REDUCIR REPETICIONES
     # -------------------------------------------------------------------------
+
     if reduced_word in COMMON_REPLACEMENTS:
+
         return COMMON_REPLACEMENTS[
             reduced_word
         ]
@@ -292,13 +512,25 @@ def _correct_word(
     # -------------------------------------------------------------------------
     # 4. PALABRA YA CONOCIDA
     # -------------------------------------------------------------------------
+
     if reduced_word in vocabulary:
+
         return reduced_word
 
     # -------------------------------------------------------------------------
-    # 5. EVITAR CORRECCIONES ARRIESGADAS EN PALABRAS CORTAS
+    # 5. NÚMEROS
     # -------------------------------------------------------------------------
-    #
+
+    # No intentamos corregir números ni cadenas
+    # formadas exclusivamente por dígitos.
+    if reduced_word.isdigit():
+
+        return reduced_word
+
+    # -------------------------------------------------------------------------
+    # 6. EVITAR CORRECCIONES ARRIESGADAS EN PALABRAS CORTAS
+    # -------------------------------------------------------------------------
+
     # Las palabras cortas tienen muchas coincidencias posibles.
     #
     # Ejemplo:
@@ -307,35 +539,47 @@ def _correct_word(
     #
     # Corregirlas automáticamente podría producir errores.
     if len(reduced_word) < 4:
+
         return reduced_word
 
     # -------------------------------------------------------------------------
-    # 6. BÚSQUEDA APROXIMADA
+    # 7. BÚSQUEDA APROXIMADA
     # -------------------------------------------------------------------------
+
+    # Usamos un umbral algo más estricto para palabras largas.
     #
-    # get_close_matches() busca la palabra más parecida
-    # dentro del vocabulario.
+    # Esto reduce correcciones incorrectas entre palabras legítimas
+    # que se parecen entre sí, como:
     #
-    # n=1:
-    #     Devuelve como máximo una coincidencia.
-    #
-    # cutoff=0.82:
-    #     Exige una similitud mínima del 82 %.
+    # recuerdos
+    # recuerdas
+    cutoff = (
+        0.88
+        if len(reduced_word) >= 7
+        else 0.84
+    )
+
     matches = get_close_matches(
         reduced_word,
         vocabulary,
         n=1,
-        cutoff=0.82,
+        cutoff=cutoff,
     )
 
-    # Si hay coincidencia, devolvemos la mejor.
     if matches:
+
         return matches[0]
 
-    # Si no se encuentra una corrección suficientemente fiable,
-    # mantenemos la palabra.
+    # -------------------------------------------------------------------------
+    # 8. PALABRA SIN CORRECCIÓN FIABLE
+    # -------------------------------------------------------------------------
+
     return reduced_word
 
+
+# =============================================================================
+# NORMALIZACIÓN DE FRASES
+# =============================================================================
 
 def normalize_text(
     text: str,
@@ -349,7 +593,7 @@ def normalize_text(
             Texto original.
 
         extra_vocabulary:
-            Palabras adicionales que deben considerarse válidas.
+            Palabras o frases adicionales que deben considerarse válidas.
 
             Se utiliza, por ejemplo, para añadir dinámicamente
             nombres de comandos y alias.
@@ -364,16 +608,30 @@ def normalize_text(
     """
 
     # -------------------------------------------------------------------------
-    # 1. MINÚSCULAS, ESPACIOS Y ACENTOS
+    # 1. VALIDACIÓN BÁSICA
     # -------------------------------------------------------------------------
+
+    if not isinstance(
+        text,
+        str,
+    ):
+
+        text = str(
+            text
+        )
+
+    # -------------------------------------------------------------------------
+    # 2. MINÚSCULAS, ESPACIOS Y ACENTOS
+    # -------------------------------------------------------------------------
+
     normalized_text = remove_accents(
         text.lower().strip()
     )
 
     # -------------------------------------------------------------------------
-    # 2. ELIMINAR SIGNOS DE PUNTUACIÓN
+    # 3. ELIMINAR SIGNOS DE PUNTUACIÓN
     # -------------------------------------------------------------------------
-    #
+
     # [^\w\s]
     #
     # significa:
@@ -389,69 +647,72 @@ def normalize_text(
     )
 
     # -------------------------------------------------------------------------
-    # 3. REDUCIR ESPACIOS DUPLICADOS
+    # 4. REDUCIR ESPACIOS DUPLICADOS
     # -------------------------------------------------------------------------
-    #
-    # \s+
-    #
-    # encuentra uno o más espacios consecutivos.
+
     normalized_text = re.sub(
         r"\s+",
         " ",
         normalized_text,
     ).strip()
 
+    if not normalized_text:
+
+        return ""
+
     # -------------------------------------------------------------------------
-    # 4. CREAR EL VOCABULARIO DE TRABAJO
+    # 5. CREAR EL VOCABULARIO DE TRABAJO
     # -------------------------------------------------------------------------
-    #
+
     # Creamos una copia para no modificar
     # COMMON_VOCABULARY directamente.
     vocabulary = set(
         COMMON_VOCABULARY
     )
 
-    # Si se ha recibido vocabulario adicional,
-    # lo normalizamos y añadimos.
+    # Añadimos las palabras de las correcciones manuales.
     #
-    # Ejemplo:
-    #
-    # COMMANDS.keys()
-    if extra_vocabulary:
+    # De este modo tanto las formas erróneas como sus resultados
+    # forman parte del contexto conocido del normalizador.
+    vocabulary.update(
+        COMMON_REPLACEMENTS.values()
+    )
 
-        vocabulary.update(
-            remove_accents(
-                str(item).lower()
-            )
-            for item in extra_vocabulary
+    # Añadimos palabras procedentes de comandos,
+    # alias u otros elementos dinámicos.
+    vocabulary.update(
+        _extract_extra_vocabulary_words(
+            extra_vocabulary
         )
+    )
 
     # -------------------------------------------------------------------------
-    # 5. CORREGIR CADA PALABRA
+    # 6. CORREGIR CADA PALABRA
     # -------------------------------------------------------------------------
-    #
-    # split() separa el texto por espacios.
-    #
-    # La comprensión de listas procesa cada palabra
-    # mediante _correct_word().
+
     corrected_words = [
+
         _correct_word(
             word,
             vocabulary,
         )
+
         for word in normalized_text.split()
+
     ]
 
     # -------------------------------------------------------------------------
-    # 6. RECONSTRUIR LA FRASE
+    # 7. RECONSTRUIR LA FRASE
     # -------------------------------------------------------------------------
-    #
-    # " ".join(...) une las palabras utilizando
-    # un espacio entre ellas.
+
     return " ".join(
         corrected_words
     )
 
+
+# =============================================================================
+# COMPARACIÓN DE FRASES
+# =============================================================================
 
 def find_closest_phrase(
     text: str,
@@ -486,17 +747,55 @@ def find_closest_phrase(
             "versoin"
 
         Candidatos:
-            ["version", "fecha", "ayuda"]
+            [
+                "version",
+                "fecha",
+                "ayuda",
+            ]
 
         Resultado:
             "version"
     """
 
+    # Convertimos primero la colección para poder recorrerla
+    # más de una vez aunque se trate de un generador.
+    candidate_list = [
+
+        str(candidate)
+
+        for candidate in candidates
+
+    ]
+
+    if not candidate_list:
+
+        return None
+
     # Normalizamos todas las frases candidatas.
     normalized_candidates = [
-        normalize_text(candidate)
-        for candidate in candidates
+
+        normalize_text(
+            candidate
+        )
+
+        for candidate in candidate_list
+
     ]
+
+    # Eliminamos posibles cadenas vacías.
+    normalized_candidates = [
+
+        candidate
+
+        for candidate in normalized_candidates
+
+        if candidate
+
+    ]
+
+    if not normalized_candidates:
+
+        return None
 
     # Normalizamos el texto recibido usando también
     # las candidatas como vocabulario adicional.
@@ -505,9 +804,14 @@ def find_closest_phrase(
         normalized_candidates,
     )
 
+    if not normalized_text:
+
+        return None
+
     # Si existe una coincidencia exacta después
     # de normalizar, la devolvemos directamente.
     if normalized_text in normalized_candidates:
+
         return normalized_text
 
     # Buscamos la frase más parecida.
@@ -518,10 +822,8 @@ def find_closest_phrase(
         cutoff=cutoff,
     )
 
-    # Si no existe ninguna coincidencia válida,
-    # devolvemos None.
     if not matches:
+
         return None
 
-    # Devolvemos la mejor coincidencia.
     return matches[0]
