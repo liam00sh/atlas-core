@@ -12,7 +12,7 @@ Descripción:
     - Presentaciones y cambios de usuario.
     - Saludos.
     - Agradecimientos.
-    - Preguntas sobre la identidad de Daxter.
+    - Preguntas sobre la identidad activa del asistente.
 
     La memoria y los comandos no se gestionan en este archivo.
 
@@ -60,7 +60,7 @@ Importante:
 #     ¡Hola, Liam!
 from conversation.personality import greet
 
-# Genera la respuesta cuando se pregunta quién es Daxter.
+# Genera la respuesta cuando se pregunta por la identidad activa.
 from conversation.personality import identity
 
 # Genera una respuesta cuando el usuario da las gracias.
@@ -234,7 +234,10 @@ def detect(text: str) -> str | None:
         # Obtenemos el usuario activo y generamos
         # un saludo personalizado.
         return greet(
-            context.atlas.get_user()
+            user=context.atlas.get_user(),
+            assistant_name=(
+                context.atlas.get_name()
+            ),
         )
 
     # -------------------------------------------------------------------------

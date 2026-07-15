@@ -1,0 +1,738 @@
+[
+    {
+        "id": "a54ba9ed-afe3-4e11-9d1b-367896d774e4",
+        "name": "Liam",
+        "aliases": [
+            "Liam Vicente Martínez",
+            "Nerea Vicente Martínez",
+            "Nerea Vicente"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "user",
+        "encounter_count": 7,
+        "first_seen_at": "2026-07-14T18:57:03",
+        "last_seen_at": "2026-07-14T22:25:19",
+        "introduced_by": null,
+        "summary": "Usuario principal de Atlas. Hombre trans. Nerea Vicente Martínez es su nombre anterior y solo debe utilizarse para reconocer documentos antiguos, nunca como forma habitual de dirigirse a él. Vive en Beneixama.",
+        "user_profile": "Liam",
+        "created_at": "2026-07-14T18:57:03",
+        "updated_at": "2026-07-14T22:25:19"
+    },
+    {
+        "id": "9510bef0-7cff-401d-a67f-b9dd39a85611",
+        "name": "Saray Izquierdo Carreres",
+        "aliases": [
+            "Saray"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "user",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Pareja de Liam. Vive en Caudete y estudia en Alicante.",
+        "user_profile": "Saray",
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "82ea29a5-1227-4846-ba2a-df7a0d0b1e10",
+        "name": "José Vicente Navarro",
+        "aliases": [
+            "José",
+            "Padre de Liam"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Padre de Liam. Vive en Beneixama.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "4ff5f25d-13fd-4424-8c41-1a68e2781255",
+        "name": "María José Martínez Sanz",
+        "aliases": [
+            "Mary",
+            "Madre de Liam"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Madre de Liam. Vive en Beneixama.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "65eceec1-b53b-455c-92f1-dea698be63cc",
+        "name": "José Manuel Martínez Pérez",
+        "aliases": [
+            "Txipi"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Primo biológico de Liam y hermano adoptivo o afectivo. Fue adoptado por la madre de Liam tras quedar huérfano. Vive en Villena con su mujer Sara y su hijo Adra.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "c01cd275-fd41-4ad1-8088-01b509811295",
+        "name": "Sara",
+        "aliases": [
+            "Sara, mujer de Txipi"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Mujer de Txipi y madre de Adra.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "1f375714-2854-4a2f-8986-0edbc803aace",
+        "name": "Adra",
+        "aliases": [],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Hijo pequeño de Txipi y Sara. Tiene aproximadamente dos años.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "8518852d-ec2f-4dee-a4f4-397ab96d5fd4",
+        "name": "Alba Martínez Pérez",
+        "aliases": [
+            "Alba"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Prima biológica de Liam y hermana adoptiva o afectiva. Tras fallecer sus padres vivió con familiares de Liam. Suele vivir con su novio Pablo o pasar algunos fines de semana en Beneixama.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "312aabf0-f183-494a-9339-96c553771dd4",
+        "name": "Pablo",
+        "aliases": [
+            "Pablo, novio de Alba"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Pareja de Alba. Relacionado con Monforte.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "66df983d-8cbc-47d4-8efa-682effc4128c",
+        "name": "Raúl Vicente Martínez",
+        "aliases": [
+            "Raúl"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Hermano de Liam. Vive habitualmente en Barcelona.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "36e8df6f-19ed-4cc1-91ec-af7d8445e940",
+        "name": "Lidia Vicente Martínez",
+        "aliases": [
+            "Lidia"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Hermana de Liam.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "3b503105-9407-47d4-a010-36f4b32bcdc3",
+        "name": "Roberto Amarillo Navarro",
+        "aliases": [
+            "Roberto"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Pareja de Lidia.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "cdd95405-90cd-4fdf-9974-0efa91f7c4f3",
+        "name": "Fermina Navarro",
+        "aliases": [],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Abuela paterna biológica de Liam. Falleció al nacer José Vicente Navarro.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "1063370a-5423-4225-a01a-713455b8d0c9",
+        "name": "José Vicente",
+        "aliases": [
+            "Pepe",
+            "Abuelo Pepe"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Abuelo paterno de Liam. Fallecido.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "e959125e-1014-4518-9f6d-cab89c8f5236",
+        "name": "Lola Payá",
+        "aliases": [
+            "Abuela Lola"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Segunda mujer del abuelo paterno de Liam y abuela afectiva de Liam.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:37",
+        "updated_at": "2026-07-14T22:16:37"
+    },
+    {
+        "id": "4886d255-daa2-4766-8e65-e73f16a3e5a9",
+        "name": "Pepi Vicente Navarro",
+        "aliases": [
+            "Pepi"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tía paterna de Liam.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "b8ddabe8-26d1-4c33-bc1a-13798454cdcc",
+        "name": "Salvador Amorós",
+        "aliases": [],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Marido de Pepi Vicente Navarro.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "39ae041c-4ce5-4d8b-807d-5e59dba2b73f",
+        "name": "Salvador Amorós Vicente",
+        "aliases": [],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Primo paterno de Liam.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "e29b0a67-369d-4c73-9dc0-fc7d4de2d81b",
+        "name": "Mario Amorós Vicente",
+        "aliases": [],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Primo paterno de Liam. Tiene una casa en El Salse, pedanía de Beneixama.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "79d08345-421e-4b04-bdd2-4c83b0a13cac",
+        "name": "Francisco Vicente Payá",
+        "aliases": [
+            "Francisco"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tío paterno de Liam. Vive en Madrid.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "1855bc5b-5c51-4e21-8dda-0e6676776c91",
+        "name": "Lucía",
+        "aliases": [
+            "Lucía, mujer de Francisco"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Mujer de Francisco Vicente Payá. Vive en Madrid.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "dd2c318f-470a-40e3-9749-13c98a5303a4",
+        "name": "Claudia Vicente",
+        "aliases": [
+            "Claudia"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Prima paterna de Liam. Vive en Madrid.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "ce8e6263-caf8-4d8a-afb3-8c8328e824f4",
+        "name": "Martín Vicente",
+        "aliases": [
+            "Martín"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Primo paterno de Liam. Vive en Madrid.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "4e39e242-0b40-4481-a203-0563582f2ad8",
+        "name": "Pepe Martínez",
+        "aliases": [
+            "Abuelo materno de Liam"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Abuelo materno de Liam. Fallecido.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "0f8d502a-8b9d-4473-9e0c-1958fd1781e3",
+        "name": "Consuelo Sanz Esteve",
+        "aliases": [
+            "Abuela materna de Liam"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Abuela materna de Liam. Fallecida.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "5aae1827-9d33-4457-adf6-a092da322429",
+        "name": "Manolo Martínez Sanz",
+        "aliases": [
+            "Manolo"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tío materno de Liam. Padre biológico de Txipi y Alba. Fallecido.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "d956058f-bea7-43e9-baef-8c17ea90d525",
+        "name": "Fermina Pérez",
+        "aliases": [],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Mujer de Manolo Martínez Sanz y madre biológica de Txipi y Alba. Fallecida.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "9ed81ed7-8c41-4039-9e46-2925cd6cfd88",
+        "name": "Consuelo Martínez Sanz",
+        "aliases": [
+            "Chelo"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tía materna de Liam. Existe distanciamiento familiar entre ella y la unidad familiar de Liam.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "c516d9e8-aa80-4662-a268-0d507a51ca53",
+        "name": "Evaristo Maestre",
+        "aliases": [
+            "Evaristo"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Marido de Chelo. Existe distanciamiento familiar.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "1c084a16-221a-4396-ad20-cc7da1a75f2f",
+        "name": "María Teresa Maestre Martínez",
+        "aliases": [
+            "María Teresa"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Prima materna de Liam.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "9ec53894-f9e0-4dc5-af54-2157645d36ec",
+        "name": "Evaristo Maestre Martínez",
+        "aliases": [
+            "Evaristo hijo"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Primo materno de Liam.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "9dd7a48c-6c20-4e84-aa62-5d22c797c2cc",
+        "name": "José Miguel Izquierdo Catalán",
+        "aliases": [
+            "Padre de Saray"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Padre de Saray. Tuvo una relación anterior antes de estar con Pepi Carreres López.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "5c6705bb-5d17-4ccf-9f60-500920d6e331",
+        "name": "Pepi Carreres López",
+        "aliases": [
+            "Madre de Saray",
+            "Pepi"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Madre de Saray. Mantiene una relación muy cercana con su hermana Manoli.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "2dc84aa8-8de9-4820-9341-d1c724dd2698",
+        "name": "Rubén Izquierdo Carreres",
+        "aliases": [
+            "Rubén"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Hermano de Saray. Es reservado y Liam todavía no lo conoce demasiado.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "7542e7fa-c5f8-4be4-b9fa-284274c550c8",
+        "name": "Manuela López Serrano",
+        "aliases": [
+            "Abuela materna de Saray"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Abuela materna de Saray. Vive en Caudete y tiene demencia.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "35d1ee09-847c-4d05-a961-1637c44e6825",
+        "name": "Antonio Carreres Hernández",
+        "aliases": [
+            "Abuelo materno de Saray"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Abuelo materno de Saray. Vive en Caudete.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "43dd9190-db61-45fa-bb89-79403bbf6cda",
+        "name": "Andrés Carreres López",
+        "aliases": [],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tío materno de Saray.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:38",
+        "updated_at": "2026-07-14T22:16:38"
+    },
+    {
+        "id": "1c98e496-3ff3-40ef-bcb7-6cc206f657dc",
+        "name": "Antonio Carreres López",
+        "aliases": [],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tío materno de Saray.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "09dfd546-ccdd-4bd5-bca2-0ae2948d47b7",
+        "name": "Yael Carreres",
+        "aliases": [
+            "Yael"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Prima de Saray e hija de Antonio Carreres López.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "db9b8518-3620-48a4-aa77-0b859f39b92b",
+        "name": "Yeray Carreres",
+        "aliases": [
+            "Yeray"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Primo de Saray e hijo de Antonio Carreres López.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "d4880574-142f-4cc3-bbb8-c79c95db692c",
+        "name": "Jorge Carreres López",
+        "aliases": [],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tío materno de Saray.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "a6bf96a1-ff0a-4903-8aad-8f9fe54333bb",
+        "name": "Manoli Carreres López",
+        "aliases": [
+            "Manoli"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Tía materna de Saray. Tiene una relación muy cercana con Saray, Liam y su hermana Pepi.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "b75a2ac3-2903-40dd-b2d3-aa1aee4523a3",
+        "name": "Georgel Melinte",
+        "aliases": [
+            "Marido de Manoli"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Marido rumano de Manoli. Dispone de un campo en Caudete cedido o prestado por su jefe.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "823e3cdf-0d65-491a-961d-c58d0609bdf0",
+        "name": "Noa Melinte Carreres",
+        "aliases": [
+            "Noa"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Prima de Saray e hija de Manoli y Georgel. Mantiene una relación cercana con Liam y Saray.",
+        "user_profile": null,
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    }
+]

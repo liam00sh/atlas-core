@@ -1,0 +1,79 @@
+[
+    {
+        "id": "8321dff9-a2a0-4bf8-b09d-ce8a9c54a55b",
+        "name": "Don Gato Mishi Van Gogh",
+        "aliases": [
+            "Don Gato",
+            "Mishi",
+            "Van Gogh",
+            "Gato"
+        ],
+        "species": "cat",
+        "breed": null,
+        "sex": "male",
+        "grammatical_gender": "masculine",
+        "birth_date": null,
+        "status": "active",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "summary": "Gato de Liam. Vive en la unidad familiar de Beneixama.",
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "4fc17d29-0b45-4ae3-a5c6-bd5a16b57b34",
+        "name": "Funcionario",
+        "aliases": [
+            "Funcio"
+        ],
+        "species": "cat",
+        "breed": null,
+        "sex": "male",
+        "grammatical_gender": "masculine",
+        "birth_date": null,
+        "status": "active",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "summary": "Gato de Lidia. Vive en la unidad familiar de Beneixama.",
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "86ab7cd4-261c-43af-b8f5-7bff86b9f6cb",
+        "name": "Lucas",
+        "aliases": [
+            "Lucas, gato de Roberto"
+        ],
+        "species": "cat",
+        "breed": null,
+        "sex": "male",
+        "grammatical_gender": "masculine",
+        "birth_date": null,
+        "status": "active",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "summary": "Gato de Roberto.",
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    },
+    {
+        "id": "ce0c048e-39d6-4bfe-8f66-46b1be04867f",
+        "name": "Estrella",
+        "aliases": [],
+        "species": "dog",
+        "breed": null,
+        "sex": "female",
+        "grammatical_gender": "feminine",
+        "birth_date": null,
+        "status": "active",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "summary": "Perra de los abuelos maternos de Saray. Suele acompañar a Liam y Saray cuando van al campo.",
+        "created_at": "2026-07-14T22:16:39",
+        "updated_at": "2026-07-14T22:16:39"
+    }
+]

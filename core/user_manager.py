@@ -107,141 +107,99 @@ class UserManager:
             # PERFIL DE LIAM
             # -----------------------------------------------------------------
             "liam": {
-
-                # Nombre mostrado al usuario.
                 "name": "Liam",
 
-                # Roles del perfil.
-                #
-                # owner:
-                #     Propietario principal de Atlas.
-                #
-                # admin:
-                #     Administrador del sistema.
-                "roles": [
+                # Género gramatical utilizado al redactar respuestas.
+                "grammatical_gender": "masculine",
 
-                    "owner",
-
-                    "admin",
-
-                ],
-
-                # Relaciones de Liam con otros usuarios.
-                "relationships": {
-
-                    # Personas de las que Liam es pareja.
-                    "partner_of": [
-
-                        "Saray",
-
-                    ],
-
-                    # Personas de la familia de Liam.
-                    "family_of": [
-
-                        "Lidia",
-
-                    ],
-
-                    # Personas conocidas o de confianza.
-                    "known_of": [
-
-                        "Saray",
-
-                        "Lidia",
-
-                    ],
-
+                # Pronombres configurados explícitamente.
+                "pronouns": {
+                    "subject": "él",
+                    "object": "lo",
+                    "indirect_object": "le",
+                    "possessive": "su",
                 },
 
+                "roles": [
+                    "owner",
+                    "admin",
+                ],
+
+                "relationships": {
+                    "partner_of": [
+                        "Saray",
+                    ],
+                    "family_of": [
+                        "Lidia",
+                    ],
+                    "known_of": [
+                        "Saray",
+                        "Lidia",
+                    ],
+                },
             },
 
             # -----------------------------------------------------------------
             # PERFIL DE SARAY
             # -----------------------------------------------------------------
             "saray": {
-
                 "name": "Saray",
 
-                # partner:
-                #     Usuario con relación de pareja.
-                #
-                # known:
-                #     Persona conocida o de confianza.
+                "grammatical_gender": "feminine",
+
+                "pronouns": {
+                    "subject": "ella",
+                    "object": "la",
+                    "indirect_object": "le",
+                    "possessive": "su",
+                },
+
                 "roles": [
-
                     "partner",
-
                     "known",
-
                 ],
 
                 "relationships": {
-
-                    # Saray es pareja de Liam.
                     "partner_of": [
-
                         "Liam",
-
                     ],
-
-                    # No está registrada como familiar de Liam.
                     "family_of": [],
-
-                    # Tiene relación de confianza con Liam.
                     "known_of": [
-
                         "Liam",
-
                     ],
-
                 },
-
             },
 
             # -----------------------------------------------------------------
             # PERFIL DE LIDIA
             # -----------------------------------------------------------------
             "lidia": {
-
                 "name": "Lidia",
 
-                # family:
-                #     Usuario perteneciente a la familia.
-                #
-                # known:
-                #     Persona conocida o de confianza.
+                "grammatical_gender": "feminine",
+
+                "pronouns": {
+                    "subject": "ella",
+                    "object": "la",
+                    "indirect_object": "le",
+                    "possessive": "su",
+                },
+
                 "roles": [
-
                     "family",
-
                     "known",
-
                 ],
 
                 "relationships": {
-
-                    # Lidia no es pareja de ningún usuario registrado.
                     "partner_of": [],
-
-                    # Lidia pertenece a la familia de Liam.
                     "family_of": [
-
                         "Liam",
-
                     ],
-
-                    # Tiene relación de confianza con Liam.
                     "known_of": [
-
                         "Liam",
-
                     ],
-
                 },
-
             },
-
         }
 
     def _normalize_name(
@@ -386,40 +344,32 @@ class UserManager:
         """
         Crea un perfil temporal para un usuario desconocido.
 
-        Parámetros:
-            user:
-                Nombre del nuevo usuario.
-
-        Devuelve:
-            dict:
-                Perfil básico de invitado.
-
-        Los invitados no tienen relaciones ni permisos especiales.
+        Como Atlas no debe deducir el género de una persona
+        únicamente por su nombre, los perfiles nuevos utilizan
+        inicialmente un tratamiento neutral.
         """
 
         return {
-
-            # Nombre visible del invitado.
             "name": user,
 
-            # Rol básico.
-            "roles": [
+            "grammatical_gender": "neutral",
 
-                "guest",
-
-            ],
-
-            # Sin relaciones conocidas.
-            "relationships": {
-
-                "partner_of": [],
-
-                "family_of": [],
-
-                "known_of": [],
-
+            "pronouns": {
+                "subject": "esa persona",
+                "object": "le",
+                "indirect_object": "le",
+                "possessive": "su",
             },
 
+            "roles": [
+                "guest",
+            ],
+
+            "relationships": {
+                "partner_of": [],
+                "family_of": [],
+                "known_of": [],
+            },
         }
 
     def get_current_user(self):
@@ -492,6 +442,136 @@ class UserManager:
         return self.profiles[
             normalized_name
         ]
+
+    def get_grammatical_gender(
+        self,
+        user: str | None = None,
+    ) -> str:
+        """
+        Devuelve el género gramatical configurado
+        para un usuario.
+
+        Valores posibles:
+
+            masculine
+            feminine
+            neutral
+        """
+
+        profile = self.get_profile(
+            user
+        )
+
+        return profile.get(
+            "grammatical_gender",
+            "neutral",
+        )
+
+
+    def get_pronouns(
+        self,
+        user: str | None = None,
+    ) -> dict[str, str]:
+        """
+        Devuelve una copia de los pronombres configurados
+        para un usuario.
+
+        Si el perfil no contiene pronombres, utiliza
+        una configuración neutral.
+        """
+
+        profile = self.get_profile(
+            user
+        )
+
+        default_pronouns = {
+            "subject": "esa persona",
+            "object": "le",
+            "indirect_object": "le",
+            "possessive": "su",
+        }
+
+        pronouns = profile.get(
+            "pronouns",
+            default_pronouns,
+        )
+
+        return pronouns.copy()
+
+    def set_grammatical_gender(
+        self,
+        user: str,
+        grammatical_gender: str,
+    ) -> bool:
+        """
+        Modifica el género gramatical de un perfil.
+
+        Devuelve:
+            True:
+                El valor era válido y se ha guardado.
+
+            False:
+                El valor recibido no es válido.
+        """
+
+        valid_genders = {
+            "masculine",
+            "feminine",
+            "neutral",
+        }
+
+        normalized_gender = (
+            grammatical_gender
+            .strip()
+            .lower()
+        )
+
+        if normalized_gender not in valid_genders:
+            return False
+
+        profile = self.get_profile(
+            user
+        )
+
+        profile["grammatical_gender"] = (
+            normalized_gender
+        )
+
+        return True
+
+
+    def set_pronouns(
+        self,
+        user: str,
+        subject: str,
+        object_pronoun: str,
+        indirect_object: str = "le",
+        possessive: str = "su",
+    ) -> bool:
+        """
+        Configura los pronombres de un usuario.
+        """
+
+        subject = subject.strip()
+        object_pronoun = object_pronoun.strip()
+        indirect_object = indirect_object.strip()
+        possessive = possessive.strip()
+
+        if not subject or not object_pronoun:
+            return False
+
+        profile = self.get_profile(
+            user
+        )
+
+        profile["pronouns"] = {
+            "subject": subject,
+            "object": object_pronoun,
+            "indirect_object": indirect_object or "le",
+            "possessive": possessive or "su",
+        }
+
+        return True
 
     def change_user(
         self,

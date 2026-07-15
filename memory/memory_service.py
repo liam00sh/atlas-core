@@ -14,7 +14,7 @@ Descripción:
     - Preguntar la privacidad cuando exista alguna duda.
     - Mantener temporalmente un recuerdo pendiente.
     - Procesar la respuesta de visibilidad.
-    - Mostrar los recuerdos que un usuario puede consultar.
+    - Mostrar los recuerdos que una persona puede consultar.
 
 Diferencia con memory_manager.py:
 
@@ -24,6 +24,12 @@ Diferencia con memory_manager.py:
     memory_service.py:
         Gestiona la conversación y las decisiones relacionadas
         con esos recuerdos.
+
+Importante:
+    El usuario autenticado y la persona que habla pueden ser distintos.
+
+    Para consultar recuerdos y comprobar permisos se utiliza siempre
+    la identidad de la persona que está hablando actualmente.
 
 ===============================================================================
 """
@@ -58,7 +64,10 @@ class MemoryService:
     Utiliza el MemoryManager que ya existe dentro de Atlas.
     """
 
-    def __init__(self, atlas):
+    def __init__(
+        self,
+        atlas,
+    ) -> None:
         """
         Inicializa el servicio de memoria.
 
@@ -68,9 +77,11 @@ class MemoryService:
 
         Guardar esta referencia permite acceder a:
 
-            - El usuario activo.
+            - El usuario autenticado.
+            - La persona que habla.
             - Los perfiles.
-            - El MemoryManager.
+            - ConversationIdentity.
+            - MemoryManager.
         """
 
         # Referencia a la instancia principal de Atlas.
@@ -91,7 +102,9 @@ class MemoryService:
         # }
         self.pending_memory = None
 
-    def has_pending_memory(self) -> bool:
+    def has_pending_memory(
+        self,
+    ) -> bool:
         """
         Indica si existe un recuerdo esperando una respuesta
         sobre su visibilidad.
@@ -125,10 +138,14 @@ class MemoryService:
             4. Si existe duda, pregunta al usuario.
         """
 
+        # Eliminamos espacios innecesarios.
+        content = content.strip()
+
         # Evitamos guardar recuerdos vacíos.
         if not content:
 
             print()
+
             print(
                 "No me has indicado qué debo recordar."
             )
@@ -188,12 +205,14 @@ class MemoryService:
         }
 
         print()
+
         print(
             "No estoy seguro de quién debería "
             "poder conocer esta información."
         )
 
         print()
+
         print("1. Solo tú")
         print("2. Tú y el administrador")
         print("3. Tu pareja")
@@ -202,6 +221,7 @@ class MemoryService:
         print("6. Cualquier persona")
 
         print()
+
         print(
             "Escribe un número del 1 al 6 "
             "o «cancelar»."
@@ -234,6 +254,19 @@ class MemoryService:
             - La orden "cancelar".
         """
 
+        # Protección adicional por si este método se llama
+        # sin existir un recuerdo pendiente.
+        if self.pending_memory is None:
+
+            print()
+
+            print(
+                "No hay ningún recuerdo pendiente "
+                "de clasificación."
+            )
+
+            return True
+
         # El usuario puede cancelar el guardado.
         if answer in {
             "cancelar",
@@ -243,7 +276,10 @@ class MemoryService:
             self.pending_memory = None
 
             print()
-            print("He cancelado el recuerdo.")
+
+            print(
+                "He cancelado el recuerdo."
+            )
 
             return True
 
@@ -257,6 +293,7 @@ class MemoryService:
         if visibility is None:
 
             print()
+
             print(
                 "No he entendido el nivel "
                 "de privacidad."
@@ -271,7 +308,7 @@ class MemoryService:
 
         # Guardamos temporalmente una copia del recuerdo
         # antes de limpiar el estado pendiente.
-        pending_memory = self.pending_memory
+        pending_memory = self.pending_memory.copy()
 
         # La siguiente entrada volverá al flujo normal.
         self.pending_memory = None
@@ -321,22 +358,77 @@ class MemoryService:
 
         La información mostrada depende de:
 
-            - El usuario que realiza la consulta.
+            - La persona que realiza la consulta.
             - Sus roles.
             - Sus relaciones.
             - La visibilidad de cada recuerdo.
+
+        Importante:
+            Los permisos se comprueban utilizando a la persona
+            que habla actualmente.
+
+            No se heredan los permisos del usuario autenticado.
         """
 
-        # Persona que realiza la consulta.
-        viewer = self.atlas.get_user()
+        owner = owner.strip()
 
-        # Perfil del usuario que consulta.
+        if not owner:
+
+            print()
+
+            print(
+                "No me has indicado sobre quién "
+                "quieres consultar recuerdos."
+            )
+
+            return
+
+        # ---------------------------------------------------------------------
+        # PERSONA QUE ESTÁ REALIZANDO LA CONSULTA
+        # ---------------------------------------------------------------------
+
+        viewer = (
+            self.atlas
+            .conversation_identity
+            .get_memory_viewer()
+        )
+
+        if viewer is None:
+
+            print()
+
+            print(
+                "No hay ninguna persona identificada."
+            )
+
+            return
+
+        # ---------------------------------------------------------------------
+        # PERFIL DE LA PERSONA QUE CONSULTA
+        # ---------------------------------------------------------------------
+
+        # Si la persona tiene un perfil completo de usuario,
+        # UserManager devolverá sus roles y relaciones.
+        #
+        # Si se trata de un invitado sin perfil, deberá devolver
+        # un diccionario vacío o un perfil sin privilegios.
         viewer_profile = self.atlas.users.get_profile(
             viewer
         )
 
+        if not isinstance(
+            viewer_profile,
+            dict,
+        ):
+
+            viewer_profile = {}
+
+        # ---------------------------------------------------------------------
+        # RECUERDOS AUTORIZADOS
+        # ---------------------------------------------------------------------
+
         # MemoryManager devuelve únicamente los recuerdos
-        # que puede leer ese usuario.
+        # que puede leer la persona que está hablando.
         memories = (
             self.atlas.memory.get_accessible_memories(
                 owner=owner,
@@ -345,13 +437,20 @@ class MemoryService:
             )
         )
 
+        info(
+            f"Consulta de recuerdos. "
+            f"Propietario: {owner}. "
+            f"Consultante: {viewer}. "
+            f"Resultados autorizados: {len(memories)}."
+        )
+
         print()
 
         # No se ha encontrado ningún recuerdo accesible.
         if not memories:
 
             # Consulta sobre uno mismo.
-            if owner.lower() == viewer.lower():
+            if owner.casefold() == viewer.casefold():
 
                 print(
                     f"Todavía no recuerdo nada "
@@ -384,11 +483,27 @@ class MemoryService:
         ):
 
             # Nombre legible de la visibilidad.
-            label = VISIBILITY_LABELS[
-                memory["visibility"]
-            ]
+            visibility = memory.get(
+                "visibility",
+                "",
+            )
+
+            label = VISIBILITY_LABELS.get(
+                visibility,
+                "Visibilidad desconocida",
+            )
+
+            content = str(
+                memory.get(
+                    "content",
+                    "",
+                )
+            ).strip()
+
+            if not content:
+                continue
 
             print(
-                f"{index}. {memory['content']} "
+                f"{index}. {content} "
                 f"[{label}]"
             )

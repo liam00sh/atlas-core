@@ -6,20 +6,17 @@ Archivo: core/atlas.py
 Descripción:
     Contiene la clase principal Atlas.
 
-    Esta clase actúa como núcleo central de Daxter y coordina:
+    Atlas actúa como coordinador de los subsistemas del proyecto.
 
-    - Procesamiento del texto.
-    - Sistema de comandos.
-    - Conversación básica.
-    - Gestión de usuarios.
-    - Gestión de memoria.
-    - Registro de actividad.
+    La lógica especializada se distribuye entre varios mixins:
 
-    La lógica conversacional específica de la memoria se ha trasladado a:
-
-        memory/memory_service.py
-
-    De esta forma, la clase Atlas resulta más pequeña y manejable.
+    - atlas_ai.py
+    - atlas_capabilities.py
+    - atlas_commands.py
+    - atlas_memory.py
+    - atlas_tools.py
+    - atlas_users.py
+    - atlas_utils.py
 
 Flujo principal:
 
@@ -28,15 +25,40 @@ Flujo principal:
        ▼
     Atlas.process()
        │
+       ├── Confirmación pendiente
        ├── Memoria pendiente
+       ├── Selección automática de modo
        ├── Guardar recuerdos
        ├── Consultar recuerdos
        ├── Ejecutar comandos
-       ├── Conversación
+       ├── Conversación básica
+       ├── Consultas de contexto
+       ├── Herramientas locales
+       ├── Inteligencia artificial local
        └── Entrada desconocida
 
 ===============================================================================
 """
+
+
+# =============================================================================
+# INTELIGENCIA ARTIFICIAL
+# =============================================================================
+
+from ai.cache.response_cache import ResponseCache
+from ai.context.context_manager import AIContextManager
+from ai.models.model_registry import ModelRegistry
+from ai.prompts.builder import PromptBuilder
+from ai.providers.base_provider import BaseAIProvider
+from ai.tools.tool_registry import ToolRegistry
+from ai.tools.tool_selector import ToolSelector
+
+
+# =============================================================================
+# IDENTIDAD DEL ASISTENTE
+# =============================================================================
+
+from assistant_identity.identity_manager import IdentityManager
 
 
 # =============================================================================
@@ -47,26 +69,25 @@ from capabilities.capabilities import CapabilityManager
 
 
 # =============================================================================
-# CONVERSACIÓN
-# =============================================================================
-
-from conversation.intent import detect
-from conversation.personality import not_understood
-
-
-# =============================================================================
 # COMANDOS
 # =============================================================================
 
 from console.command_manager import COMMANDS
-from console.command_manager import execute
-from console.command_manager import resolve_command
 
 
 # =============================================================================
 # NÚCLEO
 # =============================================================================
 
+from core.atlas_ai import AtlasAIMixin
+from core.atlas_capabilities import AtlasCapabilitiesMixin
+from core.atlas_commands import AtlasCommandsMixin
+from core.atlas_memory import AtlasMemoryMixin
+from core.atlas_tools import AtlasToolsMixin
+from core.atlas_users import AtlasUsersMixin
+from core.atlas_utils import AtlasUtilsMixin
+
+from core.confirmation_manager import ConfirmationManager
 from core.log_manager import info
 from core.user_manager import UserManager
 from core.version import ASSISTANT_NAME
@@ -75,56 +96,245 @@ from core.version import VERSION
 
 
 # =============================================================================
+# IDENTIDAD DE PERSONAS
+# =============================================================================
+
+from identity.conversation_identity import ConversationIdentity
+from identity.identity_storage import IdentityStorage
+from identity.people_manager import PeopleManager
+from identity.visitor_manager import VisitorManager
+
+
+# =============================================================================
 # MEMORIA
 # =============================================================================
 
 from memory.memory_manager import MemoryManager
+from memory.memory_retriever import MemoryRetriever
 from memory.memory_service import MemoryService
 
 
 # =============================================================================
-# UTILIDADES DE TEXTO
+# UTILIDADES
 # =============================================================================
 
-from utils.memory_query_parser import parse_memory_query
 from utils.text_normalizer import normalize_text
 
 
-class Atlas:
+from identity.family_initializer import FamilyInitializer
+from identity.family_service import FamilyService
+from identity.relationship_engine import RelationshipEngine
+
+
+# =============================================================================
+# CLASE PRINCIPAL
+# =============================================================================
+
+class Atlas(
+    AtlasAIMixin,
+    AtlasCapabilitiesMixin,
+    AtlasCommandsMixin,
+    AtlasMemoryMixin,
+    AtlasToolsMixin,
+    AtlasUsersMixin,
+    AtlasUtilsMixin,
+):
     """
     Clase principal del Proyecto Atlas.
 
-    Representa una única instancia activa de Daxter
-    y coordina todos los subsistemas.
+    Coordina todos los subsistemas mediante composición
+    y herencia de mixins.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        ai_provider: BaseAIProvider | None = None,
+    ) -> None:
         """
         Inicializa el núcleo principal de Atlas.
         """
 
-        # Identidad del proyecto y del asistente.
+        # ---------------------------------------------------------------------
+        # INFORMACIÓN DEL PROYECTO
+        # ---------------------------------------------------------------------
+
         self.name = ASSISTANT_NAME
         self.project = PROJECT_NAME
         self.version = VERSION
 
-        # Gestor de usuarios y perfiles.
+        # ---------------------------------------------------------------------
+        # USUARIOS
+        # ---------------------------------------------------------------------
+
         self.users = UserManager()
 
-        # Gestor de capacidades realmente disponibles.
+        # ---------------------------------------------------------------------
+        # IDENTIDAD DE PERSONAS
+        # ---------------------------------------------------------------------
+
+        # Almacenamiento persistente de personas,
+        # relaciones y animales.
+        self.identity_storage = IdentityStorage()
+
+        # Gestor principal de personas y animales.
+        self.people_manager = PeopleManager(
+            self.identity_storage
+        )
+
+        # Gestiona la evolución de visitantes,
+        # conocidos, habituales y usuarios.
+        self.visitor_manager = VisitorManager(
+            self.people_manager
+        )
+
+        self.relationship_engine = (
+            RelationshipEngine(
+                people_manager=self.people_manager,
+                storage=self.identity_storage,
+            )
+        )
+
+        self.family_initializer = (
+            FamilyInitializer(
+                people_manager=self.people_manager,
+                relationship_engine=(
+                    self.relationship_engine
+                ),
+            )
+        )
+
+        self.family_service = (
+            FamilyService(
+                people_manager=self.people_manager,
+                relationship_engine=(
+                    self.relationship_engine
+                ),
+            )
+        )
+
+        self.family_initializer.initialize()
+
+        # Separa:
+        #
+        # - El usuario autenticado.
+        # - La persona que está hablando.
+        self.conversation_identity = ConversationIdentity(
+            people_manager=self.people_manager,
+            visitor_manager=self.visitor_manager,
+        )
+
+        # El usuario activo inicia la sesión autenticada.
+        self.conversation_identity.set_authenticated_user(
+            self.get_user()
+        )
+
+        # Al comenzar, la persona que habla es el propio
+        # usuario autenticado.
+        self.conversation_identity.identify_person(
+            self.get_user()
+        )
+
+        # ---------------------------------------------------------------------
+        # IDENTIDAD DEL ASISTENTE
+        # ---------------------------------------------------------------------
+
+        # Gestiona:
+        #
+        # - Daxter y Coco.
+        # - El modo activo.
+        # - El cambio automático de modo.
+        # - Las preferencias separadas por interlocutor.
+        self.identity_manager = IdentityManager()
+
+        # Las preferencias deben corresponder a la persona
+        # que está hablando, no necesariamente al usuario
+        # autenticado de la sesión.
+        identity_user = (
+            self.conversation_identity
+            .get_conversation_owner()
+        )
+
+        if identity_user is None:
+            identity_user = self.get_user()
+
+        self.identity_manager.load_user(
+            identity_user
+        )
+
+        # ---------------------------------------------------------------------
+        # CAPACIDADES
+        # ---------------------------------------------------------------------
+
         self.capabilities = CapabilityManager()
 
-        # Gestor encargado de leer y guardar recuerdos.
+        # ---------------------------------------------------------------------
+        # CONFIRMACIONES
+        # ---------------------------------------------------------------------
+
+        self.confirmations = ConfirmationManager(
+            expiration_minutes=5
+        )
+
+        # ---------------------------------------------------------------------
+        # MEMORIA
+        # ---------------------------------------------------------------------
+
         self.memory = MemoryManager()
 
-        # Servicio que gestiona la conversación
-        # relacionada con la memoria.
+        self.memory_retriever = MemoryRetriever(
+            memory_manager=self.memory
+        )
+
         self.memory_service = MemoryService(
             self
         )
 
-        # Registramos la inicialización.
-        info("Atlas Core inicializado.")
+        # ---------------------------------------------------------------------
+        # INTELIGENCIA ARTIFICIAL
+        # ---------------------------------------------------------------------
+
+        self.ai_provider = ai_provider
+
+        self.model_registry = ModelRegistry()
+
+        self.prompt_builder = PromptBuilder()
+
+        # ---------------------------------------------------------------------
+        # HERRAMIENTAS
+        # ---------------------------------------------------------------------
+
+        self.tool_registry = ToolRegistry()
+
+        self.tool_selector = ToolSelector(
+            self.tool_registry
+        )
+
+        # ---------------------------------------------------------------------
+        # CACHÉ DE IA
+        # ---------------------------------------------------------------------
+
+        self.ai_cache = ResponseCache(
+            max_entries=100
+        )
+
+        # ---------------------------------------------------------------------
+        # CONTEXTOS TEMPORALES
+        # ---------------------------------------------------------------------
+
+        self.ai_contexts: dict[
+            str,
+            AIContextManager,
+        ] = {}
+
+        self.ai_context_max_messages = 10
+
+        self._get_ai_context_for_user(
+            self.get_user()
+        )
+
+        info(
+            "Atlas Core inicializado."
+        )
 
     def process(
         self,
@@ -133,12 +343,16 @@ class Atlas:
         """
         Procesa una entrada escrita por el usuario.
 
-        El método actúa como coordinador. Cada tipo de entrada se delega
-        en una función auxiliar para que el flujo principal sea fácil de
-        leer y modificar.
+        Devuelve:
+            True:
+                Atlas continúa funcionando.
+
+            False:
+                Atlas debe finalizar.
         """
 
         original_text = text.strip()
+
         normalized_text = normalize_text(
             original_text,
             COMMANDS.keys(),
@@ -147,18 +361,68 @@ class Atlas:
         if normalized_text == "":
             return True
 
-        info(f"Entrada del usuario: {normalized_text}")
+        info(
+            f"Entrada del usuario: "
+            f"{normalized_text}"
+        )
 
-        if self.memory_service.has_pending_memory():
-            return self.memory_service.process_visibility_answer(
-                normalized_text
+        # ---------------------------------------------------------------------
+        # 1. CONFIRMACIÓN PENDIENTE
+        # ---------------------------------------------------------------------
+
+        # Una respuesta como «sí» o «no» no debe provocar
+        # un cambio automático de personalidad antes de
+        # resolver la confirmación.
+        if self.confirmations.has_pending_confirmation():
+
+            confirmation_result = (
+                self._handle_pending_confirmation(
+                    normalized_text
+                )
             )
 
-        if self._is_memory_storage_request(normalized_text):
-            return self._handle_memory_storage_request(original_text)
+            if confirmation_result is not None:
+                return confirmation_result
 
-        if self._handle_memory_query(original_text):
+        # ---------------------------------------------------------------------
+        # 2. PRIVACIDAD DE MEMORIA PENDIENTE
+        # ---------------------------------------------------------------------
+
+        # Una respuesta como «familia», «pareja» o «cancelar»
+        # debe procesarse antes de evaluar el modo.
+        if self.memory_service.has_pending_memory():
+
+            return (
+                self.memory_service
+                .process_visibility_answer(
+                    normalized_text
+                )
+            )
+
+        # ---------------------------------------------------------------------
+        # 3. GUARDAR UN RECUERDO
+        # ---------------------------------------------------------------------
+
+        if self._is_memory_storage_request(
+            normalized_text
+        ):
+
+            return self._handle_memory_storage_request(
+                original_text
+            )
+
+        # ---------------------------------------------------------------------
+        # 4. CONSULTAR RECUERDOS
+        # ---------------------------------------------------------------------
+
+        if self._handle_memory_query(
+            original_text
+        ):
             return True
+
+        # ---------------------------------------------------------------------
+        # 5. EJECUTAR COMANDOS
+        # ---------------------------------------------------------------------
 
         command_result = self._handle_command(
             original_text,
@@ -168,290 +432,76 @@ class Atlas:
         if command_result is not None:
             return command_result
 
-        if self._handle_conversation(original_text, normalized_text):
-            return True
+        # ---------------------------------------------------------------------
+        # 6. CAMBIO AUTOMÁTICO DE MODO
+        # ---------------------------------------------------------------------
 
-        self._show_not_understood(normalized_text)
-        return True
-
-    @staticmethod
-    def _is_memory_storage_request(normalized_text: str) -> bool:
-        """Indica si la entrada solicita guardar un recuerdo."""
-
-        return normalized_text.startswith("recuerda que ")
-
-    def _handle_memory_storage_request(self, original_text: str) -> bool:
-        """Extrae y envía al servicio de memoria un nuevo recuerdo."""
-
-        # "recuerda que " ocupa trece caracteres. Se usa el texto
-        # original para conservar mayúsculas, nombres propios y acentos.
-        content = original_text[13:].strip()
-        return self.memory_service.process_memory_request(content)
-
-    def _handle_memory_query(self, original_text: str) -> bool:
-        """Procesa una consulta de recuerdos si la entrada contiene una."""
-
-        memory_query = parse_memory_query(original_text)
-        if memory_query is None:
-            return False
-
-        if memory_query["type"] == "self":
-            self.memory_service.show_memories_about(self.get_user())
-            return True
-
-        requested_owner = memory_query["owner"]
-        resolved_owner = self.users.resolve_user_name(requested_owner)
-
-        if resolved_owner is None:
-            print()
-            print(
-                f"No conozco ningún usuario llamado «{requested_owner}»."
+        # IdentityManager decide si debe aplicar la sugerencia.
+        #
+        # No realizará cambios cuando:
+        #
+        # - El cambio automático esté desactivado.
+        # - El usuario haya bloqueado manualmente un modo.
+        # - La confianza sea insuficiente.
+        mode_selection = (
+            self.identity_manager
+            .apply_automatic_mode(
+                original_text
             )
+        )
+
+        info(
+            f"Modo sugerido: "
+            f"{mode_selection.mode_name}. "
+            f"Confianza: "
+            f"{mode_selection.confidence:.2f}. "
+            f"Modo activo: "
+            f"{self.identity_manager.get_active_mode_name()}."
+        )
+
+        # ---------------------------------------------------------------------
+        # 7. CONVERSACIÓN BÁSICA
+        # ---------------------------------------------------------------------
+
+        if self._handle_conversation(
+            original_text,
+            normalized_text,
+        ):
             return True
 
-        self.memory_service.show_memories_about(resolved_owner)
-        return True
+        # ---------------------------------------------------------------------
+        # 8. CONSULTAS ADMINISTRATIVAS DE CONTEXTO
+        # ---------------------------------------------------------------------
 
-    def _handle_command(
-        self,
-        original_text: str,
-        normalized_text: str,
-    ) -> bool | None:
-        """
-        Resuelve y ejecuta un comando reconocido.
+        if self._handle_user_context_query(
+            original_text
+        ):
+            return True
 
-        Devuelve:
-            None:
-                La entrada no corresponde a ningún comando.
+        # ---------------------------------------------------------------------
+        # 9. HERRAMIENTAS LOCALES
+        # ---------------------------------------------------------------------
 
-            True:
-                El comando se ejecutó y Atlas debe continuar.
+        if self._handle_tool(
+            original_text
+        ):
+            return True
 
-            False:
-                El comando se ejecutó y Atlas debe finalizar.
-        """
+        # ---------------------------------------------------------------------
+        # 10. INTELIGENCIA ARTIFICIAL LOCAL
+        # ---------------------------------------------------------------------
 
-        resolved_command = resolve_command(
+        if self._handle_ai(
+            original_text
+        ):
+            return True
+
+        # ---------------------------------------------------------------------
+        # 11. ENTRADA NO COMPRENDIDA
+        # ---------------------------------------------------------------------
+
+        self._show_not_understood(
             normalized_text
         )
 
-        if resolved_command is None:
-            return None
-
-        info(
-            f"Comando ejecutado: {resolved_command}. "
-            f"Entrada original: {original_text}"
-        )
-
-        return execute(
-            resolved_command
-        )
-
-    @staticmethod
-    def _handle_conversation(
-        original_text: str,
-        normalized_text: str,
-    ) -> bool:
-        """Muestra una respuesta de conversación básica si existe."""
-
-        response = detect(original_text)
-        if not response:
-            return False
-
-        info(f"Conversación: {normalized_text}")
-        print()
-        print(response)
         return True
-
-    @staticmethod
-    def _show_not_understood(normalized_text: str) -> None:
-        """Registra y muestra la respuesta para una entrada desconocida."""
-
-        info(f"No entendido: {normalized_text}")
-        print()
-        print(not_understood())
-
-    def execute(
-        self,
-        command: str,
-    ):
-        """
-        Ejecuta directamente un comando.
-        """
-
-        return execute(command)
-
-    def get_name(self):
-        """
-        Devuelve el nombre del asistente.
-        """
-
-        return self.name
-
-    def get_version(self):
-        """
-        Devuelve la versión de Atlas.
-        """
-
-        return self.version
-
-    def get_project(self):
-        """
-        Devuelve el nombre del proyecto.
-        """
-
-        return self.project
-
-    def get_user(self):
-        """
-        Devuelve el usuario activo.
-        """
-
-        return self.users.get_current_user()
-
-    def get_main_user(self):
-        """
-        Devuelve el usuario principal.
-        """
-
-        return self.users.get_main_user()
-
-    def change_user(
-        self,
-        user: str,
-    ):
-        """
-        Cambia el usuario activo.
-        """
-
-        previous_user = self.get_user()
-
-        self.users.change_user(
-            user
-        )
-
-        info(
-            f"Cambio de usuario: "
-            f"{previous_user} -> {user}"
-        )
-
-    def return_to_main_user(self):
-        """
-        Devuelve la sesión al usuario principal.
-        """
-
-        previous_user = self.get_user()
-
-        self.users.return_to_main()
-
-        info(
-            f"Regreso al usuario principal: "
-            f"{previous_user} -> "
-            f"{self.get_user()}"
-        )
-
-    def is_main_user(self):
-        """
-        Indica si el usuario activo es el principal.
-        """
-
-        return self.users.is_main_user()
-
-    def remember(
-        self,
-        content: str,
-        visibility: str,
-    ) -> bool:
-        """
-        Guarda un recuerdo para el usuario activo.
-
-        Parámetros:
-            content:
-                Información que debe almacenarse.
-
-            visibility:
-                Nivel de privacidad.
-        """
-
-        return self.memory.remember(
-            owner=self.get_user(),
-            content=content,
-            visibility=visibility,
-        )
-
-    def can_chat(self) -> bool:
-        """
-        Indica si la conversación básica está disponible.
-        """
-
-        return self.capabilities.is_enabled(
-            "chat"
-        )
-
-    def can_use_memory(self) -> bool:
-        """
-        Indica si el sistema de memoria está disponible.
-        """
-
-        return self.capabilities.is_enabled(
-            "memory"
-        )
-
-    def can_use_ai(self) -> bool:
-        """
-        Indica si la inteligencia artificial está disponible.
-        """
-
-        return self.capabilities.is_enabled(
-            "ai"
-        )
-
-    def can_use_voice(self) -> bool:
-        """
-        Indica si el sistema de voz está disponible.
-        """
-
-        return self.capabilities.is_enabled(
-            "voice"
-        )
-
-    def can_use_tools(self) -> bool:
-        """
-        Indica si las herramientas de IA están disponibles.
-        """
-
-        return self.capabilities.is_enabled(
-            "tools"
-        )
-
-    def can_use_automation(self) -> bool:
-        """
-        Indica si las automatizaciones están disponibles.
-        """
-
-        return self.capabilities.is_enabled(
-            "automation"
-        )
-
-    def can_access_internet(self) -> bool:
-        """
-        Indica si Atlas puede utilizar Internet.
-        """
-
-        return self.capabilities.is_enabled(
-            "internet"
-        )
-
-    def get_capabilities(self) -> dict:
-        """
-        Devuelve todas las capacidades conocidas.
-        """
-
-        return self.capabilities.get_all()
-
-    def get_commands(self):
-        """
-        Devuelve todos los comandos disponibles.
-        """
-
-        return COMMANDS

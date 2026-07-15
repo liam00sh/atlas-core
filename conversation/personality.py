@@ -217,7 +217,10 @@ def initial_welcome(
     )
 
 
-def greet(user: str) -> str:
+def greet(
+    user: str,
+    assistant_name: str | None = None,
+) -> str:
     """
     Genera un saludo normal para el usuario activo.
 
@@ -225,12 +228,15 @@ def greet(user: str) -> str:
         user:
             Nombre del usuario.
 
+        assistant_name:
+            Nombre de la identidad activa. Cuando se proporciona, el saludo
+            puede presentarla sin fijar Daxter o Coco en el código.
+
     Devuelve:
         str:
             Una frase de saludo elegida aleatoriamente.
     """
 
-    # Lista de posibles saludos.
     messages = [
         f"¡Hola, {user}!",
         f"¡Buenas, {user}!",
@@ -238,9 +244,16 @@ def greet(user: str) -> str:
         f"¡Aquí estoy, {user}!",
     ]
 
-    # Elegimos uno de los mensajes al azar.
-    return random.choice(
+    greeting = random.choice(
         messages
+    )
+
+    if not assistant_name:
+        return greeting
+
+    return (
+        f"{greeting}\n"
+        f"Soy {assistant_name}."
     )
 
 
@@ -459,3 +472,105 @@ def memory_saved() -> str:
 
     # Respuesta alternativa si no hay frases configuradas.
     return "Entendido. Lo recordaré."
+
+def private_context_denied(
+    requested_user: str,
+    grammatical_gender: str = "neutral",
+) -> str:
+    """
+    Genera una respuesta amable cuando alguien intenta
+    consultar la conversación privada de otro usuario.
+
+    La respuesta mantiene el límite de privacidad,
+    pero evita sonar fría o excesivamente técnica.
+
+    Parámetros:
+        requested_user:
+            Nombre de la persona propietaria
+            de la conversación.
+
+        grammatical_gender:
+            Género gramatical configurado:
+
+            masculine
+            feminine
+            neutral
+    """
+
+    if grammatical_gender == "feminine":
+
+        messages = [
+            (
+                f"Eh... esa conversación es privada de "
+                f"{requested_user}. Está un poco feo pedirme "
+                f"que cotillee sus cosas, ¿no crees?"
+            ),
+            (
+                f"Eso pertenece a la conversación privada de "
+                f"{requested_user}. Mejor dejamos sus cosas "
+                f"donde están."
+            ),
+            (
+                f"No voy a enseñarte lo que habló "
+                f"{requested_user}. Regla número uno: "
+                f"nada de husmear en conversaciones ajenas."
+            ),
+            (
+                f"Lo siento, pero esa charla es cosa de "
+                f"{requested_user}. La privacidad también "
+                f"forma parte del plan."
+            ),
+        ]
+
+    elif grammatical_gender == "masculine":
+
+        messages = [
+            (
+                f"Eh... esa conversación es privada de "
+                f"{requested_user}. Está un poco feo pedirme "
+                f"que cotillee sus cosas, ¿no crees?"
+            ),
+            (
+                f"Eso pertenece a la conversación privada de "
+                f"{requested_user}. Mejor dejamos sus cosas "
+                f"donde están."
+            ),
+            (
+                f"No voy a enseñarte lo que habló "
+                f"{requested_user}. Regla número uno: "
+                f"nada de husmear en conversaciones ajenas."
+            ),
+            (
+                f"Lo siento, pero esa charla es cosa de "
+                f"{requested_user}. La privacidad también "
+                f"forma parte del plan."
+            ),
+        ]
+
+    else:
+
+        messages = [
+            (
+                f"Eh... esa conversación pertenece a "
+                f"{requested_user}. Está un poco feo pedirme "
+                f"que cotillee, ¿no crees?"
+            ),
+            (
+                f"Ese contenido es privado de "
+                f"{requested_user}. Mejor dejamos las cosas "
+                f"personales donde están."
+            ),
+            (
+                f"No voy a abrir la conversación de "
+                f"{requested_user}. Regla número uno: "
+                f"nada de husmear en perfiles ajenos."
+            ),
+            (
+                f"La charla de {requested_user} es privada. "
+                f"Esta vez Daxter no se mete donde no le llaman."
+            ),
+        ]
+
+    return random.choice(
+        messages
+    )

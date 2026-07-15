@@ -1,0 +1,16 @@
+{
+    "liam": {
+        "automatic_mode": true,
+        "current_mode": "classic",
+        "default_mode": "classic",
+        "identity": "coco",
+        "manual_mode_lock": false
+    },
+    "prueba": {
+        "automatic_mode": true,
+        "current_mode": "empathetic",
+        "default_mode": "classic",
+        "identity": "daxter",
+        "manual_mode_lock": false
+    }
+}

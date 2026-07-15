@@ -1,13 +1,16 @@
 # Atlas Core
 
-Atlas Core es el núcleo en Python del Proyecto Atlas y la base del asistente personal Daxter. Coordina la consola, los comandos, los usuarios, la memoria, la conversación básica y las capacidades disponibles, manteniendo desacopladas las futuras integraciones de IA, voz y automatización.
+Atlas Core es el núcleo local en Python del Proyecto Atlas. Coordina usuarios, identidad conversacional, memoria, capacidades, herramientas, inteligencia artificial local y las identidades del asistente **Daxter** y **Coco**.
+
+El proyecto está diseñado para crecer por fases sin mezclar responsabilidades ni conceder capacidades que no estén realmente disponibles.
 
 ## Requisitos
 
 - Python 3.14 o superior.
 - Git y Visual Studio Code, recomendados para desarrollo.
 - Windows, Linux o Raspberry Pi OS de 64 bits.
-- En la Fase 2 no existen dependencias externas obligatorias.
+- Ollama es opcional y solo es necesario para utilizar la IA local.
+- La base actual del proyecto utiliza la biblioteca estándar de Python; las herramientas de sistema pueden incorporar dependencias opcionales en fases posteriores.
 
 ## Instalación
 
@@ -31,7 +34,7 @@ Instalación reproducible de dependencias:
 
 ```bash
 python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## Arranque
@@ -42,41 +45,61 @@ Desde la carpeta `atlas_core`:
 python main.py
 ```
 
-Una vez iniciado, escribe `ayuda` para consultar los comandos disponibles o `estado` para ver el resumen del sistema.
+Una vez iniciado, escribe `ayuda` para consultar los comandos disponibles o `estado` para mostrar el resumen del sistema.
 
 ## Estructura principal
 
 ```text
 atlas_core/
-├── ai/             Preparación de proveedores, modelos, prompts y herramientas
-├── capabilities/   Capacidades realmente activadas
-├── commands/       Comandos cargados automáticamente
-├── console/        Consola y gestor de comandos
-├── conversation/   Conversación básica y personalidad
-├── core/           Núcleo, usuarios, versión y registro
-├── memory/         Memoria persistente y permisos
-├── tests/          Pruebas del proyecto
-├── config.py       Configuración central
-├── main.py         Punto de entrada
-└── requirements.txt
+├── ai/                  Proveedores, modelos, prompts, contexto, caché y herramientas
+├── assistant_identity/  Identidades Daxter/Coco, modos y bancos de frases
+├── capabilities/        Capacidades realmente disponibles
+├── commands/            Comandos cargados por Atlas
+├── console/             Consola interactiva y resolución de comandos
+├── conversation/        Conversación básica y respuestas heredadas
+├── core/                Coordinación principal y mixins de Atlas
+├── identity/            Personas, animales, relaciones e identidad conversacional
+├── memory/              Memoria persistente, visibilidad y recuperación
+├── tests/               Pruebas automatizadas
+├── utils/               Normalización y utilidades compartidas
+├── config.py            Configuración central
+├── main.py              Punto de entrada
+└── requirements.txt     Dependencias reproducibles
 ```
 
-## Filosofía
+## Principios de diseño
 
 - **Local primero:** los datos y modelos deben poder permanecer en los equipos de Atlas.
-- **Capacidades reales:** ninguna capa debe asumir que una función existe si está desactivada.
-- **Privacidad por diseño:** la memoria utiliza propietarios, permisos y niveles de visibilidad.
-- **Arquitectura modular:** cada subsistema mantiene una responsabilidad clara.
-- **Evolución progresiva:** las nuevas funciones se activan por fases sin romper el núcleo estable.
+- **Privacidad por diseño:** los permisos pertenecen a la persona que habla, no a quien mantiene abierta la sesión.
+- **Capacidades reales:** ninguna capa debe afirmar que puede realizar una acción desactivada.
+- **Identidad separada del modo:** Daxter y Coco conservan su personalidad; los modos solo ajustan temporalmente su comportamiento.
+- **Persistencia idempotente:** los inicializadores pueden ejecutarse varias veces sin duplicar entidades ni relaciones.
+- **Arquitectura modular:** cada módulo mantiene una responsabilidad concreta.
 
-## Estado actual: Fase 2
+## Estado actual
 
-La conversación básica, los usuarios, la memoria, los comandos, el registro y el sistema de capacidades están preparados. La IA, la voz, las herramientas, Internet y la automatización continúan desactivados.
+La implementación funcional de la **Fase 3** está preparada para validación integral. Incluye:
 
-## Próximas fases
+- identidad conversacional y separación de permisos;
+- personas, animales y relaciones familiares;
+- memoria autorizada y relevante;
+- herramientas locales controladas;
+- integración con Ollama;
+- identidades Daxter y Coco;
+- modos Clásico, Trabajo, Divertido y Empático;
+- selección automática y bloqueo manual de modo;
+- preferencias independientes por interlocutor.
 
-1. Integración local con Ollama y selección de modelos.
-2. Construcción de contexto, prompts y memoria relevante para IA.
-3. Herramientas controladas con validación y permisos.
-4. Voz mediante STT y TTS.
-5. Automatización, Home Assistant, API e interfaces adicionales.
+El cierre formal de la fase requiere superar la batería completa de pruebas y revisar la cobertura de los módulos críticos.
+
+## Pruebas
+
+```bash
+python -m unittest discover -s tests -p "test_*.py" -v
+```
+
+Comprobación previa de sintaxis:
+
+```bash
+python -m compileall ai assistant_identity capabilities commands console conversation core identity memory tests utils
+```

@@ -31,7 +31,7 @@ CAPABILITIES = {
         ),
     },
     "ai": {
-        "enabled": False,
+        "enabled": True,
         "description": (
             "Inteligencia artificial local."
         ),
@@ -43,9 +43,10 @@ CAPABILITIES = {
         ),
     },
     "tools": {
-        "enabled": False,
+        "enabled": True,
         "description": (
             "Herramientas ejecutables por la IA."
+            "información real de Atlas y del sistema."
         ),
     },
     "automation": {
