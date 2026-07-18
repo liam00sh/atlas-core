@@ -6,7 +6,7 @@ from pathlib import Path
 
 from identity.identity_storage import IdentityStorage
 from identity.people_manager import PeopleManager
-from identity.relationship import BROTHER, COUSIN, PARTNER, SISTER
+from identity.relationship import BROTHER, COUSIN, DAUGHTER, MOTHER, PARTNER, SISTER, SON
 from identity.relationship_engine import RelationshipEngine
 
 
@@ -48,6 +48,148 @@ class RelationshipEngineTests(unittest.TestCase):
         second = self.engine.create_relationship_by_name(source="REDACTED_2c7b6821719d", relationship_type=PARTNER, target="REDACTED_bc04a68d9192")
         self.assertEqual(self.engine.get_relationship_count(), count)
         self.assertEqual(first[0].id, second[0].id)
+
+    def test_infers_in_law_relationships_from_partner_and_family(self):
+        mother = self.people.create_person(
+            "María", grammatical_gender="feminine"
+        )
+        brother = self.people.create_person(
+            "REDACTED_1b4b1a7f2126", grammatical_gender="masculine"
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_2c7b6821719d",
+            relationship_type=PARTNER,
+            target="REDACTED_bc04a68d9192",
+            create_inverse=True,
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_2c7b6821719d",
+            relationship_type=SON,
+            target="María",
+            create_inverse=True,
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_1b4b1a7f2126",
+            relationship_type=BROTHER,
+            target="REDACTED_2c7b6821719d",
+            create_inverse=True,
+        )
+
+        self.assertEqual(
+            self.engine.infer_relationship_label(
+                self.REDACTED_7b9528898599.id, "person", mother.id, "person"
+            ),
+            "nuera",
+        )
+        self.assertEqual(
+            self.engine.infer_relationship_label(
+                mother.id, "person", self.REDACTED_7b9528898599.id, "person"
+            ),
+            "suegra",
+        )
+        self.assertEqual(
+            self.engine.infer_relationship_label(
+                self.REDACTED_7b9528898599.id, "person", brother.id, "person"
+            ),
+            "cuñada",
+        )
+        self.assertEqual(
+            self.engine.infer_relationship_label(
+                brother.id, "person", self.REDACTED_7b9528898599.id, "person"
+            ),
+            "cuñado",
+        )
+
+    def test_infers_grandparent_aunt_and_niece_relationships(self):
+        grandmother = self.people.create_person(
+            "Abuela", grammatical_gender="feminine"
+        )
+        aunt = self.people.create_person(
+            "REDACTED_abbdcaee9944", grammatical_gender="feminine"
+        )
+        child = self.people.create_person(
+            "REDACTED_d296a64095dd", grammatical_gender="feminine"
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_bc04a68d9192",
+            relationship_type=DAUGHTER,
+            target="REDACTED_2c7b6821719d",
+            create_inverse=True,
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_2c7b6821719d",
+            relationship_type=SON,
+            target="Abuela",
+            create_inverse=True,
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_abbdcaee9944",
+            relationship_type=SISTER,
+            target="REDACTED_2c7b6821719d",
+            create_inverse=True,
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_d296a64095dd",
+            relationship_type=DAUGHTER,
+            target="REDACTED_abbdcaee9944",
+            create_inverse=True,
+        )
+
+        self.assertEqual(
+            self.engine.infer_relationship_label(
+                grandmother.id, "person", self.REDACTED_7b9528898599.id, "person"
+            ),
+            "abuela",
+        )
+        self.assertEqual(
+            self.engine.infer_relationship_label(
+                aunt.id, "person", self.REDACTED_7b9528898599.id, "person"
+            ),
+            "tía",
+        )
+        self.assertEqual(
+            self.engine.infer_relationship_label(
+                self.REDACTED_7b9528898599.id, "person", aunt.id, "person"
+            ),
+            "sobrina",
+        )
+
+    def test_shortest_path_and_description_support_animals(self):
+        pet = self.people.create_animal(
+            "REDACTED_864fbc635ba2",
+            species="cat",
+            sex="male",
+            grammatical_gender="masculine",
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_2c7b6821719d",
+            relationship_type="pet_owner",
+            target="REDACTED_864fbc635ba2",
+            create_inverse=True,
+        )
+        self.engine.create_relationship_by_name(
+            source="REDACTED_2c7b6821719d",
+            relationship_type=PARTNER,
+            target="REDACTED_bc04a68d9192",
+            create_inverse=True,
+        )
+
+        path = self.engine.find_shortest_relationship_path(
+            self.REDACTED_7b9528898599.id,
+            "person",
+            pet.id,
+            "animal",
+        )
+        self.assertTrue(path)
+        description = self.engine.describe_relationship_between_entities(
+            self.REDACTED_7b9528898599.id,
+            "person",
+            pet.id,
+            "animal",
+        )
+        self.assertIn("REDACTED_bc04a68d9192", description)
+        self.assertIn("REDACTED_864fbc635ba2", description)
+        self.assertNotIn("None", description)
 
     def test_missing_entity_raises_clear_error(self):
         with self.assertRaises(ValueError):

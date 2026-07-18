@@ -21,7 +21,7 @@ Ejemplo:
     Atlas > version
 
         Atlas Project
-        Versión 0.2.0
+        Versión 0.3.1
 
 Flujo:
 
@@ -58,7 +58,7 @@ from core.version import PROJECT_NAME
 #
 # Ejemplo:
 #
-# 0.2.0
+# 0.3.1
 from core.version import VERSION
 
 
@@ -139,5 +139,5 @@ def execute():
     #
     # Ejemplo:
     #
-    # Versión 0.2.0
+    # Versión 0.3.1
     print(f"Versión {VERSION}")

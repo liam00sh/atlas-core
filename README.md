@@ -1,5 +1,9 @@
 # Atlas Core
 
+## Versión
+
+**0.3.1 — Fase 3.1: estabilización conversacional y validación.**
+
 Atlas Core es el núcleo local en Python del Proyecto Atlas. Coordina usuarios, identidad conversacional, memoria, capacidades, herramientas, inteligencia artificial local y las identidades del asistente **Daxter** y **Coco**.
 
 El proyecto está diseñado para crecer por fases sin mezclar responsabilidades ni conceder capacidades que no estén realmente disponibles.
@@ -78,7 +82,7 @@ atlas_core/
 
 ## Estado actual
 
-La implementación funcional de la **Fase 3** está preparada para validación integral. Incluye:
+La versión **0.3.1** de la **Fase 3.1** queda cerrada y validada como base estable para iniciar la Fase 4. Incluye:
 
 - identidad conversacional y separación de permisos;
 - personas, animales y relaciones familiares;
@@ -90,7 +94,7 @@ La implementación funcional de la **Fase 3** está preparada para validación i
 - selección automática y bloqueo manual de modo;
 - preferencias independientes por interlocutor.
 
-El cierre formal de la fase requiere superar la batería completa de pruebas y revisar la cobertura de los módulos críticos.
+La batería completa de 288 pruebas ha sido superada. La Fase 4 todavía no se ha iniciado.
 
 ## Pruebas
 

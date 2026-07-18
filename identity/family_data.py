@@ -1,561 +1,304 @@
-"""
-===============================================================================
-Proyecto Atlas
-Archivo: identity/family_data.py
+"""Datos familiares declarativos del Proyecto Atlas."""
 
-Descripción:
-    Contiene los datos familiares iniciales del Proyecto Atlas.
+FAMILY_PEOPLE = [{'name': 'REDACTED_46087f8d7037',
+  'aliases': ['REDACTED_2c7b6821719d', 'REDACTED_e97345c31916', 'REDACTED_49d9fe5d7698'],
+  'grammatical_gender': 'masculine',
+  'user_profile': 'REDACTED_2c7b6821719d',
+  'summary': 'Usuario principal de Atlas. Su nombre habitual es REDACTED_2c7b6821719d. Cumpleaños: 25 de noviembre '
+             'de 2000. Nació en REDACTED_a77d7bb7adbf, vive en REDACTED_a77d7bb7adbf y ha vivido en REDACTED_4cde1bf18b9c. Trabaja como '
+             'administrador de sistemas en Métrica, con Kyndryl y Banco Sabadell como cliente, '
+             'realizando parcheo y actualización de servidores. Ha trabajado en Burger King de '
+             'REDACTED_4cde1bf18b9c, en limpieza en Conforama de San Juan de REDACTED_4cde1bf18b9c, como informático en '
+             'Delfín Group de REDACTED_1e76780f0c8b, como administrador de sistemas en NTT Data y como soporte '
+             'técnico en REDACTED_6bb569e1f2e8 para REDACTED_c65466aa0c66 y JD. REDACTED_2c7b6821719d es un REDACTED_eeb899b73355, pero este dato es '
+             'personal y sensible: no debe mencionarse espontáneamente ni usarse para presentarlo. '
+             'Solo puede citarse cuando REDACTED_2c7b6821719d lo introduzca expresamente o la conversación trate de '
+             'forma directa y pertinente sobre ese asunto. REDACTED_e97345c31916 es su nombre '
+             'anterior y solo debe utilizarse para reconocer documentos antiguos, nunca para '
+             'dirigirse a él.'},
+ {'name': 'REDACTED_8762331d93e2',
+  'aliases': ['REDACTED_bc04a68d9192'],
+  'grammatical_gender': 'feminine',
+  'user_profile': 'REDACTED_bc04a68d9192',
+  'summary': 'Pareja de REDACTED_2c7b6821719d. Cumpleaños: 18 de noviembre de 2003. Nació en REDACTED_039ed2c608a5, vive en '
+             'REDACTED_4cde1bf18b9c y ha vivido en REDACTED_039ed2c608a5. Actualmente no trabaja. Ha trabajado de educadora '
+             'infantil en una escuela infantil y de administrativa. Terminó dos ciclos de grado '
+             'superior en un instituto: Educación Infantil y Administración. Ya terminó sus '
+             'estudios, no estudia en la universidad y no debe afirmarse que siga estudiando.'},
+ {'name': 'REDACTED_0a0e53340b75',
+  'aliases': ['REDACTED_0a0e53340b75', 'REDACTED_f3ddd50afbeb'],
+  'grammatical_gender': 'masculine',
+  'summary': 'REDACTED_f3ddd50afbeb, REDACTED_0392c3d1b4d3 y REDACTED_de9c80449aae. Cumpleaños: 19 de marzo de 1968. Nació en REDACTED_1e76780f0c8b y '
+             'vive en REDACTED_a77d7bb7adbf. Es hermano menor de REDACTED_32885d880536 y hermano mayor de '
+             'REDACTED_849f3eb005df. Trabaja como tractorista y agricultor en la Cooperativa '
+             'Agrícola de REDACTED_a77d7bb7adbf.'},
+ {'name': 'REDACTED_ba2c2b03ba9a',
+  'aliases': ['REDACTED_aebac53c46bb', 'REDACTED_19ba3f6c9e21'],
+  'grammatical_gender': 'feminine',
+  'summary': 'REDACTED_19ba3f6c9e21, REDACTED_0392c3d1b4d3 y REDACTED_de9c80449aae. Cumpleaños: 7 de junio de 1972. Nació en REDACTED_a77d7bb7adbf, '
+             'vive en REDACTED_a77d7bb7adbf y ha vivido en REDACTED_1e76780f0c8b. Trabaja en la gasolinera GasolWin de '
+             'REDACTED_a77d7bb7adbf. Ha trabajado como dependienta en Supermercados Covirán de REDACTED_a77d7bb7adbf y en '
+             'Quesos REDACTED_a77d7bb7adbf, en los mercados de REDACTED_1e76780f0c8b y Yecla.'},
+ {'name': 'REDACTED_516d7f9914e7',
+  'aliases': ['REDACTED_2ff76a67ecfb', 'REDACTED_c792e277ccc5', 'REDACTED_39216b04959f'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo de REDACTED_2c7b6821719d e hijo de REDACTED_b1ec3d80fab0 y REDACTED_9b668559ec1c. Su nombre habitual es '
+             'REDACTED_2ff76a67ecfb. Cumpleaños: 23 de diciembre. Nació en REDACTED_a77d7bb7adbf, vive en REDACTED_1e76780f0c8b y ha vivido '
+             'en Gijón, Asturias. Es el hermano mayor de REDACTED_a57a306cce03. Vive con su pareja '
+             'REDACTED_53b1fb446230 y su hijo REDACTED_32e08b362c19. Tiene una empresa de barranquismo en REDACTED_1e76780f0c8b llamada Tronkos y '
+             'Barrancos.'},
+ {'name': 'REDACTED_53b1fb446230',
+  'aliases': ['REDACTED_53b1fb446230', 'REDACTED_f7f7fd06a965'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Pareja de REDACTED_516d7f9914e7, REDACTED_2ff76a67ecfb, y madre de REDACTED_32e08b362c19. Nació en REDACTED_1e76780f0c8b, vive '
+             'en REDACTED_1e76780f0c8b y trabaja como administrativa.'},
+ {'name': 'REDACTED_32e08b362c19',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Hijo de REDACTED_516d7f9914e7, REDACTED_2ff76a67ecfb, y REDACTED_53b1fb446230. Cumpleaños: 24 de diciembre de '
+             '2023. Nació en REDACTED_1e76780f0c8b y vive en REDACTED_1e76780f0c8b.'},
+ {'name': 'REDACTED_a57a306cce03',
+  'aliases': ['REDACTED_6ced0406ed4d'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima de REDACTED_2c7b6821719d e hija de REDACTED_b1ec3d80fab0 y REDACTED_9b668559ec1c. Cumpleaños: 5 de mayo de '
+             '1992. Nació en REDACTED_a77d7bb7adbf. Vive habitualmente en Monforte del Cid, REDACTED_4cde1bf18b9c, con su '
+             'pareja REDACTED_c6fcb8c1b253, y mantiene vinculación con REDACTED_a77d7bb7adbf. Es la hermana pequeña de José '
+             'Manuel REDACTED_6311e2faf08cez Pérez, REDACTED_2ff76a67ecfb. Trabaja en la Universidad de REDACTED_4cde1bf18b9c y es '
+             'historiadora y arqueóloga.'},
+ {'name': 'REDACTED_c6fcb8c1b253',
+  'aliases': ['REDACTED_c6fcb8c1b253', 'REDACTED_7f7f2307c260'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de REDACTED_a57a306cce03. Vive en Monforte del Cid, REDACTED_4cde1bf18b9c, y trabaja como '
+             'psicólogo.'},
+ {'name': 'REDACTED_d3969f681ba1',
+  'aliases': ['REDACTED_de9c80449aae', 'REDACTED_0130eb6b9532'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Hermano de REDACTED_2c7b6821719d y REDACTED_0392c3d1b4d3. Su nombre habitual es REDACTED_de9c80449aae. Cumpleaños: 25 de junio de '
+             '2007. Nació en REDACTED_a77d7bb7adbf, vive en Barcelona y ha vivido en REDACTED_a77d7bb7adbf. Trabaja como '
+             'mecánico. Ha trabajado como camarero en el bar La Caixa de REDACTED_a77d7bb7adbf y como mecánico '
+             'de automovilismo en carreras de resistencia.'},
+ {'name': 'REDACTED_65dc3df1f2c0',
+  'aliases': ['REDACTED_0392c3d1b4d3'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Hermana de REDACTED_2c7b6821719d y REDACTED_de9c80449aae. Cumpleaños: 22 de mayo de 2005. Nació en REDACTED_a77d7bb7adbf, vive en '
+             'REDACTED_a77d7bb7adbf y ha vivido en Elche. Es auxiliar veterinaria. Actualmente no trabaja; ha '
+             'trabajado como auxiliar veterinaria y como camarera en el Discovery de REDACTED_a77d7bb7adbf y '
+             'en el bar de la piscina.'},
+ {'name': 'REDACTED_29f4c4bcf01a',
+  'aliases': ['REDACTED_a93f105aa10f'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de REDACTED_65dc3df1f2c0. Cumpleaños: 19 de septiembre de 2003. Nació en '
+             'REDACTED_61fe07b22778, REDACTED_49a799c6beb3, vive en REDACTED_a77d7bb7adbf y ha vivido en Elda y en Espinardo, Murcia. Ha '
+             'trabajado como feriante en los coches de choque.'},
+ {'name': 'REDACTED_7e476572dd1d',
+  'aliases': ['REDACTED_678ace636439'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Primera esposa de REDACTED_c116c5ff0ef3 y madre biológica de REDACTED_0a0e53340b75 y REDACTED_342ad0893cb2 '
+             'Vicente Navarro. Vivió y falleció en REDACTED_1e76780f0c8b. Falleció poco después del nacimiento '
+             'de REDACTED_0a0e53340b75.'},
+ {'name': 'REDACTED_fd70e667da43',
+  'aliases': ['REDACTED_e09b6c1fc25a', 'REDACTED_c116c5ff0ef3', 'REDACTED_762f6dc22773'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Abuelo paterno de REDACTED_2c7b6821719d, conocido como REDACTED_c116c5ff0ef3. Fallecido. Nació en REDACTED_1e76780f0c8b, '
+             'vivió en REDACTED_a77d7bb7adbf y REDACTED_1e76780f0c8b y falleció en REDACTED_a77d7bb7adbf. Trabajó en una imprenta. Fue '
+             'esposo de REDACTED_7e476572dd1d y, posteriormente, de REDACTED_8085794bfe8c.'},
+ {'name': 'REDACTED_8085794bfe8c',
+  'aliases': ['REDACTED_dee6280984bc'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Esposa de REDACTED_c116c5ff0ef3 y abuela afectiva de REDACTED_2c7b6821719d, REDACTED_0392c3d1b4d3 y REDACTED_de9c80449aae. Nació en REDACTED_a77d7bb7adbf y '
+             'vive en REDACTED_a77d7bb7adbf.'},
+ {'name': 'REDACTED_32885d880536',
+  'aliases': ['REDACTED_342ad0893cb2', 'REDACTED_2c910d64bd54'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Tía paterna de REDACTED_2c7b6821719d. Cumpleaños: 13 de julio. Nació en REDACTED_1e76780f0c8b y vive en REDACTED_a77d7bb7adbf. '
+             'Es la hermana mayor de REDACTED_0a0e53340b75 y REDACTED_849f3eb005df. Es pareja de '
+             'REDACTED_54558996de60 y madre de REDACTED_103e3365dd76 y REDACTED_aff1bed113aa.'},
+ {'name': 'REDACTED_54558996de60',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de REDACTED_32885d880536 y padre de REDACTED_103e3365dd76 y Mario Amorós '
+             'Vicente. Cumpleaños: 24 de noviembre. Nació en REDACTED_a77d7bb7adbf y vive en REDACTED_a77d7bb7adbf.'},
+ {'name': 'REDACTED_103e3365dd76',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo paterno de REDACTED_2c7b6821719d e hijo de REDACTED_32885d880536 y REDACTED_54558996de60. Cumpleaños: '
+             '8 de junio. Nació en REDACTED_a77d7bb7adbf y vive en REDACTED_a77d7bb7adbf. Es el hermano mayor de Mario '
+             'Amorós Vicente y ha trabajado como camarero.'},
+ {'name': 'REDACTED_aff1bed113aa',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo paterno de REDACTED_2c7b6821719d e hijo de REDACTED_32885d880536 y REDACTED_54558996de60. Cumpleaños: '
+             '18 de septiembre. Nació en REDACTED_a77d7bb7adbf, vive en El Salse y ha vivido en REDACTED_a77d7bb7adbf. Es '
+             'el hermano pequeño de REDACTED_103e3365dd76 y trabaja como electricista.'},
+ {'name': 'REDACTED_849f3eb005df',
+  'aliases': ['REDACTED_594323b42fab', 'REDACTED_e7be6c6f309a'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío paterno de REDACTED_2c7b6821719d. Cumpleaños: 18 de febrero. Nació en REDACTED_a77d7bb7adbf y vive en Madrid. '
+             'Es el hermano pequeño de REDACTED_0a0e53340b75 y REDACTED_32885d880536. Trabaja como '
+             'inspector de educación y ha trabajado como profesor de matemáticas.'},
+ {'name': 'REDACTED_e8ca90528f17',
+  'aliases': ['REDACTED_2e5804a41627'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Pareja de REDACTED_849f3eb005df y madre de REDACTED_7586bf4da0b4 y REDACTED_489d26b2277e. Cumpleaños: 30 '
+             'de diciembre. Vive en Madrid. Trabaja como inspectora de educación y ha trabajado '
+             'como profesora de inglés.'},
+ {'name': 'REDACTED_7553bf056f47',
+  'aliases': ['REDACTED_7586bf4da0b4'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima paterna de REDACTED_2c7b6821719d. Cumpleaños: 15 de enero. Nació en Madrid y vive en Madrid. Es '
+             'la hermana mayor de REDACTED_489d26b2277e.'},
+ {'name': 'REDACTED_489d26b2277e',
+  'aliases': ['REDACTED_6311e2faf08c'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo paterno de REDACTED_2c7b6821719d. Nació en Madrid y vive en Madrid. Es el hermano pequeño de '
+             'REDACTED_7553bf056f47.'},
+ {'name': 'REDACTED_4017eca8b313',
+  'aliases': ['REDACTED_621a3bdc038c'],
+  'grammatical_gender': 'masculine',
+  'summary': 'REDACTED_621a3bdc038c. Fallecido. Nació en REDACTED_a77d7bb7adbf, vivió en REDACTED_a77d7bb7adbf y falleció '
+             'en REDACTED_a77d7bb7adbf. Tuvo una fábrica de quesos llamada Quesos REDACTED_a77d7bb7adbf.'},
+ {'name': 'REDACTED_1d30a2a8cb4e',
+  'aliases': ['REDACTED_d6926084adac'],
+  'grammatical_gender': 'feminine',
+  'summary': 'REDACTED_d6926084adac. Fallecida. Nació en 1935 en REDACTED_a77d7bb7adbf y vivió en REDACTED_a77d7bb7adbf.'},
+ {'name': 'REDACTED_b1ec3d80fab0',
+  'aliases': ['REDACTED_46336fc4408d'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de REDACTED_2c7b6821719d y padre de REDACTED_2ff76a67ecfb y REDACTED_6ced0406ed4d. Fallecido. Nació, vivió y falleció en '
+             'REDACTED_a77d7bb7adbf. Era el hermano mayor de REDACTED_6a825c7b6da7 y María José REDACTED_6311e2faf08cez '
+             'Sanz.'},
+ {'name': 'REDACTED_9b668559ec1c',
+  'aliases': [],
+  'grammatical_gender': 'feminine',
+  'summary': 'Pareja de REDACTED_b1ec3d80fab0 y madre de REDACTED_2ff76a67ecfb y REDACTED_6ced0406ed4d. Fallecida. Vivió en '
+             'REDACTED_a77d7bb7adbf.'},
+ {'name': 'REDACTED_6a825c7b6da7',
+  'aliases': ['REDACTED_889f5a6faec5', 'REDACTED_6a825c7b6da7'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Tía materna de REDACTED_2c7b6821719d. Nació en 1960 en REDACTED_a77d7bb7adbf y vive en REDACTED_a77d7bb7adbf. Es la hermana '
+             'mayor de REDACTED_ba2c2b03ba9a y la hermana pequeña de REDACTED_b1ec3d80fab0. Es '
+             'pareja de REDACTED_45544116e08d y madre de REDACTED_d1642613a94c y José REDACTED_0ecd782cb495 '
+             'REDACTED_6311e2faf08cez.'},
+ {'name': 'REDACTED_45544116e08d',
+  'aliases': ['REDACTED_b87af0b698ff', 'REDACTED_0ecd782cb495'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de REDACTED_6a825c7b6da7 y padre de REDACTED_d1642613a94c y José REDACTED_0ecd782cb495 '
+             'REDACTED_6311e2faf08cez. Nació en REDACTED_a77d7bb7adbf y vive en REDACTED_a77d7bb7adbf.'},
+ {'name': 'REDACTED_2130eea91209',
+  'aliases': ['REDACTED_d1642613a94c'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima materna de REDACTED_2c7b6821719d. Nació en REDACTED_a77d7bb7adbf, vive en REDACTED_4cde1bf18b9c y ha vivido en Dublín, '
+             'Irlanda. Es la hermana mayor de REDACTED_8f775d9efc06 y trabaja como '
+             'abogada.'},
+ {'name': 'REDACTED_8f775d9efc06',
+  'aliases': ['REDACTED_e10ba4459f1f', 'REDACTED_b79a0304ba32'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo materno de REDACTED_2c7b6821719d e hijo de REDACTED_6a825c7b6da7 y REDACTED_45544116e08d. '
+             'Cumpleaños: 5 de enero. Nació en REDACTED_a77d7bb7adbf y vive en REDACTED_a77d7bb7adbf. Es el hermano '
+             'pequeño de REDACTED_2130eea91209. Es músico y ha trabajado como profesor de '
+             'música; su trabajo actual no está confirmado.'},
+ {'name': 'REDACTED_020164a43a4e',
+  'aliases': ['REDACTED_77c013518681', 'REDACTED_56ea2064ae98', 'REDACTED_ae978aa10c62', 'REDACTED_b29d64ce566a'],
+  'grammatical_gender': 'masculine',
+  'summary': 'REDACTED_b29d64ce566a y REDACTED_1b4b1a7f2126. Cumpleaños: 22 de mayo de 1961. Nació en REDACTED_61fe07b22778, REDACTED_49a799c6beb3; '
+             'vive en REDACTED_039ed2c608a5 y ha vivido en REDACTED_1e76780f0c8b. Trabaja en la fábrica de pieles Curtidos '
+             'Serpiel. Cuando era joven fue bailarín y ganó un premio tras bailar durante 24 horas '
+             'seguidas.'},
+ {'name': 'REDACTED_e3b252570a2f',
+  'aliases': ['REDACTED_dd8f64ee8e1b', 'REDACTED_342ad0893cb2', 'REDACTED_2c910d64bd54', 'REDACTED_6b8e6a2f600a', 'REDACTED_5fc242354893', 'REDACTED_b6fdfab60207'],
+  'grammatical_gender': 'feminine',
+  'summary': 'REDACTED_dd8f64ee8e1b y REDACTED_1b4b1a7f2126. Cumpleaños: 18 de febrero de 1972. Nació en REDACTED_039ed2c608a5 y vive '
+             'en REDACTED_039ed2c608a5. Cuida a REDACTED_a593facd4dfb y REDACTED_a8e7422bbc91. También '
+             'trabaja de limpiadora en las escaleras de un bloque privado y trabajó como '
+             'limpiadora en el Hostal Lenguetero de REDACTED_039ed2c608a5.'},
+ {'name': 'REDACTED_7b2ab41fc4b5',
+  'aliases': ['REDACTED_1b4b1a7f2126'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Hermano de REDACTED_bc04a68d9192. Cumpleaños: 3 de marzo de 2007. Nació en REDACTED_039ed2c608a5 y vive en '
+             'REDACTED_039ed2c608a5. No trabaja. Le gusta jugar a Fortnite y fumar cachimba.'},
+ {'name': 'REDACTED_a593facd4dfb',
+  'aliases': ['REDACTED_5a6a5bf23f97'],
+  'grammatical_gender': 'feminine',
+  'summary': 'REDACTED_5a6a5bf23f97. Cumpleaños: 5 de diciembre. Nació en REDACTED_039ed2c608a5 y vive en '
+             'REDACTED_039ed2c608a5. Trabajó como agricultora o recolectora en el campo. Tiene demencia.'},
+ {'name': 'REDACTED_a8e7422bbc91',
+  'aliases': ['REDACTED_204543174b33'],
+  'grammatical_gender': 'masculine',
+  'summary': 'REDACTED_204543174b33. Cumpleaños: 18 de diciembre. Nació en Hellín, REDACTED_49a799c6beb3, y '
+             'vive en REDACTED_039ed2c608a5. Trabajó en la obra.'},
+ {'name': 'REDACTED_50f64fe09cb7',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de REDACTED_bc04a68d9192. Nació en REDACTED_039ed2c608a5 y vive en REDACTED_039ed2c608a5. Trabaja de obrero.'},
+ {'name': 'REDACTED_41190c7a646b',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de REDACTED_bc04a68d9192 y padre de REDACTED_be725da4ea72 y REDACTED_1c0bd4810282. Nació en REDACTED_039ed2c608a5 y vive en REDACTED_039ed2c608a5. '
+             'Trabaja en la fábrica de vidrio Crisnova.'},
+ {'name': 'REDACTED_9f61de9de589',
+  'aliases': ['REDACTED_be725da4ea72'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima de REDACTED_bc04a68d9192 e hija de REDACTED_41190c7a646b. Nació en REDACTED_039ed2c608a5 y vive en REDACTED_039ed2c608a5. '
+             'Es la hermana pequeña de REDACTED_1c0bd4810282.'},
+ {'name': 'REDACTED_d43f24dbe6af',
+  'aliases': ['REDACTED_1c0bd4810282'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo de REDACTED_bc04a68d9192 e hijo de REDACTED_41190c7a646b. Nació en REDACTED_039ed2c608a5 y vive en REDACTED_039ed2c608a5. '
+             'Es el hermano mayor de REDACTED_be725da4ea72.'},
+ {'name': 'REDACTED_af0a5ccf569c',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de REDACTED_bc04a68d9192. Cumpleaños: 17 de julio. Nació en REDACTED_039ed2c608a5 y vive en REDACTED_039ed2c608a5. '
+             'Trabaja de carpintero y se construyó su propia casa en el campo.'},
+ {'name': 'REDACTED_7ac2d8ee0281',
+  'aliases': ['REDACTED_abbdcaee9944'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Tía materna de REDACTED_bc04a68d9192, pareja de REDACTED_1a68798d7416 y madre de REDACTED_d296a64095dd. Cumpleaños: 25 de diciembre. '
+             'Nació en REDACTED_039ed2c608a5 y vive en REDACTED_039ed2c608a5. Cuida a REDACTED_a593facd4dfb y Antonio Carreres '
+             'Hernández. Trabajó de administrativa en el Hostal Lenguetero de REDACTED_039ed2c608a5.'},
+ {'name': 'REDACTED_3ae65da8646e',
+  'aliases': ['REDACTED_1a68798d7416', 'REDACTED_d55db4b4735a'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de REDACTED_abbdcaee9944 y padre de REDACTED_d296a64095dd. Cumpleaños: 11 de diciembre. Nació en Rumanía y '
+             'vive en REDACTED_039ed2c608a5. Trabaja de tractorista y agricultor en Viveros Santa Margarita.'},
+ {'name': 'REDACTED_91f6198b34bc',
+  'aliases': ['REDACTED_d296a64095dd'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima de REDACTED_bc04a68d9192 e hija de REDACTED_abbdcaee9944 y REDACTED_1a68798d7416. Cumpleaños: 24 de julio de 2013. Nació en '
+             'REDACTED_039ed2c608a5 y vive en REDACTED_039ed2c608a5. Juega al tenis.'}]
 
-    Este archivo es declarativo:
-
-    - No escribe archivos.
-    - No crea objetos Person.
-    - No crea objetos Animal.
-    - No crea relaciones directamente.
-
-    FamilyInitializer utiliza estas colecciones para registrar
-    personas, animales y relaciones sin duplicar información.
-===============================================================================
-"""
-
-
-# =============================================================================
-# PERSONAS
-# =============================================================================
-
-FAMILY_PEOPLE = [
-    {
-        "name": "REDACTED_46087f8d7037",
-        "aliases": [
-            "REDACTED_2c7b6821719d",
-            "REDACTED_e97345c31916",
-            "REDACTED_49d9fe5d7698",
-        ],
-        "grammatical_gender": "masculine",
-        "user_profile": "REDACTED_2c7b6821719d",
-        "summary": (
-            "Usuario principal de Atlas. REDACTED_eeb899b73355. "
-            "REDACTED_e97345c31916 es su REDACTED_2e31c44a7f7f y solo debe "
-            "utilizarse para reconocer documentos antiguos, nunca como "
-            "forma habitual de dirigirse a él. Vive en REDACTED_a77d7bb7adbf."
-        ),
-    },
-    {
-        "name": "REDACTED_8762331d93e2",
-        "aliases": [
-            "REDACTED_bc04a68d9192",
-        ],
-        "grammatical_gender": "feminine",
-        "user_profile": "REDACTED_bc04a68d9192",
-        "summary": (
-            "Pareja de REDACTED_2c7b6821719d. Vive en REDACTED_039ed2c608a5 y estudia en REDACTED_4cde1bf18b9c."
-        ),
-    },
-    {
-        "name": "REDACTED_0a0e53340b75",
-        "aliases": [
-            "José",
-            "REDACTED_f3ddd50afbeb",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "REDACTED_f3ddd50afbeb. Vive en REDACTED_a77d7bb7adbf."
-        ),
-    },
-    {
-        "name": "REDACTED_ba2c2b03ba9a",
-        "aliases": [
-            "REDACTED_aebac53c46bb",
-            "REDACTED_19ba3f6c9e21",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "REDACTED_19ba3f6c9e21. Vive en REDACTED_a77d7bb7adbf."
-        ),
-    },
-    {
-        "name": "REDACTED_516d7f9914e7",
-        "aliases": [
-            "REDACTED_2ff76a67ecfb",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo biológico de REDACTED_2c7b6821719d y hermano adoptivo o afectivo. "
-            "Fue adoptado por la madre de REDACTED_2c7b6821719d tras quedar huérfano. "
-            "Vive en REDACTED_1e76780f0c8b con su mujer REDACTED_53b1fb446230 y su hijo REDACTED_32e08b362c19."
-        ),
-    },
-    {
-        "name": "REDACTED_53b1fb446230",
-        "aliases": [
-            "REDACTED_53b1fb446230, mujer de REDACTED_2ff76a67ecfb",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Mujer de REDACTED_2ff76a67ecfb y madre de REDACTED_32e08b362c19."
-        ),
-    },
-    {
-        "name": "REDACTED_32e08b362c19",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Hijo pequeño de REDACTED_2ff76a67ecfb y REDACTED_53b1fb446230. Tiene aproximadamente "
-            "dos años."
-        ),
-    },
-    {
-        "name": "REDACTED_a57a306cce03",
-        "aliases": [
-            "REDACTED_6ced0406ed4d",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima biológica de REDACTED_2c7b6821719d y hermana adoptiva o afectiva. "
-            "Tras fallecer sus padres vivió con familiares de REDACTED_2c7b6821719d. "
-            "Suele vivir con su novio REDACTED_c6fcb8c1b253 o pasar algunos fines "
-            "de semana en REDACTED_a77d7bb7adbf."
-        ),
-    },
-    {
-        "name": "REDACTED_c6fcb8c1b253",
-        "aliases": [
-            "REDACTED_c6fcb8c1b253, novio de REDACTED_6ced0406ed4d",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Pareja de REDACTED_6ced0406ed4d. Relacionado con Monforte."
-        ),
-    },
-    {
-        "name": "REDACTED_0130eb6b9532",
-        "aliases": [
-            "REDACTED_de9c80449aae",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Hermano de REDACTED_2c7b6821719d. Vive habitualmente en Barcelona."
-        ),
-    },
-    {
-        "name": "REDACTED_65dc3df1f2c0",
-        "aliases": [
-            "REDACTED_0392c3d1b4d3",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Hermana de REDACTED_2c7b6821719d."
-        ),
-    },
-    {
-        "name": "REDACTED_29f4c4bcf01a",
-        "aliases": [
-            "REDACTED_a93f105aa10f",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Pareja de REDACTED_0392c3d1b4d3."
-        ),
-    },
-
-    # -------------------------------------------------------------------------
-    # FAMILIA PATERNA DE REDACTED_f73137d930c3
-    # -------------------------------------------------------------------------
-
-    {
-        "name": "REDACTED_7e476572dd1d",
-        "aliases": [
-            "REDACTED_678ace636439",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Abuela paterna biológica de REDACTED_2c7b6821719d. Falleció al nacer "
-            "REDACTED_0a0e53340b75."
-        ),
-    },
-    {
-        "name": "REDACTED_fd70e667da43",
-        "aliases": [
-            "REDACTED_e09b6c1fc25a",
-            "REDACTED_762f6dc22773",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Abuelo paterno de REDACTED_2c7b6821719d. Fallecido."
-        ),
-    },
-    {
-        "name": "REDACTED_8085794bfe8c",
-        "aliases": [
-            "REDACTED_dee6280984bc",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Segunda mujer del abuelo paterno de REDACTED_2c7b6821719d y abuela "
-            "afectiva de REDACTED_2c7b6821719d."
-        ),
-    },
-    {
-        "name": "REDACTED_32885d880536",
-        "aliases": [
-            "REDACTED_342ad0893cb2",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Tía paterna de REDACTED_2c7b6821719d."
-        ),
-    },
-    {
-        "name": "REDACTED_54558996de60",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Marido de REDACTED_32885d880536."
-        ),
-    },
-    {
-        "name": "REDACTED_103e3365dd76",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo paterno de REDACTED_2c7b6821719d."
-        ),
-    },
-    {
-        "name": "REDACTED_aff1bed113aa",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo paterno de REDACTED_2c7b6821719d. Tiene una casa en El Salse, "
-            "pedanía de REDACTED_a77d7bb7adbf."
-        ),
-    },
-    {
-        "name": "REDACTED_849f3eb005df",
-        "aliases": [
-            "REDACTED_594323b42fab",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío paterno de REDACTED_2c7b6821719d. Vive en Madrid."
-        ),
-    },
-    {
-        "name": "REDACTED_e8ca90528f17",
-        "aliases": [
-            "REDACTED_2e5804a41627",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Mujer de REDACTED_849f3eb005df. Vive en Madrid."
-        ),
-    },
-    {
-        "name": "REDACTED_7553bf056f47",
-        "aliases": [
-            "REDACTED_7586bf4da0b4",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima paterna de REDACTED_2c7b6821719d. Vive en Madrid."
-        ),
-    },
-    {
-        "name": "REDACTED_489d26b2277e",
-        "aliases": [
-            "REDACTED_6311e2faf08c",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo paterno de REDACTED_2c7b6821719d. Vive en Madrid."
-        ),
-    },
-
-    # -------------------------------------------------------------------------
-    # FAMILIA MATERNA DE REDACTED_f73137d930c3
-    # -------------------------------------------------------------------------
-
-    {
-        "name": "REDACTED_4017eca8b313",
-        "aliases": [
-            "REDACTED_621a3bdc038c",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "REDACTED_621a3bdc038c. Fallecido."
-        ),
-    },
-    {
-        "name": "REDACTED_1d30a2a8cb4e",
-        "aliases": [
-            "REDACTED_d6926084adac",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "REDACTED_d6926084adac. Fallecida."
-        ),
-    },
-    {
-        "name": "REDACTED_b1ec3d80fab0",
-        "aliases": [
-            "REDACTED_46336fc4408d",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de REDACTED_2c7b6821719d. Padre biológico de REDACTED_2ff76a67ecfb y REDACTED_6ced0406ed4d. "
-            "Fallecido."
-        ),
-    },
-    {
-        "name": "REDACTED_678ace636439 Pérez",
-        "aliases": [],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Mujer de REDACTED_b1ec3d80fab0 y madre biológica "
-            "de REDACTED_2ff76a67ecfb y REDACTED_6ced0406ed4d. Fallecida."
-        ),
-    },
-    {
-        "name": "REDACTED_6a825c7b6da7",
-        "aliases": [
-            "REDACTED_889f5a6faec5",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Tía materna de REDACTED_2c7b6821719d. Existe distanciamiento familiar "
-            "entre ella y la unidad familiar de REDACTED_2c7b6821719d."
-        ),
-    },
-    {
-        "name": "REDACTED_0ecd782cb495",
-        "aliases": [
-            "REDACTED_b87af0b698ff",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Marido de REDACTED_889f5a6faec5. Existe distanciamiento familiar."
-        ),
-    },
-    {
-        "name": "REDACTED_2130eea91209",
-        "aliases": [
-            "REDACTED_d1642613a94c",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima materna de REDACTED_2c7b6821719d."
-        ),
-    },
-    {
-        "name": "REDACTED_0ecd782cb495 REDACTED_6311e2faf08cez",
-        "aliases": [
-            "REDACTED_e10ba4459f1f",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo materno de REDACTED_2c7b6821719d."
-        ),
-    },
-
-    # -------------------------------------------------------------------------
-    # FAMILIA DE REDACTED_7b9528898599
-    # -------------------------------------------------------------------------
-
-    {
-        "name": "REDACTED_020164a43a4e",
-        "aliases": [
-            "REDACTED_b29d64ce566a",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "REDACTED_b29d64ce566a. Tuvo una relación anterior antes "
-            "de estar con REDACTED_e3b252570a2f."
-        ),
-    },
-    {
-        "name": "REDACTED_e3b252570a2f",
-        "aliases": [
-            "REDACTED_dd8f64ee8e1b",
-            "REDACTED_342ad0893cb2",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "REDACTED_dd8f64ee8e1b. Mantiene una relación muy cercana "
-            "con su hermana REDACTED_abbdcaee9944."
-        ),
-    },
-    {
-        "name": "REDACTED_7b2ab41fc4b5",
-        "aliases": [
-            "REDACTED_1b4b1a7f2126",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Hermano de REDACTED_bc04a68d9192. Es reservado y REDACTED_2c7b6821719d todavía "
-            "no lo conoce demasiado."
-        ),
-    },
-    {
-        "name": "REDACTED_a593facd4dfb",
-        "aliases": [
-            "REDACTED_5a6a5bf23f97",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "REDACTED_5a6a5bf23f97. Vive en REDACTED_039ed2c608a5 y tiene demencia."
-        ),
-    },
-    {
-        "name": "REDACTED_a8e7422bbc91",
-        "aliases": [
-            "REDACTED_204543174b33",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "REDACTED_204543174b33. Vive en REDACTED_039ed2c608a5."
-        ),
-    },
-    {
-        "name": "REDACTED_50f64fe09cb7",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de REDACTED_bc04a68d9192."
-        ),
-    },
-    {
-        "name": "REDACTED_41190c7a646b",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de REDACTED_bc04a68d9192."
-        ),
-    },
-    {
-        "name": "REDACTED_9f61de9de589",
-        "aliases": [
-            "REDACTED_be725da4ea72",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima de REDACTED_bc04a68d9192 e hija de REDACTED_41190c7a646b."
-        ),
-    },
-    {
-        "name": "REDACTED_d43f24dbe6af",
-        "aliases": [
-            "REDACTED_1c0bd4810282",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo de REDACTED_bc04a68d9192 e hijo de REDACTED_41190c7a646b."
-        ),
-    },
-    {
-        "name": "REDACTED_af0a5ccf569c",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de REDACTED_bc04a68d9192."
-        ),
-    },
-    {
-        "name": "REDACTED_7ac2d8ee0281",
-        "aliases": [
-            "REDACTED_abbdcaee9944",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Tía materna de REDACTED_bc04a68d9192. Tiene una relación muy cercana "
-            "con REDACTED_bc04a68d9192, REDACTED_2c7b6821719d y su hermana REDACTED_342ad0893cb2."
-        ),
-    },
-    {
-        "name": "REDACTED_3ae65da8646e",
-        "aliases": [
-            "REDACTED_d55db4b4735a",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Marido rumano de REDACTED_abbdcaee9944. Dispone de un campo en REDACTED_039ed2c608a5 "
-            "cedido o prestado por su jefe."
-        ),
-    },
-    {
-        "name": "REDACTED_91f6198b34bc",
-        "aliases": [
-            "REDACTED_d296a64095dd",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima de REDACTED_bc04a68d9192 e hija de REDACTED_abbdcaee9944 y REDACTED_1a68798d7416. Mantiene una "
-            "relación cercana con REDACTED_2c7b6821719d y REDACTED_bc04a68d9192."
-        ),
-    },
-]
-
-
-# =============================================================================
-# ANIMALES
-# =============================================================================
-
-FAMILY_ANIMALS = [
-    {
-        "name": "REDACTED_a786bf1bf655",
-        "aliases": [
-            "REDACTED_73007cb40c65",
-            "REDACTED_864fbc635ba2",
-            "REDACTED_10152184cef5",
-            "REDACTED_a9baf529fb36",
-        ],
-        "species": "cat",
-        "sex": "male",
-        "grammatical_gender": "masculine",
-        "summary": (
-            "REDACTED_a9baf529fb36 de REDACTED_2c7b6821719d. Vive en la unidad familiar de REDACTED_a77d7bb7adbf."
-        ),
-    },
-    {
-        "name": "REDACTED_c0240dd983fa",
-        "aliases": [
-            "REDACTED_0f38c2ded26f",
-        ],
-        "species": "cat",
-        "sex": "male",
-        "grammatical_gender": "masculine",
-        "summary": (
-            "REDACTED_a9baf529fb36 de REDACTED_0392c3d1b4d3. Vive en la unidad familiar de REDACTED_a77d7bb7adbf."
-        ),
-    },
-    {
-        "name": "REDACTED_52d7d8604bf7",
-        "aliases": [
-            "REDACTED_e1e6d4f8f9b1",
-        ],
-        "species": "cat",
-        "sex": "male",
-        "grammatical_gender": "masculine",
-        "summary": (
-            "REDACTED_a9baf529fb36 de REDACTED_a93f105aa10f."
-        ),
-    },
-    {
-        "name": "REDACTED_06768d0d9b38",
-        "aliases": [],
-        "species": "dog",
-        "sex": "female",
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Perra de los abuelos maternos de REDACTED_bc04a68d9192. Suele acompañar "
-            "a REDACTED_2c7b6821719d y REDACTED_bc04a68d9192 cuando van al campo."
-        ),
-    },
-]
-
-
-# =============================================================================
-# RELACIONES
-# =============================================================================
+FAMILY_ANIMALS = [{'name': 'REDACTED_a786bf1bf655',
+  'aliases': ['REDACTED_73007cb40c65', 'REDACTED_864fbc635ba2', 'REDACTED_10152184cef5', 'REDACTED_a9baf529fb36'],
+  'species': 'cat',
+  'sex': 'male',
+  'grammatical_gender': 'masculine',
+  'summary': 'REDACTED_a9baf529fb36 de REDACTED_2c7b6821719d. Vive en la unidad familiar de REDACTED_a77d7bb7adbf. Como animal no tiene '
+             'proyectos, trabajo, estudios, aficiones, objetivos ni ilusiones humanas; solo pueden '
+             'describirse datos y anécdotas reales registradas.'},
+ {'name': 'REDACTED_c0240dd983fa',
+  'aliases': ['REDACTED_0f38c2ded26f'],
+  'species': 'cat',
+  'sex': 'male',
+  'grammatical_gender': 'masculine',
+  'summary': 'REDACTED_a9baf529fb36 de REDACTED_0392c3d1b4d3. Vive en la unidad familiar de REDACTED_a77d7bb7adbf. Como animal no tiene '
+             'proyectos, trabajo, estudios, aficiones, objetivos ni ilusiones humanas; solo pueden '
+             'describirse datos y anécdotas reales registradas.'},
+ {'name': 'REDACTED_52d7d8604bf7',
+  'aliases': ['REDACTED_e1e6d4f8f9b1'],
+  'species': 'cat',
+  'sex': 'male',
+  'grammatical_gender': 'masculine',
+  'summary': 'REDACTED_a9baf529fb36 de REDACTED_a93f105aa10f. Como animal no tiene proyectos, trabajo, estudios, aficiones, '
+             'objetivos ni ilusiones humanas; solo pueden describirse datos y anécdotas reales '
+             'registradas.'},
+ {'name': 'REDACTED_06768d0d9b38',
+  'aliases': [],
+  'species': 'dog',
+  'sex': 'female',
+  'grammatical_gender': 'feminine',
+  'summary': 'Perra de los abuelos maternos de REDACTED_bc04a68d9192. Suele acompañar a REDACTED_2c7b6821719d y REDACTED_bc04a68d9192 cuando van al '
+             'campo. Como animal no tiene proyectos, trabajo, estudios, aficiones, objetivos ni '
+             'ilusiones humanas; solo pueden describirse datos y anécdotas reales registradas.'}]
 
 FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'relationship_type': 'mother',
@@ -565,7 +308,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'relationship_type': 'father',
   'target': 'REDACTED_46087f8d7037',
   'notes': 'Padre biológico.'},
- {'source': 'REDACTED_0130eb6b9532',
+ {'source': 'REDACTED_d3969f681ba1',
   'relationship_type': 'brother',
   'target': 'REDACTED_46087f8d7037',
   'notes': ''},
@@ -580,21 +323,23 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
  {'source': 'REDACTED_516d7f9914e7',
   'relationship_type': 'cousin',
   'target': 'REDACTED_46087f8d7037',
-  'notes': 'Primo biológico.'},
+  'notes': 'Relación pública autorizada: primos. Al responder a cualquier usuario, describir '
+           'únicamente que REDACTED_2ff76a67ecfb y REDACTED_2c7b6821719d son primos.'},
  {'source': 'REDACTED_516d7f9914e7',
   'relationship_type': 'brother',
   'target': 'REDACTED_46087f8d7037',
-  'notes': 'Hermano adoptivo y afectivo. Fue criado por la familia de REDACTED_2c7b6821719d tras quedar '
-           'huérfano.'},
+  'notes': 'Dato interno confirmado. No exponer esta relación en respuestas: públicamente, REDACTED_2ff76a67ecfb y '
+           'REDACTED_2c7b6821719d se describen únicamente como primos.'},
  {'source': 'REDACTED_a57a306cce03',
   'relationship_type': 'cousin',
   'target': 'REDACTED_46087f8d7037',
-  'notes': 'Prima biológica.'},
+  'notes': 'Relación pública autorizada: primos. Al responder a cualquier usuario, describir '
+           'únicamente que REDACTED_6ced0406ed4d y REDACTED_2c7b6821719d son primos.'},
  {'source': 'REDACTED_a57a306cce03',
   'relationship_type': 'sister',
   'target': 'REDACTED_46087f8d7037',
-  'notes': 'Hermana adoptiva y afectiva. Fue criada por familiares de REDACTED_2c7b6821719d tras quedar '
-           'huérfana.'},
+  'notes': 'Dato interno confirmado. No exponer esta relación en respuestas: públicamente, REDACTED_6ced0406ed4d y '
+           'REDACTED_2c7b6821719d se describen únicamente como primos.'},
  {'source': 'REDACTED_516d7f9914e7',
   'relationship_type': 'partner',
   'target': 'REDACTED_53b1fb446230',
@@ -604,10 +349,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'target': 'REDACTED_32e08b362c19',
   'notes': ''},
  {'source': 'REDACTED_53b1fb446230', 'relationship_type': 'mother', 'target': 'REDACTED_32e08b362c19', 'notes': ''},
- {'source': 'REDACTED_a57a306cce03',
-  'relationship_type': 'partner',
-  'target': 'REDACTED_c6fcb8c1b253',
-  'notes': ''},
+ {'source': 'REDACTED_a57a306cce03', 'relationship_type': 'partner', 'target': 'REDACTED_c6fcb8c1b253', 'notes': ''},
  {'source': 'REDACTED_65dc3df1f2c0',
   'relationship_type': 'partner',
   'target': 'REDACTED_29f4c4bcf01a',
@@ -638,17 +380,17 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'notes': 'Responsabilidad compartida con REDACTED_a8e7422bbc91.'},
  {'source': 'REDACTED_a8e7422bbc91',
   'source_type': 'person',
-  'relationship_type': 'cares_for',
+  'relationship_type': 'pet_owner',
   'target': 'REDACTED_06768d0d9b38',
   'target_type': 'animal',
   'notes': ''},
  {'source': 'REDACTED_ba2c2b03ba9a',
   'relationship_type': 'mother',
-  'target': 'REDACTED_0130eb6b9532',
+  'target': 'REDACTED_d3969f681ba1',
   'notes': 'Relación biológica.'},
  {'source': 'REDACTED_0a0e53340b75',
   'relationship_type': 'father',
-  'target': 'REDACTED_0130eb6b9532',
+  'target': 'REDACTED_d3969f681ba1',
   'notes': 'Relación biológica.'},
  {'source': 'REDACTED_ba2c2b03ba9a',
   'relationship_type': 'mother',
@@ -662,7 +404,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'relationship_type': 'partner',
   'target': 'REDACTED_0a0e53340b75',
   'notes': 'Padres de REDACTED_2c7b6821719d, REDACTED_de9c80449aae y REDACTED_0392c3d1b4d3.'},
- {'source': 'REDACTED_0130eb6b9532',
+ {'source': 'REDACTED_d3969f681ba1',
   'relationship_type': 'brother',
   'target': 'REDACTED_65dc3df1f2c0',
   'notes': 'Hermanos biológicos.'},
@@ -674,14 +416,28 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'relationship_type': 'brother',
   'target': 'REDACTED_a57a306cce03',
   'notes': 'Hermanos biológicos.'},
+ {'source': 'REDACTED_6a825c7b6da7',
+  'relationship_type': 'mother',
+  'target': 'REDACTED_a57a306cce03',
+  'notes': 'Madre adoptiva legal de REDACTED_6ced0406ed4d. No es su madre biológica.'},
+ {'source': 'REDACTED_a57a306cce03',
+  'relationship_type': 'sister',
+  'target': 'REDACTED_2130eea91209',
+  'notes': 'Hermanas legales por adopción de REDACTED_6ced0406ed4d por REDACTED_6a825c7b6da7; no son hermanas '
+           'biológicas.'},
+ {'source': 'REDACTED_a57a306cce03',
+  'relationship_type': 'sister',
+  'target': 'REDACTED_8f775d9efc06',
+  'notes': 'Hermanos legales por adopción de REDACTED_6ced0406ed4d por REDACTED_6a825c7b6da7; no son hermanos '
+           'biológicos.'},
  {'source': 'REDACTED_7e476572dd1d',
   'relationship_type': 'partner',
   'target': 'REDACTED_fd70e667da43',
-  'notes': 'Primera pareja; REDACTED_678ace636439 falleció al nacer REDACTED_0a0e53340b75.'},
+  'notes': 'Pareja; REDACTED_678ace636439 falleció poco después del nacimiento de REDACTED_0a0e53340b75.'},
  {'source': 'REDACTED_fd70e667da43',
   'relationship_type': 'partner',
   'target': 'REDACTED_8085794bfe8c',
-  'notes': 'Segunda pareja de REDACTED_fd70e667da43.'},
+  'notes': 'Pareja de REDACTED_fd70e667da43.'},
  {'source': 'REDACTED_32885d880536',
   'relationship_type': 'partner',
   'target': 'REDACTED_54558996de60',
@@ -838,11 +594,11 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'relationship_type': 'father',
   'target': 'REDACTED_a57a306cce03',
   'notes': 'Relación biológica.'},
- {'source': 'REDACTED_678ace636439 Pérez',
+ {'source': 'REDACTED_9b668559ec1c',
   'relationship_type': 'mother',
   'target': 'REDACTED_516d7f9914e7',
   'notes': 'Relación biológica.'},
- {'source': 'REDACTED_678ace636439 Pérez',
+ {'source': 'REDACTED_9b668559ec1c',
   'relationship_type': 'mother',
   'target': 'REDACTED_a57a306cce03',
   'notes': 'Relación biológica.'},
@@ -852,23 +608,23 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'notes': 'Relación biológica.'},
  {'source': 'REDACTED_6a825c7b6da7',
   'relationship_type': 'mother',
-  'target': 'REDACTED_0ecd782cb495 REDACTED_6311e2faf08cez',
+  'target': 'REDACTED_8f775d9efc06',
   'notes': 'Relación biológica.'},
- {'source': 'REDACTED_0ecd782cb495',
+ {'source': 'REDACTED_45544116e08d',
   'relationship_type': 'father',
   'target': 'REDACTED_2130eea91209',
   'notes': 'Relación biológica.'},
- {'source': 'REDACTED_0ecd782cb495',
+ {'source': 'REDACTED_45544116e08d',
   'relationship_type': 'father',
-  'target': 'REDACTED_0ecd782cb495 REDACTED_6311e2faf08cez',
+  'target': 'REDACTED_8f775d9efc06',
   'notes': 'Relación biológica.'},
  {'source': 'REDACTED_b1ec3d80fab0',
   'relationship_type': 'partner',
-  'target': 'REDACTED_678ace636439 Pérez',
+  'target': 'REDACTED_9b668559ec1c',
   'notes': 'Padres biológicos de REDACTED_2ff76a67ecfb y REDACTED_6ced0406ed4d; ambos fallecidos.'},
  {'source': 'REDACTED_6a825c7b6da7',
   'relationship_type': 'partner',
-  'target': 'REDACTED_0ecd782cb495',
+  'target': 'REDACTED_45544116e08d',
   'notes': 'Matrimonio.'},
  {'source': 'REDACTED_b1ec3d80fab0',
   'relationship_type': 'brother',
@@ -884,7 +640,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
   'notes': 'Hermanos biológicos.'},
  {'source': 'REDACTED_2130eea91209',
   'relationship_type': 'sister',
-  'target': 'REDACTED_0ecd782cb495 REDACTED_6311e2faf08cez',
+  'target': 'REDACTED_8f775d9efc06',
   'notes': 'Hermanos biológicos.'},
  {'source': 'REDACTED_4017eca8b313',
   'relationship_type': 'grandfather',
@@ -901,12 +657,12 @@ FAMILY_RELATIONSHIPS = [{'source': 'REDACTED_ba2c2b03ba9a',
  {'source': 'REDACTED_6a825c7b6da7',
   'relationship_type': 'aunt',
   'target': 'REDACTED_46087f8d7037',
-  'notes': 'Tía materna; existe distanciamiento familiar.'},
+  'notes': 'Tía materna.'},
  {'source': 'REDACTED_2130eea91209',
   'relationship_type': 'cousin',
   'target': 'REDACTED_46087f8d7037',
   'notes': 'Prima materna.'},
- {'source': 'REDACTED_0ecd782cb495 REDACTED_6311e2faf08cez',
+ {'source': 'REDACTED_8f775d9efc06',
   'relationship_type': 'cousin',
   'target': 'REDACTED_46087f8d7037',
   'notes': 'Primo materno.'},

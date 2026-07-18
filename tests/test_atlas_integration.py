@@ -13,6 +13,7 @@ from identity.identity_storage import IdentityStorage
 from identity.people_manager import PeopleManager
 from identity.relationship_engine import RelationshipEngine
 from identity.visitor_manager import VisitorManager
+from utils.text_normalizer import normalize_text
 
 
 class AtlasSubsystemIntegrationTests(unittest.TestCase):
@@ -33,10 +34,10 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
     def test_REDACTED_f73137d930c3_session_with_REDACTED_7b9528898599_speaking_keeps_scopes_separate(self):
         self.conversation.set_authenticated_user("REDACTED_2c7b6821719d")
         self.conversation.identify_person("REDACTED_bc04a68d9192")
-        self.assistant.load_user(self.conversation.get_conversation_owner())
+        self.assistant.load_user(self.conversation.get_authenticated_user())
         self.assertEqual(self.conversation.get_authenticated_user(), "REDACTED_2c7b6821719d")
         self.assertEqual(self.conversation.get_permission_viewer(), "REDACTED_bc04a68d9192")
-        self.assertEqual(self.assistant.get_current_user(), "REDACTED_7b9528898599")
+        self.assertEqual(self.assistant.get_current_user(), "REDACTED_f73137d930c3")
 
     def test_family_and_identity_survive_reinitialization(self):
         REDACTED_f73137d930c3 = self.people.find_person_by_name("REDACTED_e97345c31916")
@@ -76,6 +77,26 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
 
         REDACTED_d9078313c20e_connections = self.family.find_connection("REDACTED_46087f8d7037", "REDACTED_06768d0d9b38")
         self.assertIsInstance(REDACTED_d9078313c20e_connections, list)
+
+    def test_REDACTED_7b9528898599_mother_relationship_is_available(self):
+        description = self.family.describe_person_family(
+            "REDACTED_bc04a68d9192"
+        )
+        self.assertIn("REDACTED_e3b252570a2f es madre de REDACTED_bc04a68d9192", description)
+
+    def test_animals_are_not_people_or_user_profiles(self):
+        self.assertIsNone(
+            self.people.find_person_by_name("REDACTED_0f38c2ded26f")
+        )
+        animal = self.people.find_animal_by_name("REDACTED_0f38c2ded26f")
+        self.assertIsNotNone(animal)
+        self.assertEqual(animal.name, "REDACTED_c0240dd983fa")
+
+    def test_common_identity_typo_is_normalized(self):
+        self.assertEqual(
+            normalize_text("quieb eres"),
+            "quien eres",
+        )
 
     def test_process_source_handles_commands_before_automatic_mode(self):
         atlas_source = (

@@ -64,6 +64,16 @@ class AIContextManager:
         Añade un mensaje al contexto.
         """
 
+        if not isinstance(role, str):
+            raise TypeError(
+                "El rol del mensaje debe ser texto."
+            )
+
+        if not isinstance(content, str):
+            raise TypeError(
+                "El contenido del mensaje debe ser texto."
+            )
+
         role = role.strip().lower()
         content = content.strip()
 
@@ -94,9 +104,29 @@ class AIContextManager:
         if len(self.messages) <= self.max_messages:
             return
 
-        self.messages = self.messages[
-            -self.max_messages:
-        ]
+        trimmed = self.messages[-self.max_messages:]
+
+        # Un recorte con límite impar puede empezar por una respuesta del
+        # asistente cuya pregunta quedó fuera. Esa respuesta no aporta un
+        # contexto válido y puede contaminar el siguiente turno.
+        while trimmed and trimmed[0]["role"] == "assistant":
+            trimmed.pop(0)
+
+        # Como defensa adicional, solo conservamos respuestas del asistente
+        # cuando están precedidas inmediatamente por su mensaje de usuario.
+        coherent_messages: list[dict[str, str]] = []
+        for message in trimmed:
+            if (
+                message["role"] == "assistant"
+                and (
+                    not coherent_messages
+                    or coherent_messages[-1]["role"] != "user"
+                )
+            ):
+                continue
+            coherent_messages.append(message)
+
+        self.messages = coherent_messages
 
     def get_messages(
         self,
@@ -119,7 +149,7 @@ class AIContextManager:
 
         role_labels = {
             "user": "Usuario",
-            "assistant": "Daxter",
+            "assistant": "Asistente",
             "system": "Sistema",
         }
 

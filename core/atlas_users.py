@@ -96,7 +96,7 @@ class AtlasUsersMixin:
     def change_user(
         self,
         user: str,
-    ) -> None:
+    ) -> bool:
         """
         Cambia el usuario activo y sincroniza todos los servicios
         dependientes del perfil.
@@ -104,6 +104,19 @@ class AtlasUsersMixin:
         Una confirmación pendiente se cancela antes del cambio para
         impedir que otra persona apruebe una acción ajena.
         """
+
+        clean_user = str(user).strip()
+
+        people_manager = getattr(self, "people_manager", None)
+
+        if people_manager is not None:
+            animal = people_manager.find_animal_by_name(clean_user)
+
+            if animal is not None:
+                info(
+                    f"Cambio de usuario rechazado: {animal.name} es un animal."
+                )
+                return False
 
         previous_user = self.get_user()
 
@@ -114,7 +127,7 @@ class AtlasUsersMixin:
                 "por cambio de usuario."
             )
 
-        self.users.change_user(user)
+        self.users.change_user(clean_user)
         current_user = self.get_user()
 
         conversation_identity = getattr(
@@ -144,6 +157,8 @@ class AtlasUsersMixin:
             f"{previous_user} -> {current_user}. "
             f"Contexto del nuevo perfil activado."
         )
+
+        return True
 
     def return_to_main_user(
         self,

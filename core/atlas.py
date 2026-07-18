@@ -181,6 +181,15 @@ class Atlas(
             self.identity_storage
         )
 
+        # Solo las personas pueden tener perfiles de usuario.
+        # Se consulta dinámicamente para cubrir también animales añadidos
+        # después del arranque.
+        self.users.set_profile_validator(
+            lambda name: (
+                self.people_manager.find_animal_by_name(name) is None
+            )
+        )
+
         # Gestiona la evolución de visitantes,
         # conocidos, habituales y usuarios.
         self.visitor_manager = VisitorManager(
@@ -246,19 +255,11 @@ class Atlas(
         # - Las preferencias separadas por interlocutor.
         self.identity_manager = IdentityManager()
 
-        # Las preferencias deben corresponder a la persona
-        # que está hablando, no necesariamente al usuario
-        # autenticado de la sesión.
-        identity_user = (
-            self.conversation_identity
-            .get_conversation_owner()
-        )
-
-        if identity_user is None:
-            identity_user = self.get_user()
-
+        # Las preferencias de Daxter/Coco pertenecen al usuario
+        # autenticado. Mencionar o identificar a otra persona no debe
+        # cambiar la identidad del asistente de la sesión.
         self.identity_manager.load_user(
-            identity_user
+            self.get_user()
         )
 
         # ---------------------------------------------------------------------

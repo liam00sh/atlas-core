@@ -109,6 +109,7 @@ COMMON_REPLACEMENTS = {
     "qe": "que",
     "ue": "que",
     "ke": "que",
+    "quieb": "quien",
 
     # -------------------------------------------------------------------------
     # ERRORES HABITUALES AL ESCRIBIR "SOY"
@@ -116,6 +117,7 @@ COMMON_REPLACEMENTS = {
 
     "spy": "soy",
     "siy": "soy",
+    "xambia": "cambia",
 
     # -------------------------------------------------------------------------
     # FORMAS FRECUENTES DE ÓRDENES
@@ -164,6 +166,7 @@ COMMON_REPLACEMENTS = {
 # De lo contrario, la búsqueda aproximada podría transformar
 # incorrectamente "recuerdos" en "recuerdas".
 COMMON_VOCABULARY = {
+    "ahora",
 
     # -------------------------------------------------------------------------
     # PALABRAS GENERALES
