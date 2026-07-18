@@ -54,7 +54,6 @@ from conversation.personality import final_goodbye
 
 # Función que genera la despedida de un usuario temporal y el regreso
 # automático al usuario principal.
-from conversation.personality import returned_to_main
 
 # Importamos el contexto global para acceder a la única instancia de Atlas
 # creada en main.py.
@@ -173,20 +172,11 @@ def execute():
         # Actualmente será Liam.
         main_user = context.atlas.get_main_user()
 
-        # Mostramos una despedida personalizada.
-        print(
+        # Cerramos el perfil temporal sin simular una nueva bienvenida.
+        # Atlas restaura internamente al usuario principal, pero no inicia
+        # una conversación nueva ni anuncia a Liam si nadie ha hablado.
+        print(f"Adiós, {current_user}. Perfil temporal cerrado.")
 
-            returned_to_main(
-
-                previous_user=current_user,
-
-                main_user=main_user,
-
-            )
-
-        )
-
-        # Restauramos el usuario principal.
         context.atlas.return_to_main_user()
 
         # True indica al shell que Atlas debe seguir funcionando.

@@ -52,6 +52,94 @@ class FamilyServiceTests(unittest.TestCase):
         self.assertIsInstance(self.service.find_connection("Saray Izquierdo Carreres", "Noa Melinte Carreres"), list)
         self.assertIsInstance(self.service.find_connection("Liam Vicente Martínez", "Estrella"), list)
 
+    def test_resolves_relationships_for_people_from_every_family_branch(self):
+        cases = (
+            ("Saray Izquierdo Carreres", "Lidia Vicente Martínez", "cuñada"),
+            ("Saray Izquierdo Carreres", "Raúl Isidro Vicente Martínez", "cuñada"),
+            ("Saray Izquierdo Carreres", "María José Martínez Sanz", "nuera"),
+            ("Saray Izquierdo Carreres", "José Vicente Navarro", "nuera"),
+            ("María José Martínez Sanz", "Saray Izquierdo Carreres", "suegra"),
+            ("Pepi Carreres López", "Liam Vicente Martínez", "suegra"),
+            ("Manoli Carreres López", "Saray Izquierdo Carreres", "tía"),
+            ("Saray Izquierdo Carreres", "Manoli Carreres López", "sobrina"),
+        )
+        for source, target, expected in cases:
+            with self.subTest(source=source, target=target):
+                description = self.service.describe_relationship_between(
+                    source,
+                    target,
+                )
+                self.assertIn(expected, description.casefold())
+
+    def test_every_direct_relationship_is_describable_in_both_directions(self):
+        entities = {
+            ("person", person.id): person
+            for person in self.people.get_people()
+        }
+        entities.update({
+            ("animal", animal.id): animal
+            for animal in self.people.get_animals()
+        })
+
+        for relationship in self.engine.get_relationships():
+            source = entities[(
+                relationship.source_entity_type,
+                relationship.source_entity_id,
+            )]
+            target = entities[(
+                relationship.target_entity_type,
+                relationship.target_entity_id,
+            )]
+            for first, second in ((source, target), (target, source)):
+                with self.subTest(source=first.name, target=second.name):
+                    description = self.service.describe_relationship_between(
+                        first.name,
+                        second.name,
+                    )
+                    self.assertTrue(description.strip())
+                    self.assertNotIn("None", description)
+
+    def test_every_person_and_animal_pair_has_a_safe_answer(self):
+        entities = [
+            *[("person", person) for person in self.people.get_people()],
+            *[("animal", animal) for animal in self.people.get_animals()],
+        ]
+
+        for index, (source_type, source) in enumerate(entities):
+            for target_type, target in entities[index + 1:]:
+                with self.subTest(source=source.name, target=target.name):
+                    forward = (
+                        self.engine
+                        .describe_relationship_between_entities(
+                            source.id,
+                            source_type,
+                            target.id,
+                            target_type,
+                        )
+                    )
+                    reverse = (
+                        self.engine
+                        .describe_relationship_between_entities(
+                            target.id,
+                            target_type,
+                            source.id,
+                            source_type,
+                        )
+                    )
+                    self.assertTrue(forward.strip())
+                    self.assertTrue(reverse.strip())
+                    self.assertNotIn("None", forward)
+                    self.assertNotIn("None", reverse)
+                    if not self.engine.find_shortest_relationship_path(
+                        source.id,
+                        source_type,
+                        target.id,
+                        target_type,
+                        max_depth=4,
+                    ):
+                        self.assertIn("no hay", forward.casefold())
+                        self.assertIn("no hay", reverse.casefold())
+
     def test_unknown_or_ambiguous_connection_returns_empty_list(self):
         self.assertEqual(self.service.find_connection("Persona inexistente", "Liam Vicente Martínez"), [])
         self.assertEqual(self.service.find_connection("Pepi", "Liam Vicente Martínez"), [])

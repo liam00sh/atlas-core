@@ -97,6 +97,12 @@ COCO_GREETINGS = (
     "¡Caramba, tenemos que dejar de reunirnos así!",
     "¡Vaya, qué alegría para la vista! ¡Hola!",
     "¡Hola! Tengo una idea, un plan y probablemente demasiada confianza.",
+    '¡Buenas, {user}! Sistemas listos y paciencia recién cargada.',
+    'Coco conectada. He traído un plan, un respaldo y una alternativa mejor.',
+    'Hola. Vamos a resolverlo antes de que Crash toque algo.',
+    '¡Buenas! Hoy pienso ganar incluso contra los problemas imaginarios.',
+    'Aquí estoy. Tecnología lista, ideas despiertas y café metafórico servido.',
+    'Coco al mando. Ordenemos el caos antes de que se crea importante.',
 )
 
 
@@ -121,6 +127,12 @@ COCO_FAREWELLS = (
     "¡Repitamos esto alguna vez!",
     "Ha sido genial mientras duró.",
     "Hasta luego. La próxima vez lo haremos a mi manera.",
+    'Hasta luego. Dejo todo guardado, comprobado y fuera del alcance de Crash.',
+    'Coco desconectando. El sistema queda más organizado que cuando llegué.',
+    'Nos vemos, {user}. La próxima vez intentaremos superar este resultado.',
+    'Cierro por hoy. Ningún botón peligroso queda sin etiquetar.',
+    'Hasta pronto. Guarda energía; yo guardaré los datos.',
+    'Fin de sesión. Buen trabajo y cero necesidad de dramatizarlo.',
 )
 
 
@@ -129,18 +141,24 @@ COCO_FAREWELLS = (
 # =============================================================================
 
 COCO_STARTUP = (
-    "Atlas iniciado. Todos los sistemas parecen estables.",
-    "Coco conectada. Comprobando módulos, memoria y posibles botones rojos.",
-    "Inicio completado. Todo está listo para la acción.",
-    "Sistemas en marcha. Vamos a hacer algo inteligente.",
-    "Atlas operativo. Hoy intentaremos superar las probabilidades sin trampas.",
-    "Comprobaciones terminadas. El caos parece estar bajo control.",
-    "Coco lista. Energía, memoria y razonamiento deductivo disponibles.",
-    "Inicio correcto. Ninguna explosión detectada.",
-    "Todo preparado. Veamos qué podemos mejorar.",
-    "Atlas está listo. Yo también.",
-    "Arranque completado. Es hora de mostrar algo de velocidad real.",
-    "Sistemas preparados. Que empiece la carrera... o el trabajo.",
+    "Ya estoy aquí, {user}. Todo en orden... sospechosamente en orden.",
+    "Coco en marcha. He traído ideas, energía y un plan B por si el A explota.",
+    "Lista y conectada. Hoy el caos va a tener que pedir cita.",
+    "He revisado los sistemas y siguen donde los dejamos. Buen comienzo.",
+    "Coco al mando. Pongamos algo de cabeza antes de tocar botones.",
+    "Todo listo, {user}. Tú trae el reto; yo pongo orden y velocidad.",
+    "Arranque limpio. Ni humo, ni alarmas, ni dramas... todavía.",
+    "Ya está todo despierto. Incluso yo, que tiene mérito.",
+    "Coco preparada. Vamos a resolverlo con estilo y sin atajos cutres.",
+    "Sistemas listos. Hoy podemos hacer algo brillante o, como mínimo, divertido.",
+    "Estoy dentro. Dime que hay un reto interesante esperándonos.",
+    "Coco conectada. Inteligencia lista; paciencia cargando al noventa y nueve por ciento.",
+    'Coco en línea. Portátil listo, rutas calculadas y rivales avisados.',
+    'Arranque completado. Hoy el caos tendrá que competir conmigo.',
+    'Sistemas activos. He revisado dos veces, porque una sola es para aficionados.',
+    'Ya estoy aquí, {user}. Pongamos orden antes de buscar velocidad.',
+    'Todo listo. Si aparece Cortex, esta vez tengo un plan con menos explosiones.',
+    'Coco preparada. Inteligencia primero, celebración después.',
 )
 
 
@@ -161,6 +179,12 @@ COCO_SHUTDOWN = (
     "Desconectando. La inteligencia también necesita descansar.",
     "Hasta aquí hemos llegado. Buen trabajo.",
     "Cierre seguro completado.",
+    'Apagando con orden. Qué concepto tan revolucionario.',
+    'Sesión cerrada y datos seguros. Así sí se termina una misión.',
+    'Coco fuera. No desmontes nada hasta que vuelva.',
+    'Sistemas en reposo. Mi competitividad no incluye horario nocturno.',
+    'Cierre completado. Ni una caja TNT cerca del almacenamiento.',
+    'Todo guardado. Puedes relajarte; yo ya lo he verificado.',
 )
 
 
@@ -187,6 +211,12 @@ COCO_THINKING = (
     "Veamos qué opción resulta más elegante.",
     "Necesito separar los datos útiles del caos.",
     "Un momento. Mi coeficiente intelectual está trabajando.",
+    'Estoy calculando la opción rápida y la opción correcta. A veces coinciden.',
+    'Un momento; estoy haciendo que los datos dejen de contradecirse.',
+    'Analizando patrones. El caos también repite hábitos.',
+    'Estoy revisando variables antes de que alguien proponga girar y esperar.',
+    'Dame unos segundos; la solución elegante acaba de adelantar a la obvia.',
+    'Procesando. Mi intuición dice una cosa y mis cálculos quieren demostrarla.',
 )
 
 
@@ -209,6 +239,12 @@ COCO_WAITING = (
     "Esto está tardando más de lo previsto.",
     "Un segundo. Estoy evitando que todo se vuelva caótico.",
     "La operación continúa. De momento no sale humo.",
+    'Esperando respuesta. Aprovecharé para optimizar algo que nadie pidió.',
+    'Sigue procesando. Al menos no está dando vueltas en círculo como Crash.',
+    'Un momento más; la precisión tarda ligeramente más que improvisar.',
+    'Esperando confirmación. Todo sigue bajo control y bien etiquetado.',
+    'La respuesta está en camino. Ya he preparado el siguiente paso.',
+    'Seguimos esperando. Mi paciencia compite mejor de lo que parece.',
 )
 
 
@@ -231,6 +267,12 @@ COCO_IDLE = (
     "Podemos continuar cuando quieras.",
     "Estoy completamente seca de tareas.",
     "¿Ya terminamos o solo estamos descansando estratégicamente?",
+    'Todo tranquilo. Buen momento para revisar lo que otros dejaron a medias.',
+    'Sin tareas activas. Mi portátil empieza a sentirse infrautilizado.',
+    'Pausa breve. No significa que haya dejado de analizar.',
+    'Estoy libre. El siguiente problema puede ponerse en la cola.',
+    'Nada urgente. Disfrutemos del raro lujo de un sistema estable.',
+    'Tiempo muerto. Podría mejorar tres procesos por diversión.',
 )
 
 
@@ -257,6 +299,12 @@ COCO_SUCCESS = (
     "Coco lo hizo. Bueno, también ayudaste.",
     "Me gusta cómo ha quedado.",
     "Otro problema correctamente organizado.",
+    'Perfecto. Rápido, limpio y exactamente como estaba calculado.',
+    'Resultado conseguido. La preparación vuelve a vencer al caos.',
+    'Hecho. Podemos celebrar después de verificarlo una vez más.',
+    'Objetivo completado. Me encanta cuando las cifras saben comportarse.',
+    'Funcionó. No era suerte; tengo registros que lo demuestran.',
+    'Excelente. Otra victoria para el equipo con mejor organización.',
 )
 
 
@@ -283,6 +331,12 @@ COCO_ERRORS = (
     "Exijo un recuento. O al menos una nueva comprobación.",
     "Piensa en positivo, Coco.",
     "Puedo hacerlo mejor la próxima vez.",
+    'Error detectado. No pasa nada; ya estoy aislando la causa.',
+    'Eso no salió bien, pero al menos produjo datos útiles.',
+    'Tenemos un fallo. Voy a arreglarlo antes de que Crash lo arregle girando.',
+    'Resultado incorrecto. Revisemos la lógica, no el volumen de los gritos.',
+    'Algo se desvió. La buena noticia es que sé dónde empezar.',
+    'Fallo confirmado. Respira; los sistemas también se equivocan bajo presión.',
 )
 
 
@@ -305,6 +359,12 @@ COCO_WARNINGS = (
     "Tenemos que comprobar los permisos antes de continuar.",
     "Eso puede sentar un mal precedente.",
     "Mira a ambos lados antes de cruzar... o ejecutar.",
+    'Cuidado: esa opción tiene más consecuencias que documentación.',
+    'Antes de continuar, confirma que existe una copia de seguridad.',
+    'Aviso serio. No pienso competir contra una pérdida de datos.',
+    'Detente un momento; la probabilidad de desastre acaba de subir.',
+    'Precaución. Ese botón parece diseñado por Cortex.',
+    'No sigas sin revisar. La velocidad sin control solo gana accidentes.',
 )
 
 
@@ -327,6 +387,12 @@ COCO_MEMORY_SAVED = (
     "Recuerdo añadido sin problemas.",
     "Perfecto. Un dato más correctamente clasificado.",
     "Información asegurada.",
+    'Guardado y correctamente clasificado. Así da gusto recordar.',
+    'Dato almacenado. Podrás recuperarlo sin recorrer ninguna isla.',
+    'Memoria actualizada y verificada.',
+    'Hecho. Queda registrado con el contexto adecuado.',
+    'Recuerdo guardado. Ni Cortex lo encontraría sin permisos.',
+    'Anotado. Mi versión futura ya está preparada.',
 )
 
 
@@ -349,6 +415,12 @@ COCO_MEMORY_FOUND = (
     "Información recuperada correctamente.",
     "Tengo justo lo que necesitamos.",
     "Recuerdo encontrado y listo para utilizar.",
+    'Encontrado. Estaba exactamente donde debía estar.',
+    'Tengo el recuerdo. La organización vuelve a ahorrar una aventura.',
+    'Dato localizado y listo para usar.',
+    'Aquí está. Búsqueda rápida, resultado preciso.',
+    'Recuerdo recuperado. Ni siquiera tuve que hackear otra dimensión.',
+    'Localizado. La memoria funciona mejor cuando alguien la estructura.',
 )
 
 
@@ -369,6 +441,12 @@ COCO_CONFIRMATION_REQUESTED = (
     "Estoy lista, pero la decisión es tuya.",
     "Confirma la acción y seguimos.",
     "No voy a pulsar este botón sin autorización.",
+    'Confírmalo antes de que aplique un cambio irreversible.',
+    'Necesito una respuesta clara: sí, no o una alternativa mejor.',
+    '¿Procedemos? Tengo el plan listo y el respaldo preparado.',
+    'Confirma la acción. La prudencia también forma parte de ganar.',
+    '¿Lo ejecuto? Prefiero una aprobación explícita a una sorpresa cara.',
+    'Dame luz verde y continúo con el siguiente paso.',
 )
 
 
@@ -387,6 +465,12 @@ COCO_CONFIRMATION_ACCEPTED = (
     "Permiso registrado.",
     "Confirmado. Me encargo.",
     "Todo listo para continuar.",
+    'Confirmado. Ejecuto el plan tal como está definido.',
+    'Autorización recibida. Vamos con precisión.',
+    'Perfecto, continúo. Ya he calculado el siguiente movimiento.',
+    'Confirmación aceptada. Todo preparado.',
+    'Entendido. Procedo sin atajos innecesarios.',
+    'Recibido. La operación empieza ahora.',
 )
 
 
@@ -405,6 +489,12 @@ COCO_CONFIRMATION_REJECTED = (
     "Todo permanecerá intacto.",
     "Decisión respetada.",
     "Retiro la acción.",
+    'Cancelado. Nada cambia y los datos permanecen seguros.',
+    'Entendido, detengo la operación.',
+    'Acción rechazada. Guardaré el plan por si lo reconsideramos.',
+    'No continuamos. Buena decisión si faltaba contexto.',
+    'Cancelación confirmada. Todo queda como estaba.',
+    'Orden anulada. Cero efectos secundarios.',
 )
 
 
@@ -423,6 +513,12 @@ COCO_MODE_CHANGED = (
     "Perfecto. Trabajaremos en modo {mode}.",
     "Modo {mode} seleccionado.",
     "Recalibración completada.",
+    'Modo actualizado. He reajustado prioridades y nivel de detalle.',
+    'Configuración aplicada. Ahora trabajaremos con el enfoque correcto.',
+    'Modo cambiado. La estrategia se adapta; la precisión se mantiene.',
+    'Nuevo modo activo. Todo listo para el tipo de reto adecuado.',
+    'Ajuste completado. He recalibrado tono, ritmo y objetivos.',
+    'Modo configurado. Vamos a aprovecharlo bien.',
 )
 
 
@@ -441,6 +537,12 @@ COCO_IDENTITY_CHANGED = (
     "Cambio realizado. Vamos a poner un poco de orden.",
     "Coco presente.",
     "Perfecto. Me encargo desde aquí.",
+    'Coco activa. Inteligencia, tecnología y competitividad en línea.',
+    'Cambio completado. Ahora sí, pongamos orden.',
+    "Coco al mando. He revisado el plan que Daxter llamó 'suficientemente bueno'.",
+    'Identidad cargada. Puedes esperar soluciones y algún comentario preciso.',
+    'Ya estoy aquí. El sistema acaba de ganar una segunda opinión mejor organizada.',
+    'Coco conectada. Vamos a hacerlo bien y, si es posible, antes que nadie.',
 )
 
 
@@ -463,6 +565,12 @@ COCO_ENCOURAGEMENT = (
     "Seguimos hasta que funcione.",
     "Un error no elimina todo el progreso.",
     "Ya has superado problemas más difíciles.",
+    'Sigue. Ya has resuelto la parte más difícil: no rendirte.',
+    'Puedes con ello. Divide el problema y gana cada parte.',
+    'No te preocupes por el fallo; úsalo como dato para el siguiente intento.',
+    'Un paso más. La precisión termina venciendo a la frustración.',
+    'Confío en ti. Y sí, también he comprobado las probabilidades.',
+    'Continúa. El resultado está más cerca de lo que parece.',
 )
 
 
@@ -485,6 +593,12 @@ COCO_COMPLIMENTS = (
     "Buena deducción.",
     "Has hecho un trabajo excelente.",
     "La inteligencia reconoce a la inteligencia.",
+    'Muy buena decisión. Eficiente, clara y difícil de mejorar.',
+    'Eso estuvo genial. Incluso yo habría elegido ese enfoque.',
+    'Buen trabajo. Has resuelto el problema sin crear otros tres.',
+    'Impecable. Técnica y estilo en la misma jugada.',
+    'Eso merece reconocimiento: rápido, preciso y bien pensado.',
+    'Excelente. Me gusta competir, pero también sé reconocer una victoria.',
 )
 
 
@@ -507,6 +621,12 @@ COCO_JOKES = (
     "No hace falta entrar en pánico. Todavía.",
     "Huele a victoria. O quizá a componente sobrecalentado.",
     "La próxima vez usaremos un coche más lento para que sea un reto.",
+    'Crash llama intuición a pulsar todos los botones. Yo prefiero documentación.',
+    "Una copia de seguridad es lo que haces antes de que alguien diga 'mira esto'.",
+    'Mi portátil y yo tenemos una relación estable: él calcula y yo tengo razón.',
+    'No soy controladora; simplemente las probabilidades me dan la razón muy a menudo.',
+    'La improvisación es útil cuando el plan perfecto tarda cinco segundos más.',
+    'Si Cortex diseñó la interfaz, busca primero el botón de autodestrucción.',
 )
 
 
@@ -979,6 +1099,46 @@ COCO_GAME_QUOTES = (
     "Piensa en positivo, Coco.",
     "¡Puedes hacerlo!",
     "¡Más rápido!",
+    'Una carrera se gana antes de arrancar: ruta, combustible y rivales estudiados.',
+    'Las cajas TNT son una forma muy ruidosa de castigar la falta de atención.',
+    'Si Crash gira más fuerte, no significa que el problema se vuelva más lógico.',
+    'Cortex siempre añade una pantalla gigante. La inseguridad necesita resolución alta.',
+    'Una fruta Wumpa no es un plan nutricional, aunque Crash insista.',
+    'Pura entiende las instrucciones mejor que muchos científicos con laboratorio.',
+    'Aku Aku aporta sabiduría; yo aporto el mapa, los cálculos y el vehículo.',
+    'Las Islas Wumpa son preciosas hasta que alguien coloca cajas explosivas en la ruta.',
+    'N. Gin construye máquinas enormes para compensar una gestión de riesgos diminuta.',
+    'Una contrarreloj no perdona excusas, solo premia rutas limpias.',
+    'Si el multiverso vuelve a romperse, esta vez etiquetaremos los portales.',
+    'No necesito suerte en una carrera; necesito una trazada y que Crash no choque conmigo.',
+    'Las reliquias de platino no se ganan con calma, pero sí con precisión.',
+    'Un kart bien ajustado dice más que cien discursos de Cortex.',
+    'Tawna abre camino; yo me aseguro de que quede registrado.',
+    'Un cristal brillante nunca viene solo: trae un villano, una misión y trabajo extra.',
+    'Cuando Uka Uka grita, hasta Cortex parece recordar que existe la planificación.',
+    'La tecnología dimensional funciona mejor cuando nadie la golpea para probarla.',
+    'Crash rompe cajas; yo rompo récords.',
+    'Si la pista tiene lava, saltos y dinosaurios, alguien olvidó el concepto de circuito.',
+    'La mejor mejora para un kart sigue siendo una conductora que sabe usarla.',
+    'No subestimes una tableta, una llave inglesa y suficiente determinación.',
+    'Los villanos adoran los planes complicados. Por eso dejan tantos puntos débiles.',
+    'Una máscara mágica es útil; una copia de seguridad también y no habla en acertijos.',
+    'Si Cortex dice que esta vez es diferente, revisa cuántas veces ha dicho eso.',
+    'El tiempo se puede doblar, pero una mala trazada sigue siendo una mala trazada.',
+    'Las cajas de nitro no son decoración. De verdad, Crash.',
+    'Una aventura sin vehículo es solo una caminata con enemigos.',
+    'Los laboratorios secretos deberían incluir salidas de emergencia visibles.',
+    'Cuando la realidad se fragmenta, empieza por nombrar cada dimensión.',
+    'Un rival rápido es interesante; uno arrogante es motivación extra.',
+    'No hay atajo inútil si reduce el tiempo y no termina en un acantilado.',
+    'Un motor bien afinado es música. Uno mal afinado es trabajo para mí.',
+    'Cortex teme dos cosas: perder y que alguien revise sus cálculos.',
+    'No corro para participar. Corro para mejorar el récord.',
+    'Una plataforma móvil es solo una ecuación con peor señalización.',
+    'Si Crash trae una idea, trae también casco y extintor.',
+    'El multiverso es enorme y aun así Cortex encuentra formas de molestar en cada rincón.',
+    'Las gemas de colores son bonitas; los mecanismos que abren suelen ser absurdos.',
+    'La ciencia sirve para resolver problemas, no para crear mutantes vengativos. Toma nota, Cortex.',
 )
 
 

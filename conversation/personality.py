@@ -45,6 +45,25 @@ Importante:
 import random
 
 
+_LAST_IDENTITY_RESPONSES: dict[str, str] = {}
+_LAST_CONTEXT_RESPONSES: dict[str, str] = {}
+
+
+def _choose_without_immediate_repeat(key: str, messages) -> str:
+    """Elige una frase evitando repetir inmediatamente la misma opción."""
+
+    options = [str(message).strip() for message in messages if str(message).strip()]
+    if not options:
+        return ""
+
+    previous = _LAST_CONTEXT_RESPONSES.get(key)
+    available = [message for message in options if message != previous]
+    selected = random.choice(available or options)
+    _LAST_CONTEXT_RESPONSES[key] = selected
+    return selected
+
+
+
 # Diccionario con referencias procedentes de los videojuegos.
 #
 # Ejemplo:
@@ -257,98 +276,136 @@ def greet(
     )
 
 
-def thank_you_response() -> str:
-    """
-    Genera una respuesta cuando el usuario da las gracias.
+def thank_you_response(
+    assistant_name: str | None = None,
+    expected: bool = True,
+) -> str:
+    """Responde a un agradecimiento con variedad y personalidad."""
 
-    No recibe parámetros.
+    name = str(assistant_name or "Atlas").casefold()
+    if name == "coco":
+        normal = (
+            "De nada. Problema resuelto y expediente imaginario cerrado.",
+            "Un placer. La eficiencia también puede tener estilo.",
+            "Para eso estoy; alguien tiene que mantener el caos a raya.",
+            "No hay de qué. Lo apuntaré como otra victoria perfectamente calculada.",
+            "Encantada de ayudar. Esta vez ni siquiera hizo falta un plan C.",
+        )
+        odd = (
+            "¿De nada por adelantado? Me gusta tu confianza en mis resultados.",
+            "Acepto el agradecimiento, aunque todavía estoy buscando el motivo.",
+            "Gracias recibidas. Contexto pendiente de instalación.",
+        )
+    else:
+        normal = (
+            "De nada. Otro problema derrotado por el equipo bueno.",
+            "Para eso estoy. Puedes reservar los aplausos para el final.",
+            "No hay de qué; salvar el día entra en mis tareas no oficiales.",
+            "Encantado de ayudar. Y sin caer en Eco Oscuro, que siempre suma.",
+            "Un placer. Bueno, un placer heroico y moderadamente agotador.",
+        )
+        odd = (
+            "¿De nada por qué? ¿Me he perdido una hazaña propia?",
+            "Agradecimiento aceptado. Motivo desconocido, ego satisfecho.",
+            "Gracias recibidas... aunque esto ha llegado sin misión adjunta.",
+        )
 
-    Devuelve:
-        str:
-            Una respuesta de agradecimiento.
-    """
-
-    messages = [
-        "De nada.",
-        "Para eso estoy.",
-        "Encantado de ayudar.",
-        "No hay de qué.",
-        "Siempre que lo necesites.",
-    ]
-
-    return random.choice(
-        messages
-    )
+    key = f"thanks:{name}:{'expected' if expected else 'odd'}"
+    return _choose_without_immediate_repeat(key, normal if expected else odd)
 
 
 def identity(
     assistant_name: str,
     project_name: str,
 ) -> str:
-    """
-    Explica quién es Daxter.
+    """Presenta a la identidad activa sin repetir la misma frase seguida."""
 
-    Parámetros:
-        assistant_name:
-            Nombre del asistente.
+    clean_name = str(assistant_name).strip() or "Atlas"
+    clean_project = str(project_name).strip() or "Proyecto Atlas"
 
-        project_name:
-            Nombre del proyecto.
-
-    Devuelve:
-        str:
-            Presentación breve del asistente.
-    """
-
-    return (
-        f"Soy {assistant_name}, "
-        f"el compañero digital del {project_name}.\n\n"
-        "Todavía estoy aprendiendo, "
-        "pero cada día tengo alguna función nueva."
-    )
-
-
-def user_changed(user: str) -> str:
-    """
-    Genera el mensaje mostrado al cambiar de usuario.
-
-    Parámetros:
-        user:
-            Nombre del nuevo usuario activo.
-
-    Devuelve:
-        str:
-            Mensaje de bienvenida personalizado.
-    """
-
-    # Obtenemos las frases originales de bienvenida
-    # para usuarios temporales.
-    messages = ORIGINAL_PHRASES.get(
-        "guest_welcome",
-        [],
-    )
-
-    # Si existen frases configuradas,
-    # elegimos una aleatoriamente.
-    if messages:
-
-        # Algunas frases contienen el marcador:
-        #
-        #     {user}
-        #
-        # format() lo sustituye por el nombre real.
-        return random.choice(
-            messages
-        ).format(
-            user=user
+    if clean_name.casefold() == "coco":
+        messages = (
+            f"Soy Coco, la mente tecnológica de {clean_project}. Organizo el caos antes de que se crea importante.",
+            f"Estás hablando con Coco. Inteligencia, velocidad y una saludable obsesión por que todo quede bien hecho.",
+            f"Coco al habla: tu asistente digital, competitiva por naturaleza y preparada para poner orden.",
+            f"Me llamo Coco. En {clean_project} me encargo de pensar rápido, revisar dos veces y resolver con estilo.",
+            f"Soy Coco, la identidad femenina de {clean_project}. Tecnología lista, plan preparado y paciencia casi completa.",
+            f"Aquí Coco. Digamos que soy la parte organizada de {clean_project}; alguien tenía que serlo.",
+        )
+    elif clean_name.casefold() == "daxter":
+        messages = (
+            f"Soy Daxter, compañero digital de {clean_project}: pequeño, naranja y sorprendentemente imprescindible.",
+            f"Estás hablando con Daxter. Pongo las bromas, las ideas y, ocasionalmente, el plan que funciona.",
+            f"Daxter al habla, héroe de apoyo de {clean_project}. Lo de apoyo es una forma modesta de decir protagonista.",
+            f"Me llaman Daxter. Soy tu asistente digital, experto en misiones, problemas raros y retiradas estratégicas.",
+            f"Soy Daxter, la identidad más aventurera de {clean_project}. El talento viene en frascos pequeños.",
+            f"Aquí Daxter. Si buscas al cerebro, al humor y al superviviente del equipo, ya me has encontrado.",
+        )
+    else:
+        messages = (
+            f"Soy {clean_name}, tu asistente digital del {clean_project}.",
+            f"Estás hablando con {clean_name}, la identidad activa del {clean_project}.",
+            f"Me llamo {clean_name} y formo parte del {clean_project}.",
         )
 
-    # Respuesta alternativa si la categoría
-    # guest_welcome no existe o está vacía.
+    key = clean_name.casefold()
+    selected = _choose_without_immediate_repeat(
+        f"identity:{key}",
+        messages,
+    )
+    _LAST_IDENTITY_RESPONSES[key] = selected
+    return selected
+
+
+
+def current_user_identity(
+    user: str,
+    assistant_name: str,
+) -> str:
+    """Presenta al usuario activo con humor y sin una etiqueta fija."""
+
+    clean_user = str(user).strip() or "usuario"
+    name = str(assistant_name).strip().casefold()
+
+    if name == "coco":
+        messages = (
+            f"Eres {clean_user}, la persona que tiene ahora mismo el control de esta conversación. Buenas noticias: el sistema te reconoce.",
+            f"Ahora mismo hablo con {clean_user}. Identidad confirmada; no ha hecho falta ningún escáner dramático.",
+            f"Tú eres {clean_user}. Perfil localizado, datos en orden y cero confusiones en la tabla.",
+            f"El usuario de esta conversación es {clean_user}. Verificación completada con elegancia técnica.",
+            f"Eres {clean_user}; la sesión, la conversación y mi atención están asociadas a ti.",
+        )
+    else:
+        messages = (
+            f"Eres {clean_user}. Lo confirmo yo, Daxter, autoridad mundial en reconocer compañeros de misión.",
+            f"Ahora mismo estoy hablando con {clean_user}. Tranquilo: todavía no te han sustituido por un doble malvado.",
+            f"Tú eres {clean_user}, usuario activo y responsable oficial de las decisiones peligrosamente interesantes.",
+            f"Identidad confirmada: {clean_user}. Paso uno, saber quién eres; paso dos, no tocar nada brillante.",
+            f"Eres {clean_user}. El perfil encaja, la misión continúa y nadie ha perdido los pantalones.",
+        )
+
+    return _choose_without_immediate_repeat(
+        f"current-user:{name}:{clean_user.casefold()}",
+        messages,
+    )
+
+def user_changed(
+    user: str,
+    assistant_name: str,
+) -> str:
+    """
+    Genera el mensaje mostrado después de cambiar de usuario.
+
+    El nombre del asistente se recibe de la identidad activa para evitar
+    referencias fijas a Daxter cuando el perfil utiliza Coco.
+    """
+
+    clean_user = str(user).strip() or "usuario"
+    clean_assistant = str(assistant_name).strip() or "Atlas"
+
     return (
-        f"¡Hola, {user}!\n\n"
-        "He cambiado a tu perfil.\n\n"
-        "¿Qué hacemos hoy?"
+        f"¡Hola, {clean_user}! He cambiado a tu perfil.\n"
+        f"Ahora estás hablando con {clean_assistant}."
     )
 
 

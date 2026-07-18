@@ -19,7 +19,7 @@ class FamilyDataTests(unittest.TestCase):
     def test_expected_dataset_size(self):
         self.assertEqual(len(FAMILY_PEOPLE), 44)
         self.assertEqual(len(FAMILY_ANIMALS), 4)
-        self.assertEqual(len(FAMILY_RELATIONSHIPS), 124)
+        self.assertEqual(len(FAMILY_RELATIONSHIPS), 127)
 
     def test_primary_names_are_unique_and_references_exist(self):
         names = [item["name"] for item in FAMILY_PEOPLE + FAMILY_ANIMALS]
@@ -92,7 +92,7 @@ class FamilyDataTests(unittest.TestCase):
             ("Lidia Vicente Martínez", "pet_owner", "Funcionario"),
             ("Roberto Amarillo Navarro", "pet_owner", "Lucas"),
             ("Manuela López Serrano", "pet_owner", "Estrella"),
-            ("Antonio Carreres Hernández", "cares_for", "Estrella"),
+            ("Antonio Carreres Hernández", "pet_owner", "Estrella"),
             ("Liam Vicente Martínez", "cares_for", "Estrella"),
             ("Saray Izquierdo Carreres", "cares_for", "Estrella"),
         }
@@ -152,6 +152,22 @@ class FamilyDataTests(unittest.TestCase):
             ),
             self.triples,
         )
+
+    def test_canonical_names_do_not_collide_with_other_people_aliases(self):
+        alias_to_people = {}
+        for person in FAMILY_PEOPLE:
+            for reference in [person["name"], *person.get("aliases", [])]:
+                key = reference.casefold().strip()
+                alias_to_people.setdefault(key, set()).add(person["name"])
+
+        allowed_ambiguous = {"pepi", "pepa"}
+        collisions = {
+            alias: names
+            for alias, names in alias_to_people.items()
+            if len(names) > 1 and alias not in allowed_ambiguous
+        }
+        self.assertEqual(collisions, {})
+
 
 
 if __name__ == "__main__":

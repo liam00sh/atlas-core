@@ -1,561 +1,304 @@
-"""
-===============================================================================
-Proyecto Atlas
-Archivo: identity/family_data.py
+"""Datos familiares declarativos del Proyecto Atlas."""
 
-Descripción:
-    Contiene los datos familiares iniciales del Proyecto Atlas.
+FAMILY_PEOPLE = [{'name': 'Liam Vicente Martínez',
+  'aliases': ['Liam', 'Nerea Vicente Martínez', 'Nerea Vicente'],
+  'grammatical_gender': 'masculine',
+  'user_profile': 'Liam',
+  'summary': 'Usuario principal de Atlas. Su nombre habitual es Liam. Cumpleaños: 25 de noviembre '
+             'de 2000. Nació en Beneixama, vive en Beneixama y ha vivido en Alicante. Trabaja como '
+             'administrador de sistemas en Métrica, con Kyndryl y Banco Sabadell como cliente, '
+             'realizando parcheo y actualización de servidores. Ha trabajado en Burger King de '
+             'Alicante, en limpieza en Conforama de San Juan de Alicante, como informático en '
+             'Delfín Group de Villena, como administrador de sistemas en NTT Data y como soporte '
+             'técnico en MetaEnlace para Sprinter y JD. Liam es un hombre trans, pero este dato es '
+             'personal y sensible: no debe mencionarse espontáneamente ni usarse para presentarlo. '
+             'Solo puede citarse cuando Liam lo introduzca expresamente o la conversación trate de '
+             'forma directa y pertinente sobre ese asunto. Nerea Vicente Martínez es su nombre '
+             'anterior y solo debe utilizarse para reconocer documentos antiguos, nunca para '
+             'dirigirse a él.'},
+ {'name': 'Saray Izquierdo Carreres',
+  'aliases': ['Saray'],
+  'grammatical_gender': 'feminine',
+  'user_profile': 'Saray',
+  'summary': 'Pareja de Liam. Cumpleaños: 18 de noviembre de 2003. Nació en Caudete, vive en '
+             'Alicante y ha vivido en Caudete. Actualmente no trabaja. Ha trabajado de educadora '
+             'infantil en una escuela infantil y de administrativa. Terminó dos ciclos de grado '
+             'superior en un instituto: Educación Infantil y Administración. Ya terminó sus '
+             'estudios, no estudia en la universidad y no debe afirmarse que siga estudiando.'},
+ {'name': 'José Vicente Navarro',
+  'aliases': ['José Vicente Navarro', 'Padre de Liam'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Padre de Liam, Lidia y Raúl. Cumpleaños: 19 de marzo de 1968. Nació en Villena y '
+             'vive en Beneixama. Es hermano menor de Pepi Vicente Navarro y hermano mayor de '
+             'Francisco Vicente Payá. Trabaja como tractorista y agricultor en la Cooperativa '
+             'Agrícola de Beneixama.'},
+ {'name': 'María José Martínez Sanz',
+  'aliases': ['Mary', 'Madre de Liam'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Madre de Liam, Lidia y Raúl. Cumpleaños: 7 de junio de 1972. Nació en Beneixama, '
+             'vive en Beneixama y ha vivido en Villena. Trabaja en la gasolinera GasolWin de '
+             'Beneixama. Ha trabajado como dependienta en Supermercados Covirán de Beneixama y en '
+             'Quesos Beneixama, en los mercados de Villena y Yecla.'},
+ {'name': 'José Manuel Martínez Pérez',
+  'aliases': ['Txipi', 'José Manuel', 'Jose Manuel'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo de Liam e hijo de Manolo Martínez Sanz y Fina Pérez. Su nombre habitual es '
+             'Txipi. Cumpleaños: 23 de diciembre. Nació en Beneixama, vive en Villena y ha vivido '
+             'en Gijón, Asturias. Es el hermano mayor de Alba Martínez Pérez. Vive con su pareja '
+             'Sara y su hijo Adra. Tiene una empresa de barranquismo en Villena llamada Tronkos y '
+             'Barrancos.'},
+ {'name': 'Sara',
+  'aliases': ['Sara', 'Sara, pareja de Txipi'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Pareja de José Manuel Martínez Pérez, Txipi, y madre de Adra. Nació en Villena, vive '
+             'en Villena y trabaja como administrativa.'},
+ {'name': 'Adra',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Hijo de José Manuel Martínez Pérez, Txipi, y Sara. Cumpleaños: 24 de diciembre de '
+             '2023. Nació en Villena y vive en Villena.'},
+ {'name': 'Alba Martínez Pérez',
+  'aliases': ['Alba'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima de Liam e hija de Manolo Martínez Sanz y Fina Pérez. Cumpleaños: 5 de mayo de '
+             '1992. Nació en Beneixama. Vive habitualmente en Monforte del Cid, Alicante, con su '
+             'pareja Pablo, y mantiene vinculación con Beneixama. Es la hermana pequeña de José '
+             'Manuel Martínez Pérez, Txipi. Trabaja en la Universidad de Alicante y es '
+             'historiadora y arqueóloga.'},
+ {'name': 'Pablo',
+  'aliases': ['Pablo', 'Pablo, pareja de Alba'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de Alba Martínez Pérez. Vive en Monforte del Cid, Alicante, y trabaja como '
+             'psicólogo.'},
+ {'name': 'Raúl Isidro Vicente Martínez',
+  'aliases': ['Raúl', 'Raúl Vicente Martínez'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Hermano de Liam y Lidia. Su nombre habitual es Raúl. Cumpleaños: 25 de junio de '
+             '2007. Nació en Beneixama, vive en Barcelona y ha vivido en Beneixama. Trabaja como '
+             'mecánico. Ha trabajado como camarero en el bar La Caixa de Beneixama y como mecánico '
+             'de automovilismo en carreras de resistencia.'},
+ {'name': 'Lidia Vicente Martínez',
+  'aliases': ['Lidia'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Hermana de Liam y Raúl. Cumpleaños: 22 de mayo de 2005. Nació en Beneixama, vive en '
+             'Beneixama y ha vivido en Elche. Es auxiliar veterinaria. Actualmente no trabaja; ha '
+             'trabajado como auxiliar veterinaria y como camarera en el Discovery de Beneixama y '
+             'en el bar de la piscina.'},
+ {'name': 'Roberto Amarillo Navarro',
+  'aliases': ['Roberto'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de Lidia Vicente Martínez. Cumpleaños: 19 de septiembre de 2003. Nació en '
+             'Tobarra, Albacete, vive en Beneixama y ha vivido en Elda y en Espinardo, Murcia. Ha '
+             'trabajado como feriante en los coches de choque.'},
+ {'name': 'Fermina Navarro',
+  'aliases': ['Fermina'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Primera esposa de Pepe Vicente y madre biológica de José Vicente Navarro y Pepi '
+             'Vicente Navarro. Vivió y falleció en Villena. Falleció poco después del nacimiento '
+             'de José Vicente Navarro.'},
+ {'name': 'José Vicente',
+  'aliases': ['Pepe', 'Pepe Vicente', 'Abuelo Pepe'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Abuelo paterno de Liam, conocido como Pepe Vicente. Fallecido. Nació en Villena, '
+             'vivió en Beneixama y Villena y falleció en Beneixama. Trabajó en una imprenta. Fue '
+             'esposo de Fermina Navarro y, posteriormente, de Lola Payá.'},
+ {'name': 'Lola Payá',
+  'aliases': ['Abuela Lola'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Esposa de Pepe Vicente y abuela afectiva de Liam, Lidia y Raúl. Nació en Beneixama y '
+             'vive en Beneixama.'},
+ {'name': 'Pepi Vicente Navarro',
+  'aliases': ['Pepi', 'Pepa'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Tía paterna de Liam. Cumpleaños: 13 de julio. Nació en Villena y vive en Beneixama. '
+             'Es la hermana mayor de José Vicente Navarro y Francisco Vicente Payá. Es pareja de '
+             'Salvador Amorós y madre de Salvador Amorós Vicente y Mario Amorós Vicente.'},
+ {'name': 'Salvador Amorós',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de Pepi Vicente Navarro y padre de Salvador Amorós Vicente y Mario Amorós '
+             'Vicente. Cumpleaños: 24 de noviembre. Nació en Beneixama y vive en Beneixama.'},
+ {'name': 'Salvador Amorós Vicente',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo paterno de Liam e hijo de Pepi Vicente Navarro y Salvador Amorós. Cumpleaños: '
+             '8 de junio. Nació en Beneixama y vive en Beneixama. Es el hermano mayor de Mario '
+             'Amorós Vicente y ha trabajado como camarero.'},
+ {'name': 'Mario Amorós Vicente',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo paterno de Liam e hijo de Pepi Vicente Navarro y Salvador Amorós. Cumpleaños: '
+             '18 de septiembre. Nació en Beneixama, vive en El Salse y ha vivido en Beneixama. Es '
+             'el hermano pequeño de Salvador Amorós Vicente y trabaja como electricista.'},
+ {'name': 'Francisco Vicente Payá',
+  'aliases': ['Francisco', 'Fran'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío paterno de Liam. Cumpleaños: 18 de febrero. Nació en Beneixama y vive en Madrid. '
+             'Es el hermano pequeño de José Vicente Navarro y Pepi Vicente Navarro. Trabaja como '
+             'inspector de educación y ha trabajado como profesor de matemáticas.'},
+ {'name': 'Lucía',
+  'aliases': ['Lucía, mujer de Francisco'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Pareja de Francisco Vicente Payá y madre de Claudia y Martín Vicente. Cumpleaños: 30 '
+             'de diciembre. Vive en Madrid. Trabaja como inspectora de educación y ha trabajado '
+             'como profesora de inglés.'},
+ {'name': 'Claudia Vicente',
+  'aliases': ['Claudia'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima paterna de Liam. Cumpleaños: 15 de enero. Nació en Madrid y vive en Madrid. Es '
+             'la hermana mayor de Martín Vicente.'},
+ {'name': 'Martín Vicente',
+  'aliases': ['Martín'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo paterno de Liam. Nació en Madrid y vive en Madrid. Es el hermano pequeño de '
+             'Claudia Vicente.'},
+ {'name': 'Pepe Martínez',
+  'aliases': ['Abuelo materno de Liam'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Abuelo materno de Liam. Fallecido. Nació en Beneixama, vivió en Beneixama y falleció '
+             'en Beneixama. Tuvo una fábrica de quesos llamada Quesos Beneixama.'},
+ {'name': 'Consuelo Sanz Esteve',
+  'aliases': ['Abuela materna de Liam'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Abuela materna de Liam. Fallecida. Nació en 1935 en Beneixama y vivió en Beneixama.'},
+ {'name': 'Manolo Martínez Sanz',
+  'aliases': ['Manolo'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de Liam y padre de Txipi y Alba. Fallecido. Nació, vivió y falleció en '
+             'Beneixama. Era el hermano mayor de Consuelo Martínez Sanz y María José Martínez '
+             'Sanz.'},
+ {'name': 'Fina Pérez',
+  'aliases': [],
+  'grammatical_gender': 'feminine',
+  'summary': 'Pareja de Manolo Martínez Sanz y madre de Txipi y Alba. Fallecida. Vivió en '
+             'Beneixama.'},
+ {'name': 'Consuelo Martínez Sanz',
+  'aliases': ['Chelo', 'Consuelo Martínez Sanz'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Tía materna de Liam. Nació en 1960 en Beneixama y vive en Beneixama. Es la hermana '
+             'mayor de María José Martínez Sanz y la hermana pequeña de Manolo Martínez Sanz. Es '
+             'pareja de Evaristo Maestre Domenech y madre de María Teresa y José Evaristo Maestre '
+             'Martínez.'},
+ {'name': 'Evaristo Maestre Domenech',
+  'aliases': ['Evaristo', 'Evaristo Maestre'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de Consuelo Martínez Sanz y padre de María Teresa y José Evaristo Maestre '
+             'Martínez. Nació en Beneixama y vive en Beneixama.'},
+ {'name': 'María Teresa Maestre Martínez',
+  'aliases': ['María Teresa'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima materna de Liam. Nació en Beneixama, vive en Alicante y ha vivido en Dublín, '
+             'Irlanda. Es la hermana mayor de José Evaristo Maestre Martínez y trabaja como '
+             'abogada.'},
+ {'name': 'José Evaristo Maestre Martínez',
+  'aliases': ['Evaristo hijo', 'José Evaristo'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo materno de Liam e hijo de Consuelo Martínez Sanz y Evaristo Maestre Domenech. '
+             'Cumpleaños: 5 de enero. Nació en Beneixama y vive en Beneixama. Es el hermano '
+             'pequeño de María Teresa Maestre Martínez. Es músico y ha trabajado como profesor de '
+             'música; su trabajo actual no está confirmado.'},
+ {'name': 'José Miguel Izquierdo Catalán',
+  'aliases': ['José Miguel', 'Jose Miguel', 'Jose', 'Padre de Saray'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Padre de Saray y Rubén. Cumpleaños: 22 de mayo de 1961. Nació en Tobarra, Albacete; '
+             'vive en Caudete y ha vivido en Villena. Trabaja en la fábrica de pieles Curtidos '
+             'Serpiel. Cuando era joven fue bailarín y ganó un premio tras bailar durante 24 horas '
+             'seguidas.'},
+ {'name': 'Pepi Carreres López',
+  'aliases': ['Madre de Saray', 'Pepi', 'Pepa', 'Pepi Carreras', 'Pepa Carreres', 'Pepa Carreras'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Madre de Saray y Rubén. Cumpleaños: 18 de febrero de 1972. Nació en Caudete y vive '
+             'en Caudete. Cuida a Manuela López Serrano y Antonio Carreres Hernández. También '
+             'trabaja de limpiadora en las escaleras de un bloque privado y trabajó como '
+             'limpiadora en el Hostal Lenguetero de Caudete.'},
+ {'name': 'Rubén Izquierdo Carreres',
+  'aliases': ['Rubén'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Hermano de Saray. Cumpleaños: 3 de marzo de 2007. Nació en Caudete y vive en '
+             'Caudete. No trabaja. Le gusta jugar a Fortnite y fumar cachimba.'},
+ {'name': 'Manuela López Serrano',
+  'aliases': ['Abuela materna de Saray'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Abuela materna de Saray. Cumpleaños: 5 de diciembre. Nació en Caudete y vive en '
+             'Caudete. Trabajó como agricultora o recolectora en el campo. Tiene demencia.'},
+ {'name': 'Antonio Carreres Hernández',
+  'aliases': ['Abuelo materno de Saray'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Abuelo materno de Saray. Cumpleaños: 18 de diciembre. Nació en Hellín, Albacete, y '
+             'vive en Caudete. Trabajó en la obra.'},
+ {'name': 'Andrés Carreres López',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de Saray. Nació en Caudete y vive en Caudete. Trabaja de obrero.'},
+ {'name': 'Antonio Carreres López',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de Saray y padre de Yael y Yeray. Nació en Caudete y vive en Caudete. '
+             'Trabaja en la fábrica de vidrio Crisnova.'},
+ {'name': 'Yael Carreres',
+  'aliases': ['Yael'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima de Saray e hija de Antonio Carreres López. Nació en Caudete y vive en Caudete. '
+             'Es la hermana pequeña de Yeray.'},
+ {'name': 'Yeray Carreres',
+  'aliases': ['Yeray'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Primo de Saray e hijo de Antonio Carreres López. Nació en Caudete y vive en Caudete. '
+             'Es el hermano mayor de Yael.'},
+ {'name': 'Jorge Carreres López',
+  'aliases': [],
+  'grammatical_gender': 'masculine',
+  'summary': 'Tío materno de Saray. Cumpleaños: 17 de julio. Nació en Caudete y vive en Caudete. '
+             'Trabaja de carpintero y se construyó su propia casa en el campo.'},
+ {'name': 'Manoli Carreres López',
+  'aliases': ['Manoli'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Tía materna de Saray, pareja de Georgel y madre de Noa. Cumpleaños: 25 de diciembre. '
+             'Nació en Caudete y vive en Caudete. Cuida a Manuela López Serrano y Antonio Carreres '
+             'Hernández. Trabajó de administrativa en el Hostal Lenguetero de Caudete.'},
+ {'name': 'Georgel Melinte',
+  'aliases': ['Georgel', 'Marido de Manoli'],
+  'grammatical_gender': 'masculine',
+  'summary': 'Pareja de Manoli y padre de Noa. Cumpleaños: 11 de diciembre. Nació en Rumanía y '
+             'vive en Caudete. Trabaja de tractorista y agricultor en Viveros Santa Margarita.'},
+ {'name': 'Noa Melinte Carreres',
+  'aliases': ['Noa'],
+  'grammatical_gender': 'feminine',
+  'summary': 'Prima de Saray e hija de Manoli y Georgel. Cumpleaños: 24 de julio de 2013. Nació en '
+             'Caudete y vive en Caudete. Juega al tenis.'}]
 
-    Este archivo es declarativo:
-
-    - No escribe archivos.
-    - No crea objetos Person.
-    - No crea objetos Animal.
-    - No crea relaciones directamente.
-
-    FamilyInitializer utiliza estas colecciones para registrar
-    personas, animales y relaciones sin duplicar información.
-===============================================================================
-"""
-
-
-# =============================================================================
-# PERSONAS
-# =============================================================================
-
-FAMILY_PEOPLE = [
-    {
-        "name": "Liam Vicente Martínez",
-        "aliases": [
-            "Liam",
-            "Nerea Vicente Martínez",
-            "Nerea Vicente",
-        ],
-        "grammatical_gender": "masculine",
-        "user_profile": "Liam",
-        "summary": (
-            "Usuario principal de Atlas. Hombre trans. "
-            "Nerea Vicente Martínez es su nombre anterior y solo debe "
-            "utilizarse para reconocer documentos antiguos, nunca como "
-            "forma habitual de dirigirse a él. Vive en Beneixama."
-        ),
-    },
-    {
-        "name": "Saray Izquierdo Carreres",
-        "aliases": [
-            "Saray",
-        ],
-        "grammatical_gender": "feminine",
-        "user_profile": "Saray",
-        "summary": (
-            "Pareja de Liam. Vive en Caudete y estudia en Alicante."
-        ),
-    },
-    {
-        "name": "José Vicente Navarro",
-        "aliases": [
-            "José",
-            "Padre de Liam",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Padre de Liam. Vive en Beneixama."
-        ),
-    },
-    {
-        "name": "María José Martínez Sanz",
-        "aliases": [
-            "Mary",
-            "Madre de Liam",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Madre de Liam. Vive en Beneixama."
-        ),
-    },
-    {
-        "name": "José Manuel Martínez Pérez",
-        "aliases": [
-            "Txipi",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo biológico de Liam y hermano adoptivo o afectivo. "
-            "Fue adoptado por la madre de Liam tras quedar huérfano. "
-            "Vive en Villena con su mujer Sara y su hijo Adra."
-        ),
-    },
-    {
-        "name": "Sara",
-        "aliases": [
-            "Sara, mujer de Txipi",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Mujer de Txipi y madre de Adra."
-        ),
-    },
-    {
-        "name": "Adra",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Hijo pequeño de Txipi y Sara. Tiene aproximadamente "
-            "dos años."
-        ),
-    },
-    {
-        "name": "Alba Martínez Pérez",
-        "aliases": [
-            "Alba",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima biológica de Liam y hermana adoptiva o afectiva. "
-            "Tras fallecer sus padres vivió con familiares de Liam. "
-            "Suele vivir con su novio Pablo o pasar algunos fines "
-            "de semana en Beneixama."
-        ),
-    },
-    {
-        "name": "Pablo",
-        "aliases": [
-            "Pablo, novio de Alba",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Pareja de Alba. Relacionado con Monforte."
-        ),
-    },
-    {
-        "name": "Raúl Vicente Martínez",
-        "aliases": [
-            "Raúl",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Hermano de Liam. Vive habitualmente en Barcelona."
-        ),
-    },
-    {
-        "name": "Lidia Vicente Martínez",
-        "aliases": [
-            "Lidia",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Hermana de Liam."
-        ),
-    },
-    {
-        "name": "Roberto Amarillo Navarro",
-        "aliases": [
-            "Roberto",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Pareja de Lidia."
-        ),
-    },
-
-    # -------------------------------------------------------------------------
-    # FAMILIA PATERNA DE LIAM
-    # -------------------------------------------------------------------------
-
-    {
-        "name": "Fermina Navarro",
-        "aliases": [
-            "Fermina",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Abuela paterna biológica de Liam. Falleció al nacer "
-            "José Vicente Navarro."
-        ),
-    },
-    {
-        "name": "José Vicente",
-        "aliases": [
-            "Pepe",
-            "Abuelo Pepe",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Abuelo paterno de Liam. Fallecido."
-        ),
-    },
-    {
-        "name": "Lola Payá",
-        "aliases": [
-            "Abuela Lola",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Segunda mujer del abuelo paterno de Liam y abuela "
-            "afectiva de Liam."
-        ),
-    },
-    {
-        "name": "Pepi Vicente Navarro",
-        "aliases": [
-            "Pepi",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Tía paterna de Liam."
-        ),
-    },
-    {
-        "name": "Salvador Amorós",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Marido de Pepi Vicente Navarro."
-        ),
-    },
-    {
-        "name": "Salvador Amorós Vicente",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo paterno de Liam."
-        ),
-    },
-    {
-        "name": "Mario Amorós Vicente",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo paterno de Liam. Tiene una casa en El Salse, "
-            "pedanía de Beneixama."
-        ),
-    },
-    {
-        "name": "Francisco Vicente Payá",
-        "aliases": [
-            "Francisco",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío paterno de Liam. Vive en Madrid."
-        ),
-    },
-    {
-        "name": "Lucía",
-        "aliases": [
-            "Lucía, mujer de Francisco",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Mujer de Francisco Vicente Payá. Vive en Madrid."
-        ),
-    },
-    {
-        "name": "Claudia Vicente",
-        "aliases": [
-            "Claudia",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima paterna de Liam. Vive en Madrid."
-        ),
-    },
-    {
-        "name": "Martín Vicente",
-        "aliases": [
-            "Martín",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo paterno de Liam. Vive en Madrid."
-        ),
-    },
-
-    # -------------------------------------------------------------------------
-    # FAMILIA MATERNA DE LIAM
-    # -------------------------------------------------------------------------
-
-    {
-        "name": "Pepe Martínez",
-        "aliases": [
-            "Abuelo materno de Liam",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Abuelo materno de Liam. Fallecido."
-        ),
-    },
-    {
-        "name": "Consuelo Sanz Esteve",
-        "aliases": [
-            "Abuela materna de Liam",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Abuela materna de Liam. Fallecida."
-        ),
-    },
-    {
-        "name": "Manolo Martínez Sanz",
-        "aliases": [
-            "Manolo",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de Liam. Padre biológico de Txipi y Alba. "
-            "Fallecido."
-        ),
-    },
-    {
-        "name": "Fermina Pérez",
-        "aliases": [],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Mujer de Manolo Martínez Sanz y madre biológica "
-            "de Txipi y Alba. Fallecida."
-        ),
-    },
-    {
-        "name": "Consuelo Martínez Sanz",
-        "aliases": [
-            "Chelo",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Tía materna de Liam. Existe distanciamiento familiar "
-            "entre ella y la unidad familiar de Liam."
-        ),
-    },
-    {
-        "name": "Evaristo Maestre",
-        "aliases": [
-            "Evaristo",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Marido de Chelo. Existe distanciamiento familiar."
-        ),
-    },
-    {
-        "name": "María Teresa Maestre Martínez",
-        "aliases": [
-            "María Teresa",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima materna de Liam."
-        ),
-    },
-    {
-        "name": "Evaristo Maestre Martínez",
-        "aliases": [
-            "Evaristo hijo",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo materno de Liam."
-        ),
-    },
-
-    # -------------------------------------------------------------------------
-    # FAMILIA DE SARAY
-    # -------------------------------------------------------------------------
-
-    {
-        "name": "José Miguel Izquierdo Catalán",
-        "aliases": [
-            "Padre de Saray",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Padre de Saray. Tuvo una relación anterior antes "
-            "de estar con Pepi Carreres López."
-        ),
-    },
-    {
-        "name": "Pepi Carreres López",
-        "aliases": [
-            "Madre de Saray",
-            "Pepi",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Madre de Saray. Mantiene una relación muy cercana "
-            "con su hermana Manoli."
-        ),
-    },
-    {
-        "name": "Rubén Izquierdo Carreres",
-        "aliases": [
-            "Rubén",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Hermano de Saray. Es reservado y Liam todavía "
-            "no lo conoce demasiado."
-        ),
-    },
-    {
-        "name": "Manuela López Serrano",
-        "aliases": [
-            "Abuela materna de Saray",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Abuela materna de Saray. Vive en Caudete y tiene demencia."
-        ),
-    },
-    {
-        "name": "Antonio Carreres Hernández",
-        "aliases": [
-            "Abuelo materno de Saray",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Abuelo materno de Saray. Vive en Caudete."
-        ),
-    },
-    {
-        "name": "Andrés Carreres López",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de Saray."
-        ),
-    },
-    {
-        "name": "Antonio Carreres López",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de Saray."
-        ),
-    },
-    {
-        "name": "Yael Carreres",
-        "aliases": [
-            "Yael",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima de Saray e hija de Antonio Carreres López."
-        ),
-    },
-    {
-        "name": "Yeray Carreres",
-        "aliases": [
-            "Yeray",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Primo de Saray e hijo de Antonio Carreres López."
-        ),
-    },
-    {
-        "name": "Jorge Carreres López",
-        "aliases": [],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Tío materno de Saray."
-        ),
-    },
-    {
-        "name": "Manoli Carreres López",
-        "aliases": [
-            "Manoli",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Tía materna de Saray. Tiene una relación muy cercana "
-            "con Saray, Liam y su hermana Pepi."
-        ),
-    },
-    {
-        "name": "Georgel Melinte",
-        "aliases": [
-            "Marido de Manoli",
-        ],
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Marido rumano de Manoli. Dispone de un campo en Caudete "
-            "cedido o prestado por su jefe."
-        ),
-    },
-    {
-        "name": "Noa Melinte Carreres",
-        "aliases": [
-            "Noa",
-        ],
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Prima de Saray e hija de Manoli y Georgel. Mantiene una "
-            "relación cercana con Liam y Saray."
-        ),
-    },
-]
-
-
-# =============================================================================
-# ANIMALES
-# =============================================================================
-
-FAMILY_ANIMALS = [
-    {
-        "name": "Don Gato Mishi Van Gogh",
-        "aliases": [
-            "Don Gato",
-            "Mishi",
-            "Van Gogh",
-            "Gato",
-        ],
-        "species": "cat",
-        "sex": "male",
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Gato de Liam. Vive en la unidad familiar de Beneixama."
-        ),
-    },
-    {
-        "name": "Funcionario",
-        "aliases": [
-            "Funcio",
-        ],
-        "species": "cat",
-        "sex": "male",
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Gato de Lidia. Vive en la unidad familiar de Beneixama."
-        ),
-    },
-    {
-        "name": "Lucas",
-        "aliases": [
-            "Lucas, gato de Roberto",
-        ],
-        "species": "cat",
-        "sex": "male",
-        "grammatical_gender": "masculine",
-        "summary": (
-            "Gato de Roberto."
-        ),
-    },
-    {
-        "name": "Estrella",
-        "aliases": [],
-        "species": "dog",
-        "sex": "female",
-        "grammatical_gender": "feminine",
-        "summary": (
-            "Perra de los abuelos maternos de Saray. Suele acompañar "
-            "a Liam y Saray cuando van al campo."
-        ),
-    },
-]
-
-
-# =============================================================================
-# RELACIONES
-# =============================================================================
+FAMILY_ANIMALS = [{'name': 'Don Gato Mishi Van Gogh',
+  'aliases': ['Don Gato', 'Mishi', 'Van Gogh', 'Gato'],
+  'species': 'cat',
+  'sex': 'male',
+  'grammatical_gender': 'masculine',
+  'summary': 'Gato de Liam. Vive en la unidad familiar de Beneixama. Como animal no tiene '
+             'proyectos, trabajo, estudios, aficiones, objetivos ni ilusiones humanas; solo pueden '
+             'describirse datos y anécdotas reales registradas.'},
+ {'name': 'Funcionario',
+  'aliases': ['Funcio'],
+  'species': 'cat',
+  'sex': 'male',
+  'grammatical_gender': 'masculine',
+  'summary': 'Gato de Lidia. Vive en la unidad familiar de Beneixama. Como animal no tiene '
+             'proyectos, trabajo, estudios, aficiones, objetivos ni ilusiones humanas; solo pueden '
+             'describirse datos y anécdotas reales registradas.'},
+ {'name': 'Lucas',
+  'aliases': ['Lucas, gato de Roberto'],
+  'species': 'cat',
+  'sex': 'male',
+  'grammatical_gender': 'masculine',
+  'summary': 'Gato de Roberto. Como animal no tiene proyectos, trabajo, estudios, aficiones, '
+             'objetivos ni ilusiones humanas; solo pueden describirse datos y anécdotas reales '
+             'registradas.'},
+ {'name': 'Estrella',
+  'aliases': [],
+  'species': 'dog',
+  'sex': 'female',
+  'grammatical_gender': 'feminine',
+  'summary': 'Perra de los abuelos maternos de Saray. Suele acompañar a Liam y Saray cuando van al '
+             'campo. Como animal no tiene proyectos, trabajo, estudios, aficiones, objetivos ni '
+             'ilusiones humanas; solo pueden describirse datos y anécdotas reales registradas.'}]
 
 FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'relationship_type': 'mother',
@@ -565,7 +308,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'relationship_type': 'father',
   'target': 'Liam Vicente Martínez',
   'notes': 'Padre biológico.'},
- {'source': 'Raúl Vicente Martínez',
+ {'source': 'Raúl Isidro Vicente Martínez',
   'relationship_type': 'brother',
   'target': 'Liam Vicente Martínez',
   'notes': ''},
@@ -580,21 +323,23 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
  {'source': 'José Manuel Martínez Pérez',
   'relationship_type': 'cousin',
   'target': 'Liam Vicente Martínez',
-  'notes': 'Primo biológico.'},
+  'notes': 'Relación pública autorizada: primos. Al responder a cualquier usuario, describir '
+           'únicamente que Txipi y Liam son primos.'},
  {'source': 'José Manuel Martínez Pérez',
   'relationship_type': 'brother',
   'target': 'Liam Vicente Martínez',
-  'notes': 'Hermano adoptivo y afectivo. Fue criado por la familia de Liam tras quedar '
-           'huérfano.'},
+  'notes': 'Dato interno confirmado. No exponer esta relación en respuestas: públicamente, Txipi y '
+           'Liam se describen únicamente como primos.'},
  {'source': 'Alba Martínez Pérez',
   'relationship_type': 'cousin',
   'target': 'Liam Vicente Martínez',
-  'notes': 'Prima biológica.'},
+  'notes': 'Relación pública autorizada: primos. Al responder a cualquier usuario, describir '
+           'únicamente que Alba y Liam son primos.'},
  {'source': 'Alba Martínez Pérez',
   'relationship_type': 'sister',
   'target': 'Liam Vicente Martínez',
-  'notes': 'Hermana adoptiva y afectiva. Fue criada por familiares de Liam tras quedar '
-           'huérfana.'},
+  'notes': 'Dato interno confirmado. No exponer esta relación en respuestas: públicamente, Alba y '
+           'Liam se describen únicamente como primos.'},
  {'source': 'José Manuel Martínez Pérez',
   'relationship_type': 'partner',
   'target': 'Sara',
@@ -604,10 +349,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'target': 'Adra',
   'notes': ''},
  {'source': 'Sara', 'relationship_type': 'mother', 'target': 'Adra', 'notes': ''},
- {'source': 'Alba Martínez Pérez',
-  'relationship_type': 'partner',
-  'target': 'Pablo',
-  'notes': ''},
+ {'source': 'Alba Martínez Pérez', 'relationship_type': 'partner', 'target': 'Pablo', 'notes': ''},
  {'source': 'Lidia Vicente Martínez',
   'relationship_type': 'partner',
   'target': 'Roberto Amarillo Navarro',
@@ -638,17 +380,17 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'notes': 'Responsabilidad compartida con Antonio Carreres Hernández.'},
  {'source': 'Antonio Carreres Hernández',
   'source_type': 'person',
-  'relationship_type': 'cares_for',
+  'relationship_type': 'pet_owner',
   'target': 'Estrella',
   'target_type': 'animal',
   'notes': ''},
  {'source': 'María José Martínez Sanz',
   'relationship_type': 'mother',
-  'target': 'Raúl Vicente Martínez',
+  'target': 'Raúl Isidro Vicente Martínez',
   'notes': 'Relación biológica.'},
  {'source': 'José Vicente Navarro',
   'relationship_type': 'father',
-  'target': 'Raúl Vicente Martínez',
+  'target': 'Raúl Isidro Vicente Martínez',
   'notes': 'Relación biológica.'},
  {'source': 'María José Martínez Sanz',
   'relationship_type': 'mother',
@@ -662,7 +404,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'relationship_type': 'partner',
   'target': 'José Vicente Navarro',
   'notes': 'Padres de Liam, Raúl y Lidia.'},
- {'source': 'Raúl Vicente Martínez',
+ {'source': 'Raúl Isidro Vicente Martínez',
   'relationship_type': 'brother',
   'target': 'Lidia Vicente Martínez',
   'notes': 'Hermanos biológicos.'},
@@ -674,14 +416,28 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'relationship_type': 'brother',
   'target': 'Alba Martínez Pérez',
   'notes': 'Hermanos biológicos.'},
+ {'source': 'Consuelo Martínez Sanz',
+  'relationship_type': 'mother',
+  'target': 'Alba Martínez Pérez',
+  'notes': 'Madre adoptiva legal de Alba. No es su madre biológica.'},
+ {'source': 'Alba Martínez Pérez',
+  'relationship_type': 'sister',
+  'target': 'María Teresa Maestre Martínez',
+  'notes': 'Hermanas legales por adopción de Alba por Consuelo Martínez Sanz; no son hermanas '
+           'biológicas.'},
+ {'source': 'Alba Martínez Pérez',
+  'relationship_type': 'sister',
+  'target': 'José Evaristo Maestre Martínez',
+  'notes': 'Hermanos legales por adopción de Alba por Consuelo Martínez Sanz; no son hermanos '
+           'biológicos.'},
  {'source': 'Fermina Navarro',
   'relationship_type': 'partner',
   'target': 'José Vicente',
-  'notes': 'Primera pareja; Fermina falleció al nacer José Vicente Navarro.'},
+  'notes': 'Pareja; Fermina falleció poco después del nacimiento de José Vicente Navarro.'},
  {'source': 'José Vicente',
   'relationship_type': 'partner',
   'target': 'Lola Payá',
-  'notes': 'Segunda pareja de José Vicente.'},
+  'notes': 'Pareja de José Vicente.'},
  {'source': 'Pepi Vicente Navarro',
   'relationship_type': 'partner',
   'target': 'Salvador Amorós',
@@ -838,11 +594,11 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'relationship_type': 'father',
   'target': 'Alba Martínez Pérez',
   'notes': 'Relación biológica.'},
- {'source': 'Fermina Pérez',
+ {'source': 'Fina Pérez',
   'relationship_type': 'mother',
   'target': 'José Manuel Martínez Pérez',
   'notes': 'Relación biológica.'},
- {'source': 'Fermina Pérez',
+ {'source': 'Fina Pérez',
   'relationship_type': 'mother',
   'target': 'Alba Martínez Pérez',
   'notes': 'Relación biológica.'},
@@ -852,23 +608,23 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'notes': 'Relación biológica.'},
  {'source': 'Consuelo Martínez Sanz',
   'relationship_type': 'mother',
-  'target': 'Evaristo Maestre Martínez',
+  'target': 'José Evaristo Maestre Martínez',
   'notes': 'Relación biológica.'},
- {'source': 'Evaristo Maestre',
+ {'source': 'Evaristo Maestre Domenech',
   'relationship_type': 'father',
   'target': 'María Teresa Maestre Martínez',
   'notes': 'Relación biológica.'},
- {'source': 'Evaristo Maestre',
+ {'source': 'Evaristo Maestre Domenech',
   'relationship_type': 'father',
-  'target': 'Evaristo Maestre Martínez',
+  'target': 'José Evaristo Maestre Martínez',
   'notes': 'Relación biológica.'},
  {'source': 'Manolo Martínez Sanz',
   'relationship_type': 'partner',
-  'target': 'Fermina Pérez',
+  'target': 'Fina Pérez',
   'notes': 'Padres biológicos de Txipi y Alba; ambos fallecidos.'},
  {'source': 'Consuelo Martínez Sanz',
   'relationship_type': 'partner',
-  'target': 'Evaristo Maestre',
+  'target': 'Evaristo Maestre Domenech',
   'notes': 'Matrimonio.'},
  {'source': 'Manolo Martínez Sanz',
   'relationship_type': 'brother',
@@ -884,7 +640,7 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
   'notes': 'Hermanos biológicos.'},
  {'source': 'María Teresa Maestre Martínez',
   'relationship_type': 'sister',
-  'target': 'Evaristo Maestre Martínez',
+  'target': 'José Evaristo Maestre Martínez',
   'notes': 'Hermanos biológicos.'},
  {'source': 'Pepe Martínez',
   'relationship_type': 'grandfather',
@@ -901,12 +657,12 @@ FAMILY_RELATIONSHIPS = [{'source': 'María José Martínez Sanz',
  {'source': 'Consuelo Martínez Sanz',
   'relationship_type': 'aunt',
   'target': 'Liam Vicente Martínez',
-  'notes': 'Tía materna; existe distanciamiento familiar.'},
+  'notes': 'Tía materna.'},
  {'source': 'María Teresa Maestre Martínez',
   'relationship_type': 'cousin',
   'target': 'Liam Vicente Martínez',
   'notes': 'Prima materna.'},
- {'source': 'Evaristo Maestre Martínez',
+ {'source': 'José Evaristo Maestre Martínez',
   'relationship_type': 'cousin',
   'target': 'Liam Vicente Martínez',
   'notes': 'Primo materno.'},

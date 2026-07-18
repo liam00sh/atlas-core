@@ -135,6 +135,29 @@ class FamilyInitializerTests(unittest.TestCase):
             self.people.find_animal_by_name("Funció")
         )
 
+    def test_short_jose_vicente_resolves_only_to_grandfather(self):
+        self.initializer.initialize()
+        father = self.people.find_person_by_name("José Vicente Navarro")
+        grandfather = self.people.find_person_by_name("José Vicente")
+
+        self.assertIsNotNone(father)
+        self.assertIsNotNone(grandfather)
+        self.assertNotEqual(father.id, grandfather.id)
+        self.assertNotIn("José Vicente", father.aliases)
+        self.assertEqual(grandfather.name, "José Vicente")
+
+    def test_obsolete_corrected_people_are_removed(self):
+        self.people.create_person(name="Evaristo Maestre Esteve")
+        self.people.create_person(name="Fermina Pérez")
+
+        self.initializer.initialize()
+
+        self.assertIsNone(self.people.find_person_by_name("Evaristo Maestre Esteve"))
+        self.assertIsNone(self.people.find_person_by_name("Fermina Pérez"))
+        self.assertIsNotNone(self.people.find_person_by_name("Evaristo Maestre Domenech"))
+        self.assertIsNotNone(self.people.find_person_by_name("Fina Pérez"))
+
+
 
 if __name__ == "__main__":
     unittest.main()

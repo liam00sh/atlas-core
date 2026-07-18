@@ -4,6 +4,7 @@ import unittest
 from unittest.mock import Mock
 
 from core.atlas_users import AtlasUsersMixin
+from core.user_manager import UserManager
 
 
 class AtlasUsersMixinTests(unittest.TestCase):
@@ -33,6 +34,34 @@ class AtlasUsersMixinTests(unittest.TestCase):
         atlas.conversation_identity.set_authenticated_user.assert_called_once_with("Saray")
         atlas.conversation_identity.identify_person.assert_called_once_with("Saray")
         atlas.identity_manager.load_user.assert_called_once_with("Saray")
+
+    def test_animal_cannot_become_active_user(self):
+        atlas = object.__new__(AtlasUsersMixin)
+        atlas.users = Mock()
+        atlas.users.get_current_user.return_value = "Liam"
+        atlas.confirmations = Mock()
+        atlas.people_manager = Mock()
+        atlas.people_manager.find_animal_by_name.return_value = Mock(name="Funcio")
+
+        result = atlas.change_user("Funcio")
+
+        self.assertFalse(result)
+        atlas.users.change_user.assert_not_called()
+
+    def test_animal_cannot_have_user_profile(self):
+        users = UserManager()
+        users.set_profile_validator(
+            lambda name: str(name).strip().casefold() != "funcio"
+        )
+
+        with self.assertRaises(ValueError):
+            users.get_profile("Funcio")
+
+        with self.assertRaises(ValueError):
+            users.change_user("Funcio")
+
+        self.assertEqual(users.get_current_user(), "Liam")
+        self.assertNotIn("funcio", users.profiles)
 
 
 if __name__ == "__main__":

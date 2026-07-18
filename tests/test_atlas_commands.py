@@ -16,6 +16,9 @@ class CommandAtlas(AtlasCommandsMixin):
         self.identity_manager = IdentityManager(preferences_path=path)
         self.identity_manager.load_user("Liam")
 
+    def get_project(self):
+        return "Proyecto Atlas"
+
 
 class AtlasCommandsTests(unittest.TestCase):
     def setUp(self):

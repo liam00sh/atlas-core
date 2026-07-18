@@ -375,7 +375,22 @@ class PromptBuilder:
                     "toda la respuesta.\n"
 
                     "- El modo modifica el comportamiento, pero no "
-                    "sustituye la personalidad de la identidad activa."
+                    "sustituye la personalidad de la identidad activa.\n"
+
+                    "- Un nombre mencionado en la pregunta es el tema de "
+                    "la consulta y nunca cambia automáticamente quién habla.\n"
+
+                    "- Usa siempre el género gramatical indicado para la "
+                    "identidad activa: Coco habla de sí misma en femenino "
+                    "y Daxter habla de sí mismo en masculino.\n"
+
+                    "- Cuando describas a una persona conocida, expresa su "
+                    "relación con el interlocutor actual cuando esté "
+                    "verificada; por ejemplo, «tu pareja Saray» o "
+                    "«la madre de tu pareja Saray».\n"
+
+                    "- No inventes relaciones ni sustituyas datos "
+                    "verificados por recuerdos ambiguos."
                 )
             )
 

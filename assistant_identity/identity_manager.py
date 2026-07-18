@@ -206,6 +206,10 @@ class IdentityManager:
         # Preferencias completas de todos los usuarios.
         self._preferences: dict[str, dict] = {}
 
+        # Última frase mostrada por identidad, modo y categoría. Evita que
+        # una selección aleatoria repita exactamente el mismo texto seguido.
+        self._last_phrases: dict[tuple[str, str, str], str] = {}
+
         # Usuario cuyas preferencias están cargadas.
         self._current_user: str | None = None
 
@@ -1036,11 +1040,34 @@ class IdentityManager:
         Devuelve una frase aleatoria de la identidad activa.
         """
 
-        return self._active_identity.get_random_phrase(
+        key = (
+            self._active_identity.name,
+            self._active_mode_name,
+            str(category),
+        )
+        previous = self._last_phrases.get(key)
+
+        selected = self._active_identity.get_random_phrase(
             category=category,
             default=default,
             **values,
         )
+
+        # La identidad ya elige al azar. Repetimos unas pocas veces si ha
+        # coincidido exactamente con la frase inmediatamente anterior.
+        attempts = 0
+        while selected == previous and attempts < 6:
+            selected = self._active_identity.get_random_phrase(
+                category=category,
+                default=default,
+                **values,
+            )
+            attempts += 1
+
+        if selected:
+            self._last_phrases[key] = selected
+
+        return selected
 
     # =========================================================================
     # CONTEXTO PARA EL PROMPT

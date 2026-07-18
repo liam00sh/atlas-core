@@ -13,6 +13,7 @@ from identity.identity_storage import IdentityStorage
 from identity.people_manager import PeopleManager
 from identity.relationship_engine import RelationshipEngine
 from identity.visitor_manager import VisitorManager
+from utils.text_normalizer import normalize_text
 
 
 class AtlasSubsystemIntegrationTests(unittest.TestCase):
@@ -33,10 +34,10 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
     def test_liam_session_with_saray_speaking_keeps_scopes_separate(self):
         self.conversation.set_authenticated_user("Liam")
         self.conversation.identify_person("Saray")
-        self.assistant.load_user(self.conversation.get_conversation_owner())
+        self.assistant.load_user(self.conversation.get_authenticated_user())
         self.assertEqual(self.conversation.get_authenticated_user(), "Liam")
         self.assertEqual(self.conversation.get_permission_viewer(), "Saray")
-        self.assertEqual(self.assistant.get_current_user(), "saray")
+        self.assertEqual(self.assistant.get_current_user(), "liam")
 
     def test_family_and_identity_survive_reinitialization(self):
         liam = self.people.find_person_by_name("Nerea Vicente Martínez")
@@ -76,6 +77,26 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
 
         estrella_connections = self.family.find_connection("Liam Vicente Martínez", "Estrella")
         self.assertIsInstance(estrella_connections, list)
+
+    def test_saray_mother_relationship_is_available(self):
+        description = self.family.describe_person_family(
+            "Saray"
+        )
+        self.assertIn("Pepi Carreres López es madre de Saray", description)
+
+    def test_animals_are_not_people_or_user_profiles(self):
+        self.assertIsNone(
+            self.people.find_person_by_name("Funcio")
+        )
+        animal = self.people.find_animal_by_name("Funcio")
+        self.assertIsNotNone(animal)
+        self.assertEqual(animal.name, "Funcionario")
+
+    def test_common_identity_typo_is_normalized(self):
+        self.assertEqual(
+            normalize_text("quieb eres"),
+            "quien eres",
+        )
 
     def test_process_source_handles_commands_before_automatic_mode(self):
         atlas_source = (

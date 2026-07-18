@@ -118,6 +118,36 @@ class FamilyService:
 
         return "\n".join(descriptions)
 
+    def describe_relationship_between(
+        self,
+        source_name: str,
+        target_name: str,
+    ) -> str:
+        """
+        Describe la relación entre dos personas o animales conocidos.
+
+        La resolución admite cualquier combinación de persona y animal. Las
+        relaciones directas tienen prioridad; después se aplican inferencias
+        familiares seguras y, si no existe una etiqueta exacta, se describe
+        la cadena verificable más corta.
+        """
+
+        source = self.people_manager.resolve_entity(source_name)
+        target = self.people_manager.resolve_entity(target_name)
+
+        if source is None or target is None:
+            return ""
+
+        source_type, source_entity = source
+        target_type, target_entity = target
+
+        return self.relationship_engine.describe_relationship_between_entities(
+            source_entity_id=source_entity.id,
+            source_entity_type=source_type,
+            target_entity_id=target_entity.id,
+            target_entity_type=target_type,
+        )
+
     def find_connection(
         self,
         source_name: str,
@@ -168,3 +198,27 @@ class FamilyService:
                 target_entity_type="person",
             )
         )
+    def find_any_connection(
+        self,
+        source_name: str,
+        target_name: str,
+        max_depth: int = 4,
+    ) -> list[Relationship]:
+        """Busca la conexión más corta entre dos personas o animales."""
+
+        source = self.people_manager.resolve_entity(source_name)
+        target = self.people_manager.resolve_entity(target_name)
+        if source is None or target is None:
+            return []
+
+        source_type, source_entity = source
+        target_type, target_entity = target
+
+        return self.relationship_engine.find_shortest_relationship_path(
+            source_entity_id=source_entity.id,
+            source_entity_type=source_type,
+            target_entity_id=target_entity.id,
+            target_entity_type=target_type,
+            max_depth=max_depth,
+        )
+

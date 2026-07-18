@@ -80,6 +80,8 @@ from identity.relationship import PERSON_ENTITY
 
 from identity.relationship import AUNT
 from identity.relationship import BROTHER
+from identity.relationship import CARED_FOR_BY
+from identity.relationship import CARES_FOR
 from identity.relationship import CHILD
 from identity.relationship import COUSIN
 from identity.relationship import DAUGHTER
@@ -91,7 +93,8 @@ from identity.relationship import GRANDPARENT
 from identity.relationship import GRANDSON
 from identity.relationship import GRANDDAUGHTER
 from identity.relationship import GRANDCHILD
-from identity.relationship import SPOUSE
+from identity.relationship import LIVES_WITH
+from identity.relationship import ANIMAL_COMPANION
 from identity.relationship import MOTHER
 from identity.relationship import NEPHEW
 from identity.relationship import NIECE
@@ -124,6 +127,13 @@ class RelationshipEngine:
     Todas las operaciones persistentes se delegan
     en IdentityStorage.
     """
+
+    # Política de presentación pública: estos vínculos se conservan
+    # internamente, pero se describen únicamente como primos.
+    _PUBLIC_COUSIN_ONLY_NAMES = {
+        frozenset({"Liam Vicente Martínez", "José Manuel Martínez Pérez"}),
+        frozenset({"Liam Vicente Martínez", "Alba Martínez Pérez"}),
+    }
 
     def __init__(
         self,
@@ -1237,14 +1247,37 @@ class RelationshipEngine:
             else relationship.target_entity_id
         )
 
+        public_pair = frozenset({source_name, target_name})
+        if public_pair in self._PUBLIC_COUSIN_ONLY_NAMES:
+            return f"{source_name} y {target_name} son primos."
+
         label = get_relationship_label(
             relationship.relationship_type
         )
 
-        return (
+        description = (
             f"{source_name} es {label} de "
             f"{target_name}."
         )
+
+        notes = str(
+            getattr(relationship, "notes", "") or ""
+        ).strip()
+
+        # Las notas que solo documentan la creación automática de
+        # la relación inversa no aportan información familiar.
+        # Las demás sí son esenciales para distinguir vínculos
+        # biológicos, legales, adoptivos y afectivos que pueden
+        # coexistir sin ser contradictorios.
+        if (
+            notes
+            and not notes.casefold().startswith(
+                "relación inversa generada"
+            )
+        ):
+            description += f" Detalle verificado: {notes}"
+
+        return description
 
     def describe_relationships_for_entity(
         self,
@@ -1256,16 +1289,459 @@ class RelationshipEngine:
         de una entidad.
         """
 
-        return [
-            self.describe_relationship(
-                relationship
+        descriptions: list[str] = []
+
+        for relationship in self.get_relationships_for_entity(
+            entity_id=entity_id,
+            entity_type=entity_type,
+        ):
+            description = self.describe_relationship(relationship)
+            if description not in descriptions:
+                descriptions.append(description)
+
+        return descriptions
+
+
+
+    # =========================================================================
+    # RESOLUCIÓN GENERAL DE PARENTESCOS
+    # =========================================================================
+
+    @staticmethod
+    def _entity_gender(entity: Person | Animal | None) -> str:
+        """Devuelve el género gramatical conocido de una entidad."""
+
+        return str(
+            getattr(entity, "grammatical_gender", "") or ""
+        ).strip().casefold()
+
+    @classmethod
+    def _gendered_label(
+        cls,
+        masculine: str,
+        feminine: str,
+        entity: Person | Animal | None,
+        neutral: str | None = None,
+    ) -> str:
+        """Elige una etiqueta familiar según el género de la entidad origen."""
+
+        gender = cls._entity_gender(entity)
+        if gender == "feminine":
+            return feminine
+        if gender == "masculine":
+            return masculine
+        return neutral or f"{masculine} o {feminine}"
+
+    @staticmethod
+    def _other_endpoint(
+        relationship: Relationship,
+        entity_id: str,
+        entity_type: str,
+    ) -> tuple[str, str] | None:
+        """Devuelve el extremo opuesto de una relación."""
+
+        key = entity_id.strip().casefold()
+        if (
+            relationship.source_entity_id.casefold() == key
+            and relationship.source_entity_type == entity_type
+        ):
+            return (
+                relationship.target_entity_id,
+                relationship.target_entity_type,
             )
-            for relationship
-            in self.get_relationships_for_entity(
-                entity_id=entity_id,
-                entity_type=entity_type,
+        if (
+            relationship.target_entity_id.casefold() == key
+            and relationship.target_entity_type == entity_type
+        ):
+            return (
+                relationship.source_entity_id,
+                relationship.source_entity_type,
             )
+        return None
+
+    def find_shortest_relationship_path(
+        self,
+        source_entity_id: str,
+        source_entity_type: str,
+        target_entity_id: str,
+        target_entity_type: str,
+        max_depth: int = 4,
+    ) -> list[Relationship]:
+        """
+        Busca el camino relacional más corto entre dos entidades.
+
+        El recorrido incluye personas y animales, evita ciclos y no crea
+        relaciones nuevas. Se limita por defecto a cuatro pasos para impedir
+        deducciones remotas o poco fiables.
+        """
+
+        source_key = (
+            source_entity_type,
+            source_entity_id.strip().casefold(),
+        )
+        target_key = (
+            target_entity_type,
+            target_entity_id.strip().casefold(),
+        )
+
+        if source_key == target_key:
+            return []
+
+        queue: list[tuple[str, str, list[Relationship]]] = [
+            (source_entity_id, source_entity_type, [])
         ]
+        visited = {source_key}
+
+        while queue:
+            current_id, current_type, path = queue.pop(0)
+            if len(path) >= max_depth:
+                continue
+
+            for relationship in self.get_relationships_for_entity(
+                entity_id=current_id,
+                entity_type=current_type,
+            ):
+                endpoint = self._other_endpoint(
+                    relationship,
+                    current_id,
+                    current_type,
+                )
+                if endpoint is None:
+                    continue
+
+                next_id, next_type = endpoint
+                next_key = (next_type, next_id.casefold())
+                next_path = [*path, relationship]
+
+                if next_key == target_key:
+                    return next_path
+
+                if next_key in visited:
+                    continue
+
+                visited.add(next_key)
+                queue.append((next_id, next_type, next_path))
+
+        return []
+
+    def _oriented_relationship_type(
+        self,
+        relationship: Relationship,
+        source_entity_id: str,
+        source_entity_type: str,
+    ) -> str | None:
+        """
+        Devuelve el tipo de relación visto desde la entidad indicada.
+
+        Normalmente el almacenamiento ya contiene la relación inversa, pero
+        este método también funciona si únicamente existe uno de los sentidos.
+        """
+
+        source_matches = (
+            relationship.source_entity_id.casefold()
+            == source_entity_id.strip().casefold()
+            and relationship.source_entity_type == source_entity_type
+        )
+        if source_matches:
+            return relationship.relationship_type
+
+        target_matches = (
+            relationship.target_entity_id.casefold()
+            == source_entity_id.strip().casefold()
+            and relationship.target_entity_type == source_entity_type
+        )
+        if not target_matches:
+            return None
+
+        return get_inverse_relationship_type(
+            relationship.relationship_type
+        )
+
+    def _compose_two_step_kinship(
+        self,
+        first_type: str,
+        second_type: str,
+        source_entity: Person | Animal | None,
+    ) -> str | None:
+        """Compone parentescos familiares seguros de exactamente dos pasos."""
+
+        parent_types = {MOTHER, FATHER, PARENT}
+        child_types = {DAUGHTER, SON, CHILD}
+        sibling_types = {SISTER, BROTHER, SIBLING}
+        partner_types = {PARTNER, SPOUSE}
+
+        if first_type in parent_types and second_type in parent_types:
+            return self._gendered_label(
+                "abuelo", "abuela", source_entity, "abuelo o abuela"
+            )
+
+        if first_type in child_types and second_type in child_types:
+            return self._gendered_label(
+                "nieto", "nieta", source_entity, "nieto o nieta"
+            )
+
+        if first_type in sibling_types and second_type in parent_types:
+            return self._gendered_label(
+                "tío", "tía", source_entity, "tío o tía"
+            )
+
+        if first_type in child_types and second_type in sibling_types:
+            return self._gendered_label(
+                "sobrino", "sobrina", source_entity, "sobrino o sobrina"
+            )
+
+        if (
+            first_type in child_types
+            and second_type in {AUNT, UNCLE}
+        ):
+            return self._gendered_label(
+                "primo", "prima", source_entity, "primo o prima"
+            )
+
+        # Pareja + hermano/a y hermano/a + pareja producen cuñados.
+        if (
+            first_type in partner_types
+            and second_type in sibling_types
+        ) or (
+            first_type in sibling_types
+            and second_type in partner_types
+        ):
+            return self._gendered_label(
+                "cuñado", "cuñada", source_entity, "cuñado o cuñada"
+            )
+
+        # Pareja de un hijo/a respecto de sus padres.
+        if (
+            first_type in partner_types
+            and second_type in child_types
+        ):
+            return self._gendered_label(
+                "yerno", "nuera", source_entity, "yerno o nuera"
+            )
+
+        # Padre/madre de la pareja respecto de la otra persona.
+        if (
+            first_type in parent_types
+            and second_type in partner_types
+        ):
+            return self._gendered_label(
+                "suegro", "suegra", source_entity, "suegro o suegra"
+            )
+
+        return None
+
+    def infer_relationship_label(
+        self,
+        source_entity_id: str,
+        source_entity_type: str,
+        target_entity_id: str,
+        target_entity_type: str,
+    ) -> str | None:
+        """
+        Devuelve el parentesco o vínculo más específico que puede demostrarse.
+
+        Prioriza relaciones directas. Si no existen, compone reglas familiares
+        seguras de dos pasos. Para conexiones más largas devuelve ``None`` y
+        la capa superior puede describir el camino sin inventar una etiqueta.
+        """
+
+        source_entity = self._resolve_entity_by_id(
+            source_entity_id,
+            source_entity_type,
+        )
+        target_entity = self._resolve_entity_by_id(
+            target_entity_id,
+            target_entity_type,
+        )
+        if source_entity is None or target_entity is None:
+            return None
+
+        public_pair = frozenset({
+            source_entity.name,
+            target_entity.name,
+        })
+        if public_pair in self._PUBLIC_COUSIN_ONLY_NAMES:
+            return self._gendered_label(
+                "primo", "prima", source_entity, "primo o prima"
+            )
+
+        direct = []
+        for relationship in self.get_relationships_for_entity(
+            entity_id=source_entity_id,
+            entity_type=source_entity_type,
+        ):
+            endpoint = self._other_endpoint(
+                relationship,
+                source_entity_id,
+                source_entity_type,
+            )
+            if endpoint is None:
+                continue
+            other_id, other_type = endpoint
+            if (
+                other_id.casefold() == target_entity_id.strip().casefold()
+                and other_type == target_entity_type
+            ):
+                direct_type = self._oriented_relationship_type(
+                    relationship,
+                    source_entity_id,
+                    source_entity_type,
+                )
+                if direct_type:
+                    direct.append(direct_type)
+
+        if direct:
+            # La política pública de primos ya se ha aplicado arriba.
+            preferred_order = (
+                PARTNER, SPOUSE, MOTHER, FATHER, PARENT,
+                DAUGHTER, SON, CHILD, SISTER, BROTHER, SIBLING,
+                GRANDMOTHER, GRANDFATHER, GRANDPARENT,
+                GRANDDAUGHTER, GRANDSON, GRANDCHILD,
+                AUNT, UNCLE, NIECE, NEPHEW, COUSIN,
+                PET_OWNER, PET_OF, CARES_FOR, CARED_FOR_BY,
+                LIVES_WITH, ANIMAL_COMPANION,
+            )
+            for relationship_type in preferred_order:
+                if relationship_type not in direct:
+                    continue
+                if relationship_type == COUSIN:
+                    return self._gendered_label(
+                        "primo", "prima", source_entity, "primo o prima"
+                    )
+                return get_relationship_label(relationship_type)
+            return get_relationship_label(direct[0])
+
+        path = self.find_shortest_relationship_path(
+            source_entity_id,
+            source_entity_type,
+            target_entity_id,
+            target_entity_type,
+            max_depth=2,
+        )
+        if len(path) != 2:
+            return None
+
+        first_type = self._oriented_relationship_type(
+            path[0],
+            source_entity_id,
+            source_entity_type,
+        )
+        first_endpoint = self._other_endpoint(
+            path[0],
+            source_entity_id,
+            source_entity_type,
+        )
+        if first_type is None or first_endpoint is None:
+            return None
+
+        middle_id, middle_type = first_endpoint
+        second_type = self._oriented_relationship_type(
+            path[1],
+            middle_id,
+            middle_type,
+        )
+        if second_type is None:
+            return None
+
+        return self._compose_two_step_kinship(
+            first_type,
+            second_type,
+            source_entity,
+        )
+
+    def describe_relationship_between_entities(
+        self,
+        source_entity_id: str,
+        source_entity_type: str,
+        target_entity_id: str,
+        target_entity_type: str,
+    ) -> str:
+        """
+        Describe de forma segura la relación entre dos entidades cualesquiera.
+
+        Si existe un parentesco directo o compuesto conocido lo nombra. En los
+        demás casos describe el camino verificable y evita asignar parentescos
+        no demostrados. También admite conexiones entre personas y animales.
+        """
+
+        source = self._resolve_entity_by_id(
+            source_entity_id,
+            source_entity_type,
+        )
+        target = self._resolve_entity_by_id(
+            target_entity_id,
+            target_entity_type,
+        )
+        if source is None or target is None:
+            return ""
+
+        label = self.infer_relationship_label(
+            source_entity_id,
+            source_entity_type,
+            target_entity_id,
+            target_entity_type,
+        )
+        if label:
+            return f"{source.name} es {label} de {target.name}."
+
+        path = self.find_shortest_relationship_path(
+            source_entity_id,
+            source_entity_type,
+            target_entity_id,
+            target_entity_type,
+        )
+        if not path:
+            return (
+                f"No hay un parentesco o vínculo verificado entre "
+                f"{source.name} y {target.name}."
+            )
+
+        steps = []
+        current_id = source_entity_id
+        current_type = source_entity_type
+        for relationship in path:
+            endpoint = self._other_endpoint(
+                relationship,
+                current_id,
+                current_type,
+            )
+            if endpoint is None:
+                break
+            next_id, next_type = endpoint
+            current_entity = self._resolve_entity_by_id(
+                current_id,
+                current_type,
+            )
+            next_entity = self._resolve_entity_by_id(
+                next_id,
+                next_type,
+            )
+            oriented_type = self._oriented_relationship_type(
+                relationship,
+                current_id,
+                current_type,
+            )
+            if (
+                current_entity is not None
+                and next_entity is not None
+                and oriented_type is not None
+            ):
+                steps.append(
+                    f"{current_entity.name} es "
+                    f"{get_relationship_label(oriented_type)} de "
+                    f"{next_entity.name}"
+                )
+            current_id, current_type = next_id, next_type
+
+        if not steps:
+            return ""
+
+        return (
+            f"{source.name} está relacionado con {target.name} "
+            f"mediante esta cadena verificada: "
+            + "; ".join(steps)
+            + "."
+        )
 
     # =========================================================================
     # DEDUCCIONES SENCILLAS

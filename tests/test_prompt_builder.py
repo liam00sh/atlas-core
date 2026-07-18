@@ -15,7 +15,7 @@ class PromptBuilderTests(unittest.TestCase):
             user_name="Saray",
             project_name="Proyecto Atlas",
             assistant_name=assistant,
-            atlas_version="0.3.0-rc1",
+            atlas_version="0.3.1",
             capabilities={"ai": {"enabled": True, "description": "IA local"}},
             system_information="Sistema de prueba",
             identity_context=identity_context,
@@ -37,6 +37,21 @@ class PromptBuilderTests(unittest.TestCase):
             "MENSAJE ACTUAL DEL INTERLOCUTOR",
         ):
             self.assertIn(heading, prompt)
+
+    def test_enforces_speaker_and_assistant_gender_rules(self):
+        prompt = self._build("Coco")
+        self.assertIn(
+            "Coco habla de sí misma en femenino",
+            prompt,
+        )
+        self.assertIn(
+            "Un nombre mencionado en la pregunta",
+            prompt,
+        )
+        self.assertIn(
+            "nunca cambia automáticamente quién habla",
+            prompt,
+        )
 
     def test_rejects_required_empty_values(self):
         with self.assertRaises(ValueError):

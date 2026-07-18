@@ -88,6 +88,10 @@ class UserManager:
         # Al iniciar, coincide con el usuario principal.
         self.current_user = self.main_user
 
+        # Validador externo opcional para impedir perfiles de entidades
+        # que no sean personas, como los animales registrados.
+        self._profile_validator = None
+
         # Diccionario con los perfiles conocidos.
         #
         # Las claves están en minúsculas para facilitar la búsqueda:
@@ -337,6 +341,26 @@ class UserManager:
         # No existe coincidencia.
         return None
 
+
+    def set_profile_validator(self, validator) -> None:
+        """Configura una función que valida si un nombre puede tener perfil."""
+
+        if validator is not None and not callable(validator):
+            raise TypeError("El validador de perfiles debe ser invocable.")
+
+        self._profile_validator = validator
+
+    def _ensure_profile_allowed(self, user: str) -> None:
+        """Impide crear o utilizar perfiles para entidades no autorizadas."""
+
+        if self._profile_validator is None:
+            return
+
+        if not self._profile_validator(user):
+            raise ValueError(
+                f"{user} no puede tener un perfil de usuario en Atlas."
+            )
+
     def _create_guest_profile(
         self,
         user: str,
@@ -421,6 +445,11 @@ class UserManager:
         selected_user = (
             user
             or self.current_user
+        )
+
+        # Validamos antes de buscar o crear el perfil.
+        self._ensure_profile_allowed(
+            selected_user
         )
 
         # Convertimos el nombre en una clave interna.
@@ -588,13 +617,13 @@ class UserManager:
         como invitado.
         """
 
-        # Actualizamos el usuario activo.
-        self.current_user = user
-
-        # Nos aseguramos de que exista un perfil.
+        # Validamos y obtenemos el perfil antes de cambiar el usuario.
+        # Así una entidad rechazada nunca queda activa parcialmente.
         self.get_profile(
             user
         )
+
+        self.current_user = user
 
     def return_to_main(self):
         """

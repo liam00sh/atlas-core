@@ -1,22 +1,22 @@
 [
     {
         "id": "a54ba9ed-afe3-4e11-9d1b-367896d774e4",
-        "name": "Liam",
+        "name": "Liam Vicente Martínez",
         "aliases": [
-            "Liam Vicente Martínez",
+            "Liam",
             "Nerea Vicente Martínez",
             "Nerea Vicente"
         ],
         "grammatical_gender": "masculine",
         "status": "user",
-        "encounter_count": 7,
+        "encounter_count": 37,
         "first_seen_at": "2026-07-14T18:57:03",
-        "last_seen_at": "2026-07-14T22:25:19",
+        "last_seen_at": "2026-07-18T11:54:06",
         "introduced_by": null,
-        "summary": "Usuario principal de Atlas. Hombre trans. Nerea Vicente Martínez es su nombre anterior y solo debe utilizarse para reconocer documentos antiguos, nunca como forma habitual de dirigirse a él. Vive en Beneixama.",
+        "summary": "Usuario principal de Atlas. Su nombre habitual es Liam. Cumpleaños: 25 de noviembre de 2000. Nació en Beneixama, vive en Beneixama y ha vivido en Alicante. Trabaja como administrador de sistemas en Métrica, con Kyndryl y Banco Sabadell como cliente, realizando parcheo y actualización de servidores. Ha trabajado en Burger King de Alicante, en limpieza en Conforama de San Juan de Alicante, como informático en Delfín Group de Villena, como administrador de sistemas en NTT Data y como soporte técnico en MetaEnlace para Sprinter y JD. Liam es un hombre trans, pero este dato es personal y sensible: no debe mencionarse espontáneamente ni usarse para presentarlo. Solo puede citarse cuando Liam lo introduzca expresamente o la conversación trate de forma directa y pertinente sobre ese asunto. Nerea Vicente Martínez es su nombre anterior y solo debe utilizarse para reconocer documentos antiguos, nunca para dirigirse a él.",
         "user_profile": "Liam",
         "created_at": "2026-07-14T18:57:03",
-        "updated_at": "2026-07-14T22:25:19"
+        "updated_at": "2026-07-18T11:54:06"
     },
     {
         "id": "9510bef0-7cff-401d-a67f-b9dd39a85611",
@@ -26,20 +26,19 @@
         ],
         "grammatical_gender": "feminine",
         "status": "user",
-        "encounter_count": 0,
-        "first_seen_at": null,
-        "last_seen_at": null,
+        "encounter_count": 8,
+        "first_seen_at": "2026-07-15T16:29:13",
+        "last_seen_at": "2026-07-15T21:31:06",
         "introduced_by": null,
-        "summary": "Pareja de Liam. Vive en Caudete y estudia en Alicante.",
+        "summary": "Pareja de Liam. Cumpleaños: 18 de noviembre de 2003. Nació en Caudete, vive en Alicante y ha vivido en Caudete. Actualmente no trabaja. Ha trabajado de educadora infantil en una escuela infantil y de administrativa. Terminó dos ciclos de grado superior en un instituto: Educación Infantil y Administración. Ya terminó sus estudios, no estudia en la universidad y no debe afirmarse que siga estudiando.",
         "user_profile": "Saray",
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "82ea29a5-1227-4846-ba2a-df7a0d0b1e10",
         "name": "José Vicente Navarro",
         "aliases": [
-            "José",
             "Padre de Liam"
         ],
         "grammatical_gender": "masculine",
@@ -48,10 +47,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Padre de Liam. Vive en Beneixama.",
+        "summary": "Padre de Liam, Lidia y Raúl. Cumpleaños: 19 de marzo de 1968. Nació en Villena y vive en Beneixama. Es hermano menor de Pepi Vicente Navarro y hermano mayor de Francisco Vicente Payá. Trabaja como tractorista y agricultor en la Cooperativa Agrícola de Beneixama.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "4ff5f25d-13fd-4424-8c41-1a68e2781255",
@@ -66,16 +65,18 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Madre de Liam. Vive en Beneixama.",
+        "summary": "Madre de Liam, Lidia y Raúl. Cumpleaños: 7 de junio de 1972. Nació en Beneixama, vive en Beneixama y ha vivido en Villena. Trabaja en la gasolinera GasolWin de Beneixama. Ha trabajado como dependienta en Supermercados Covirán de Beneixama y en Quesos Beneixama, en los mercados de Villena y Yecla.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "65eceec1-b53b-455c-92f1-dea698be63cc",
         "name": "José Manuel Martínez Pérez",
         "aliases": [
-            "Txipi"
+            "Txipi",
+            "José Manuel",
+            "Jose Manuel"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -83,16 +84,16 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Primo biológico de Liam y hermano adoptivo o afectivo. Fue adoptado por la madre de Liam tras quedar huérfano. Vive en Villena con su mujer Sara y su hijo Adra.",
+        "summary": "Primo de Liam e hijo de Manolo Martínez Sanz y Fina Pérez. Su nombre habitual es Txipi. Cumpleaños: 23 de diciembre. Nació en Beneixama, vive en Villena y ha vivido en Gijón, Asturias. Es el hermano mayor de Alba Martínez Pérez. Vive con su pareja Sara y su hijo Adra. Tiene una empresa de barranquismo en Villena llamada Tronkos y Barrancos.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "c01cd275-fd41-4ad1-8088-01b509811295",
         "name": "Sara",
         "aliases": [
-            "Sara, mujer de Txipi"
+            "Sara, pareja de Txipi"
         ],
         "grammatical_gender": "feminine",
         "status": "guest",
@@ -100,10 +101,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Mujer de Txipi y madre de Adra.",
+        "summary": "Pareja de José Manuel Martínez Pérez, Txipi, y madre de Adra. Nació en Villena, vive en Villena y trabaja como administrativa.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T11:53:58"
     },
     {
         "id": "1f375714-2854-4a2f-8986-0edbc803aace",
@@ -115,10 +116,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Hijo pequeño de Txipi y Sara. Tiene aproximadamente dos años.",
+        "summary": "Hijo de José Manuel Martínez Pérez, Txipi, y Sara. Cumpleaños: 24 de diciembre de 2023. Nació en Villena y vive en Villena.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "8518852d-ec2f-4dee-a4f4-397ab96d5fd4",
@@ -132,16 +133,16 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Prima biológica de Liam y hermana adoptiva o afectiva. Tras fallecer sus padres vivió con familiares de Liam. Suele vivir con su novio Pablo o pasar algunos fines de semana en Beneixama.",
+        "summary": "Prima de Liam e hija de Manolo Martínez Sanz y Fina Pérez. Cumpleaños: 5 de mayo de 1992. Nació en Beneixama. Vive habitualmente en Monforte del Cid, Alicante, con su pareja Pablo, y mantiene vinculación con Beneixama. Es la hermana pequeña de José Manuel Martínez Pérez, Txipi. Trabaja en la Universidad de Alicante y es historiadora y arqueóloga.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "312aabf0-f183-494a-9339-96c553771dd4",
         "name": "Pablo",
         "aliases": [
-            "Pablo, novio de Alba"
+            "Pablo, pareja de Alba"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -149,16 +150,17 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Pareja de Alba. Relacionado con Monforte.",
+        "summary": "Pareja de Alba Martínez Pérez. Vive en Monforte del Cid, Alicante, y trabaja como psicólogo.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T11:53:58"
     },
     {
         "id": "66df983d-8cbc-47d4-8efa-682effc4128c",
-        "name": "Raúl Vicente Martínez",
+        "name": "Raúl Isidro Vicente Martínez",
         "aliases": [
-            "Raúl"
+            "Raúl",
+            "Raúl Vicente Martínez"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -166,10 +168,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Hermano de Liam. Vive habitualmente en Barcelona.",
+        "summary": "Hermano de Liam y Lidia. Su nombre habitual es Raúl. Cumpleaños: 25 de junio de 2007. Nació en Beneixama, vive en Barcelona y ha vivido en Beneixama. Trabaja como mecánico. Ha trabajado como camarero en el bar La Caixa de Beneixama y como mecánico de automovilismo en carreras de resistencia.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "36e8df6f-19ed-4cc1-91ec-af7d8445e940",
@@ -179,14 +181,14 @@
         ],
         "grammatical_gender": "feminine",
         "status": "guest",
-        "encounter_count": 0,
-        "first_seen_at": null,
-        "last_seen_at": null,
+        "encounter_count": 1,
+        "first_seen_at": "2026-07-16T18:57:54",
+        "last_seen_at": "2026-07-16T18:57:54",
         "introduced_by": null,
-        "summary": "Hermana de Liam.",
+        "summary": "Hermana de Liam y Raúl. Cumpleaños: 22 de mayo de 2005. Nació en Beneixama, vive en Beneixama y ha vivido en Elche. Es auxiliar veterinaria. Actualmente no trabaja; ha trabajado como auxiliar veterinaria y como camarera en el Discovery de Beneixama y en el bar de la piscina.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "3b503105-9407-47d4-a010-36f4b32bcdc3",
@@ -200,32 +202,35 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Pareja de Lidia.",
+        "summary": "Pareja de Lidia Vicente Martínez. Cumpleaños: 19 de septiembre de 2003. Nació en Tobarra, Albacete, vive en Beneixama y ha vivido en Elda y en Espinardo, Murcia. Ha trabajado como feriante en los coches de choque.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "cdd95405-90cd-4fdf-9974-0efa91f7c4f3",
         "name": "Fermina Navarro",
-        "aliases": [],
+        "aliases": [
+            "Fermina"
+        ],
         "grammatical_gender": "feminine",
         "status": "guest",
         "encounter_count": 0,
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Abuela paterna biológica de Liam. Falleció al nacer José Vicente Navarro.",
+        "summary": "Primera esposa de Pepe Vicente y madre biológica de José Vicente Navarro y Pepi Vicente Navarro. Vivió y falleció en Villena. Falleció poco después del nacimiento de José Vicente Navarro.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "1063370a-5423-4225-a01a-713455b8d0c9",
         "name": "José Vicente",
         "aliases": [
             "Pepe",
-            "Abuelo Pepe"
+            "Abuelo Pepe",
+            "Pepe Vicente"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -233,10 +238,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Abuelo paterno de Liam. Fallecido.",
+        "summary": "Abuelo paterno de Liam, conocido como Pepe Vicente. Fallecido. Nació en Villena, vivió en Beneixama y Villena y falleció en Beneixama. Trabajó en una imprenta. Fue esposo de Fermina Navarro y, posteriormente, de Lola Payá.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "e959125e-1014-4518-9f6d-cab89c8f5236",
@@ -250,16 +255,17 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Segunda mujer del abuelo paterno de Liam y abuela afectiva de Liam.",
+        "summary": "Esposa de Pepe Vicente y abuela afectiva de Liam, Lidia y Raúl. Nació en Beneixama y vive en Beneixama.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-14T22:16:37"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "4886d255-daa2-4766-8e65-e73f16a3e5a9",
         "name": "Pepi Vicente Navarro",
         "aliases": [
-            "Pepi"
+            "Pepi",
+            "Pepa"
         ],
         "grammatical_gender": "feminine",
         "status": "guest",
@@ -267,10 +273,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tía paterna de Liam.",
+        "summary": "Tía paterna de Liam. Cumpleaños: 13 de julio. Nació en Villena y vive en Beneixama. Es la hermana mayor de José Vicente Navarro y Francisco Vicente Payá. Es pareja de Salvador Amorós y madre de Salvador Amorós Vicente y Mario Amorós Vicente.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "b8ddabe8-26d1-4c33-bc1a-13798454cdcc",
@@ -282,10 +288,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Marido de Pepi Vicente Navarro.",
+        "summary": "Pareja de Pepi Vicente Navarro y padre de Salvador Amorós Vicente y Mario Amorós Vicente. Cumpleaños: 24 de noviembre. Nació en Beneixama y vive en Beneixama.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "39ae041c-4ce5-4d8b-807d-5e59dba2b73f",
@@ -297,10 +303,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Primo paterno de Liam.",
+        "summary": "Primo paterno de Liam e hijo de Pepi Vicente Navarro y Salvador Amorós. Cumpleaños: 8 de junio. Nació en Beneixama y vive en Beneixama. Es el hermano mayor de Mario Amorós Vicente y ha trabajado como camarero.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "e29b0a67-369d-4c73-9dc0-fc7d4de2d81b",
@@ -312,16 +318,17 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Primo paterno de Liam. Tiene una casa en El Salse, pedanía de Beneixama.",
+        "summary": "Primo paterno de Liam e hijo de Pepi Vicente Navarro y Salvador Amorós. Cumpleaños: 18 de septiembre. Nació en Beneixama, vive en El Salse y ha vivido en Beneixama. Es el hermano pequeño de Salvador Amorós Vicente y trabaja como electricista.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "79d08345-421e-4b04-bdd2-4c83b0a13cac",
         "name": "Francisco Vicente Payá",
         "aliases": [
-            "Francisco"
+            "Francisco",
+            "Fran"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -329,10 +336,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tío paterno de Liam. Vive en Madrid.",
+        "summary": "Tío paterno de Liam. Cumpleaños: 18 de febrero. Nació en Beneixama y vive en Madrid. Es el hermano pequeño de José Vicente Navarro y Pepi Vicente Navarro. Trabaja como inspector de educación y ha trabajado como profesor de matemáticas.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "1855bc5b-5c51-4e21-8dda-0e6676776c91",
@@ -346,10 +353,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Mujer de Francisco Vicente Payá. Vive en Madrid.",
+        "summary": "Pareja de Francisco Vicente Payá y madre de Claudia y Martín Vicente. Cumpleaños: 30 de diciembre. Vive en Madrid. Trabaja como inspectora de educación y ha trabajado como profesora de inglés.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "dd2c318f-470a-40e3-9749-13c98a5303a4",
@@ -363,10 +370,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Prima paterna de Liam. Vive en Madrid.",
+        "summary": "Prima paterna de Liam. Cumpleaños: 15 de enero. Nació en Madrid y vive en Madrid. Es la hermana mayor de Martín Vicente.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "ce8e6263-caf8-4d8a-afb3-8c8328e824f4",
@@ -380,10 +387,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Primo paterno de Liam. Vive en Madrid.",
+        "summary": "Primo paterno de Liam. Nació en Madrid y vive en Madrid. Es el hermano pequeño de Claudia Vicente.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "4e39e242-0b40-4481-a203-0563582f2ad8",
@@ -397,10 +404,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Abuelo materno de Liam. Fallecido.",
+        "summary": "Abuelo materno de Liam. Fallecido. Nació en Beneixama, vivió en Beneixama y falleció en Beneixama. Tuvo una fábrica de quesos llamada Quesos Beneixama.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "0f8d502a-8b9d-4473-9e0c-1958fd1781e3",
@@ -414,10 +421,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Abuela materna de Liam. Fallecida.",
+        "summary": "Abuela materna de Liam. Fallecida. Nació en 1935 en Beneixama y vivió en Beneixama.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "5aae1827-9d33-4457-adf6-a092da322429",
@@ -431,25 +438,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tío materno de Liam. Padre biológico de Txipi y Alba. Fallecido.",
+        "summary": "Tío materno de Liam y padre de Txipi y Alba. Fallecido. Nació, vivió y falleció en Beneixama. Era el hermano mayor de Consuelo Martínez Sanz y María José Martínez Sanz.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
-    },
-    {
-        "id": "d956058f-bea7-43e9-baef-8c17ea90d525",
-        "name": "Fermina Pérez",
-        "aliases": [],
-        "grammatical_gender": "feminine",
-        "status": "guest",
-        "encounter_count": 0,
-        "first_seen_at": null,
-        "last_seen_at": null,
-        "introduced_by": null,
-        "summary": "Mujer de Manolo Martínez Sanz y madre biológica de Txipi y Alba. Fallecida.",
-        "user_profile": null,
-        "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "9ed81ed7-8c41-4039-9e46-2925cd6cfd88",
@@ -463,27 +455,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tía materna de Liam. Existe distanciamiento familiar entre ella y la unidad familiar de Liam.",
+        "summary": "Tía materna de Liam. Nació en 1960 en Beneixama y vive en Beneixama. Es la hermana mayor de María José Martínez Sanz y la hermana pequeña de Manolo Martínez Sanz. Es pareja de Evaristo Maestre Domenech y madre de María Teresa y José Evaristo Maestre Martínez.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
-    },
-    {
-        "id": "c516d9e8-aa80-4662-a268-0d507a51ca53",
-        "name": "Evaristo Maestre",
-        "aliases": [
-            "Evaristo"
-        ],
-        "grammatical_gender": "masculine",
-        "status": "guest",
-        "encounter_count": 0,
-        "first_seen_at": null,
-        "last_seen_at": null,
-        "introduced_by": null,
-        "summary": "Marido de Chelo. Existe distanciamiento familiar.",
-        "user_profile": null,
-        "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "1c084a16-221a-4396-ad20-cc7da1a75f2f",
@@ -497,16 +472,17 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Prima materna de Liam.",
+        "summary": "Prima materna de Liam. Nació en Beneixama, vive en Alicante y ha vivido en Dublín, Irlanda. Es la hermana mayor de José Evaristo Maestre Martínez y trabaja como abogada.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "9ec53894-f9e0-4dc5-af54-2157645d36ec",
-        "name": "Evaristo Maestre Martínez",
+        "name": "José Evaristo Maestre Martínez",
         "aliases": [
-            "Evaristo hijo"
+            "Evaristo hijo",
+            "José Evaristo"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -514,16 +490,19 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Primo materno de Liam.",
+        "summary": "Primo materno de Liam e hijo de Consuelo Martínez Sanz y Evaristo Maestre Domenech. Cumpleaños: 5 de enero. Nació en Beneixama y vive en Beneixama. Es el hermano pequeño de María Teresa Maestre Martínez. Es músico y ha trabajado como profesor de música; su trabajo actual no está confirmado.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "9dd7a48c-6c20-4e84-aa62-5d22c797c2cc",
         "name": "José Miguel Izquierdo Catalán",
         "aliases": [
-            "Padre de Saray"
+            "Padre de Saray",
+            "José Miguel",
+            "Jose Miguel",
+            "Jose"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -531,17 +510,21 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Padre de Saray. Tuvo una relación anterior antes de estar con Pepi Carreres López.",
+        "summary": "Padre de Saray y Rubén. Cumpleaños: 22 de mayo de 1961. Nació en Tobarra, Albacete; vive en Caudete y ha vivido en Villena. Trabaja en la fábrica de pieles Curtidos Serpiel. Cuando era joven fue bailarín y ganó un premio tras bailar durante 24 horas seguidas.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "5c6705bb-5d17-4ccf-9f60-500920d6e331",
         "name": "Pepi Carreres López",
         "aliases": [
             "Madre de Saray",
-            "Pepi"
+            "Pepi",
+            "Pepa",
+            "Pepi Carreras",
+            "Pepa Carreres",
+            "Pepa Carreras"
         ],
         "grammatical_gender": "feminine",
         "status": "guest",
@@ -549,10 +532,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Madre de Saray. Mantiene una relación muy cercana con su hermana Manoli.",
+        "summary": "Madre de Saray y Rubén. Cumpleaños: 18 de febrero de 1972. Nació en Caudete y vive en Caudete. Cuida a Manuela López Serrano y Antonio Carreres Hernández. También trabaja de limpiadora en las escaleras de un bloque privado y trabajó como limpiadora en el Hostal Lenguetero de Caudete.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "2dc84aa8-8de9-4820-9341-d1c724dd2698",
@@ -566,10 +549,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Hermano de Saray. Es reservado y Liam todavía no lo conoce demasiado.",
+        "summary": "Hermano de Saray. Cumpleaños: 3 de marzo de 2007. Nació en Caudete y vive en Caudete. No trabaja. Le gusta jugar a Fortnite y fumar cachimba.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "7542e7fa-c5f8-4be4-b9fa-284274c550c8",
@@ -583,10 +566,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Abuela materna de Saray. Vive en Caudete y tiene demencia.",
+        "summary": "Abuela materna de Saray. Cumpleaños: 5 de diciembre. Nació en Caudete y vive en Caudete. Trabajó como agricultora o recolectora en el campo. Tiene demencia.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "35d1ee09-847c-4d05-a961-1637c44e6825",
@@ -600,10 +583,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Abuelo materno de Saray. Vive en Caudete.",
+        "summary": "Abuelo materno de Saray. Cumpleaños: 18 de diciembre. Nació en Hellín, Albacete, y vive en Caudete. Trabajó en la obra.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "43dd9190-db61-45fa-bb89-79403bbf6cda",
@@ -615,10 +598,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tío materno de Saray.",
+        "summary": "Tío materno de Saray. Nació en Caudete y vive en Caudete. Trabaja de obrero.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:38",
-        "updated_at": "2026-07-14T22:16:38"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "1c98e496-3ff3-40ef-bcb7-6cc206f657dc",
@@ -630,10 +613,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tío materno de Saray.",
+        "summary": "Tío materno de Saray y padre de Yael y Yeray. Nació en Caudete y vive en Caudete. Trabaja en la fábrica de vidrio Crisnova.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-14T22:16:39"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "09dfd546-ccdd-4bd5-bca2-0ae2948d47b7",
@@ -647,10 +630,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Prima de Saray e hija de Antonio Carreres López.",
+        "summary": "Prima de Saray e hija de Antonio Carreres López. Nació en Caudete y vive en Caudete. Es la hermana pequeña de Yeray.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-14T22:16:39"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "db9b8518-3620-48a4-aa77-0b859f39b92b",
@@ -664,10 +647,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Primo de Saray e hijo de Antonio Carreres López.",
+        "summary": "Primo de Saray e hijo de Antonio Carreres López. Nació en Caudete y vive en Caudete. Es el hermano mayor de Yael.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-14T22:16:39"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "d4880574-142f-4cc3-bbb8-c79c95db692c",
@@ -679,10 +662,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tío materno de Saray.",
+        "summary": "Tío materno de Saray. Cumpleaños: 17 de julio. Nació en Caudete y vive en Caudete. Trabaja de carpintero y se construyó su propia casa en el campo.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-14T22:16:39"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "a6bf96a1-ff0a-4903-8aad-8f9fe54333bb",
@@ -696,16 +679,17 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Tía materna de Saray. Tiene una relación muy cercana con Saray, Liam y su hermana Pepi.",
+        "summary": "Tía materna de Saray, pareja de Georgel y madre de Noa. Cumpleaños: 25 de diciembre. Nació en Caudete y vive en Caudete. Cuida a Manuela López Serrano y Antonio Carreres Hernández. Trabajó de administrativa en el Hostal Lenguetero de Caudete.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-14T22:16:39"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "b75a2ac3-2903-40dd-b2d3-aa1aee4523a3",
         "name": "Georgel Melinte",
         "aliases": [
-            "Marido de Manoli"
+            "Marido de Manoli",
+            "Georgel"
         ],
         "grammatical_gender": "masculine",
         "status": "guest",
@@ -713,10 +697,10 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Marido rumano de Manoli. Dispone de un campo en Caudete cedido o prestado por su jefe.",
+        "summary": "Pareja de Manoli y padre de Noa. Cumpleaños: 11 de diciembre. Nació en Rumanía y vive en Caudete. Trabaja de tractorista y agricultor en Viveros Santa Margarita.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-14T22:16:39"
+        "updated_at": "2026-07-18T09:35:51"
     },
     {
         "id": "823e3cdf-0d65-491a-961d-c58d0609bdf0",
@@ -730,9 +714,42 @@
         "first_seen_at": null,
         "last_seen_at": null,
         "introduced_by": null,
-        "summary": "Prima de Saray e hija de Manoli y Georgel. Mantiene una relación cercana con Liam y Saray.",
+        "summary": "Prima de Saray e hija de Manoli y Georgel. Cumpleaños: 24 de julio de 2013. Nació en Caudete y vive en Caudete. Juega al tenis.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-14T22:16:39"
+        "updated_at": "2026-07-18T09:35:51"
+    },
+    {
+        "id": "b99c7294-835d-4bcd-8601-d8882f1e1e28",
+        "name": "Fina Pérez",
+        "aliases": [],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Pareja de Manolo Martínez Sanz y madre de Txipi y Alba. Fallecida. Vivió en Beneixama.",
+        "user_profile": null,
+        "created_at": "2026-07-18T09:35:51",
+        "updated_at": "2026-07-18T09:35:51"
+    },
+    {
+        "id": "af98bdc3-0f61-4959-9cee-f67d88811a2e",
+        "name": "Evaristo Maestre Domenech",
+        "aliases": [
+            "Evaristo",
+            "Evaristo Maestre"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Pareja de Consuelo Martínez Sanz y padre de María Teresa y José Evaristo Maestre Martínez. Nació en Beneixama y vive en Beneixama.",
+        "user_profile": null,
+        "created_at": "2026-07-18T09:35:51",
+        "updated_at": "2026-07-18T09:35:51"
     }
 ]

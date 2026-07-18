@@ -71,8 +71,10 @@ class FamilyInitializer:
         no se contabilizan como nuevas.
         """
 
+        self._remove_obsolete_people()
         created_people = self._initialize_people()
         created_animals = self._initialize_animals()
+        self._remove_obsolete_relationships()
         created_relationships = self._initialize_relationships()
 
         result = {
@@ -174,6 +176,41 @@ class FamilyInitializer:
                 alias,
             )
 
+        # FAMILY_PEOPLE es la fuente declarativa oficial de estos perfiles.
+        # Los alias corregidos o eliminados deben retirarse también del JSON
+        # persistente; de lo contrario pueden resolver a la persona equivocada
+        # y crear relaciones de una entidad consigo misma.
+        desired_alias_keys = {
+            alias.strip().casefold()
+            for alias in data.get(
+                "aliases",
+                [],
+            )
+            if str(alias).strip()
+        }
+
+        aliases_changed = False
+
+        for current_alias in list(
+            person.aliases
+        ):
+
+            if (
+                current_alias.strip().casefold()
+                in desired_alias_keys
+            ):
+                continue
+
+            if person.remove_alias(
+                current_alias
+            ):
+                aliases_changed = True
+
+        if aliases_changed:
+            self.people_manager.save_person(
+                person
+            )
+
         grammatical_gender = data.get(
             "grammatical_gender",
             "unknown",
@@ -215,6 +252,29 @@ class FamilyInitializer:
                 person.id,
                 user_profile,
             )
+
+    def _remove_obsolete_people(
+        self,
+    ) -> int:
+        """Elimina perfiles históricos sustituidos por nombres corregidos."""
+
+        obsolete_names = {
+            "Evaristo Maestre Esteve",
+            "Fermina Pérez",
+        }
+        removed = 0
+
+        for person in self.people_manager.get_people():
+            if person.name not in obsolete_names:
+                continue
+
+            if self.people_manager.delete_person(
+                person.id,
+                delete_relationships=True,
+            ):
+                removed += 1
+
+        return removed
 
     def _initialize_people(
         self,
@@ -456,6 +516,51 @@ class FamilyInitializer:
                 created_count += 1
 
         return created_count
+
+    def _remove_obsolete_relationships(
+        self,
+    ) -> int:
+        """Elimina relaciones declarativas antiguas que ya fueron corregidas."""
+
+        antonio = self.people_manager.find_person_by_name(
+            "Antonio Carreres Hernández"
+        )
+        estrella = self.people_manager.find_animal_by_name(
+            "Estrella"
+        )
+
+        if antonio is None or estrella is None:
+            return 0
+
+        removed = 0
+
+        for relationship in list(
+            self.relationship_engine.get_relationships()
+        ):
+            is_obsolete_direct = (
+                relationship.source_entity_id == antonio.id
+                and relationship.target_entity_id == estrella.id
+                and relationship.relationship_type == "cares_for"
+            )
+            is_obsolete_inverse = (
+                relationship.source_entity_id == estrella.id
+                and relationship.target_entity_id == antonio.id
+                and relationship.relationship_type == "cared_for_by"
+            )
+
+            if not (
+                is_obsolete_direct
+                or is_obsolete_inverse
+            ):
+                continue
+
+            if self.relationship_engine.delete_relationship(
+                relationship.id,
+                delete_inverse=True,
+            ):
+                removed += 1
+
+        return removed
 
     def _initialize_relationships(
         self,

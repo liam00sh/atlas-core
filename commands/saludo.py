@@ -1,119 +1,82 @@
-"""
-===============================================================================
-Proyecto Atlas
-Archivo: commands/saludo.py
-
-Descripción:
-    Implementa el comando "saludo".
-
-    Su función es mostrar un saludo sencillo del asistente.
-
-    Actualmente el saludo está dirigido a Liam de forma fija, ya que fue uno
-    de los primeros comandos creados durante el desarrollo de Atlas.
-
-    En futuras versiones este comando utilizará el usuario activo almacenado
-    en Atlas para personalizar automáticamente el saludo.
-
-Ejemplo:
-
-    Atlas > saludo
-
-        ¡Hola Liam!
-        Soy Daxter 😊
-
-Flujo:
-
-    Usuario
-        │
-        ▼
-     saludo
-        │
-        ▼
-    execute()
-        │
-        ▼
-    Mostrar saludo
-===============================================================================
-"""
+﻿"""Comando de saludo dinámico del Proyecto Atlas."""
 
 
-# =============================================================================
-# METADATOS DEL COMANDO
-# =============================================================================
+from assistant_identity.phrase_bank import GREETINGS
 
-# Todos los comandos incluyen un diccionario COMMAND.
-#
-# command_manager.py utiliza esta información para registrar
-# automáticamente el comando al iniciar Atlas.
+
 COMMAND = {
-
-    # Nombre principal del comando.
     "name": "saludo",
-
-    # Descripción que aparecerá en el comando "ayuda".
     "description": "Saluda al usuario.",
-
-    # Categoría.
     "category": "General",
-
-    # Autor del comando.
     "author": "Liam",
-
-    # Versión del comando.
-    "version": "1.0",
-
-    # Alias aceptados.
-    #
-    # Todos ejecutarán exactamente este mismo comando.
-    "aliases": [
-
-        "hola",
-
-        "saludar",
-
-    ],
-
-    # Ejemplos de uso.
-    "examples": [
-
-        "saludo",
-
-        "hola",
-
-    ],
-
+    "version": "1.1",
+    "aliases": ["hola", "saludar"],
+    "examples": ["saludo", "hola"],
 }
 
 
-def execute():
-    """
-    Ejecuta el comando "saludo".
 
-    No recibe parámetros.
 
-    No devuelve ningún valor.
+def _find_atlas_context():
+    """Busca la instancia de Atlas en la pila de llamadas."""
 
-    Funcionamiento:
 
-        Muestra un saludo básico del asistente.
+    import inspect
 
-    Al no devolver ningún valor, command_manager interpretará
-    automáticamente que Atlas debe continuar funcionando.
-    """
 
-    # Dejamos una línea en blanco para mejorar la presentación.
+    frame = inspect.currentframe()
+
+
+    try:
+        frame = frame.f_back if frame is not None else None
+
+
+        while frame is not None:
+            atlas = frame.f_locals.get("self")
+
+
+            if (
+                atlas is not None
+                and callable(getattr(atlas, "get_user", None))
+                and hasattr(atlas, "identity_manager")
+            ):
+                return atlas
+
+
+            frame = frame.f_back
+
+
+    finally:
+        del frame
+
+
+    return None
+
+
+
+
+def execute(
+    user_name: str | None = None,
+    assistant_name: str | None = None,
+):
+    """Muestra un saludo propio de la identidad activa."""
+
+
+    atlas = _find_atlas_context()
+
+
+    if atlas is not None:
+        user_name = user_name or atlas.get_user()
+        phrase = atlas.identity_manager.get_phrase(
+            GREETINGS,
+            default="¡Buenas! ¿Qué tenemos entre manos?",
+            user=user_name,
+        )
+    else:
+        clean_user = str(user_name or "usuario").strip() or "usuario"
+        clean_assistant = str(assistant_name or "Atlas").strip() or "Atlas"
+        phrase = f"¡Buenas, {clean_user}! {clean_assistant} al habla."
+
+
     print()
-
-    # Saludo principal.
-    #
-    # Actualmente el nombre "Liam" está escrito de forma fija.
-    #
-    # En futuras versiones se obtendrá automáticamente mediante:
-    #
-    #     atlas.get_user()
-    #
-    # De esta forma el saludo cambiará según el usuario activo.
-    print("¡Hola Liam!")
-
-    # Presentación del asistente.
-    print("Soy Daxter 😊")
+    print(phrase)

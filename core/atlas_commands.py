@@ -43,6 +43,8 @@ from assistant_identity.mode import WORK_MODE
 from assistant_identity.phrase_bank import IDENTITY_CHANGED
 from assistant_identity.phrase_bank import MODE_CHANGED
 
+from conversation.personality import identity as identity_response
+
 from console.command_manager import COMMANDS
 from console.command_manager import execute
 from console.command_manager import resolve_command
@@ -572,6 +574,29 @@ class AtlasCommandsMixin:
             .get_active_display_name()
         )
 
+        if previous_identity.casefold() == str(identity_name).casefold():
+            same_messages = {
+                "daxter": (
+                    "Ya soy Daxter. Buen intento, pero no puedes cambiarme por mí mismo.",
+                    "Has seleccionado a Daxter... mientras hablabas con Daxter. Casi, pringado.",
+                    "Otra vez será: Daxter ya estaba al mando y el puesto sigue ocupado.",
+                    "Confirmado: sigo siendo Daxter. La misión era demasiado fácil.",
+                ),
+                "coco": (
+                    "Ya soy Coco. La comprobación era innecesaria, pero técnicamente correcta.",
+                    "Has pedido a Coco mientras Coco ya estaba aquí. Resultado: cero cambios y una pequeña sonrisa.",
+                    "Coco ya estaba al mando. Buen intento; el sistema no puede mejorar lo que ya está activo.",
+                    "Sigo siendo Coco. Has ejecutado un cambio de identidad con destino idéntico.",
+                ),
+            }
+            import random
+            print()
+            print(random.choice(same_messages.get(
+                str(identity_name).casefold(),
+                (f"Ya está activa la identidad {previous_identity}.",),
+            )))
+            return True
+
         changed = (
             self.identity_manager
             .change_identity(
@@ -630,6 +655,19 @@ class AtlasCommandsMixin:
             .get_active_mode_name()
         )
 
+        if previous_mode == mode_name:
+            import random
+            active_name = self.identity_manager.get_active_display_name()
+            messages = (
+                f"Ya estoy en modo {self.identity_manager.get_active_mode_label()}. Has cambiado exactamente nada.",
+                f"Modo {self.identity_manager.get_active_mode_label()} ya activo. Intento elegante, resultado nulo.",
+                f"{active_name} confirma que ese modo ya estaba puesto. Otra vez será, campeón.",
+                f"Has pedido el modo que ya estaba usando. La máquina obedece, pero también juzga un poquito.",
+            )
+            print()
+            print(random.choice(messages))
+            return True
+
         changed = self.identity_manager.set_mode(
             mode_name=mode_name,
             manual=True,
@@ -678,24 +716,16 @@ class AtlasCommandsMixin:
     def _show_active_assistant_identity(
         self,
     ) -> None:
-        """
-        Muestra la identidad activa del asistente.
-        """
+        """Muestra la identidad activa con una formulación variable."""
 
-        identity = (
-            self.identity_manager
-            .get_active_identity()
-        )
+        active_name = self.identity_manager.get_active_display_name()
 
         print()
         print(
-            f"Ahora estás hablando con "
-            f"{identity.display_name}."
-        )
-
-        print()
-        print(
-            identity.description
+            identity_response(
+                active_name,
+                self.get_project(),
+            )
         )
 
     def _show_active_assistant_mode(

@@ -55,6 +55,7 @@ Mostrar usuario activo
 #
 # Esto permite consultar información del asistente sin necesidad
 # de pasar la instancia como parámetro.
+from conversation.personality import current_user_identity
 from core import context
 
 
@@ -135,9 +136,8 @@ def execute():
     # Usuario activo: Saray
     # Usuario activo: Lidia
     print(
-
-        f"Usuario activo: "
-
-        f"{context.atlas.get_user()}"
-
+        current_user_identity(
+            user=context.atlas.get_user(),
+            assistant_name=context.atlas.get_name(),
+        )
     )
