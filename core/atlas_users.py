@@ -107,6 +107,19 @@ class AtlasUsersMixin:
 
         clean_user = str(user).strip()
 
+        request_context = getattr(self, "channel_request_context", None)
+        authenticated_channel_user = getattr(request_context, "atlas_user_id", None)
+        if (
+            getattr(request_context, "channel", None) == "telegram"
+            and authenticated_channel_user
+            and clean_user.casefold() != str(authenticated_channel_user).casefold()
+        ):
+            info(
+                "Cambio de usuario rechazado: la identidad del canal "
+                "Telegram es autoritativa."
+            )
+            return False
+
         people_manager = getattr(self, "people_manager", None)
 
         if people_manager is not None:
@@ -167,6 +180,20 @@ class AtlasUsersMixin:
         Devuelve la sesión al usuario principal y sincroniza todos
         los servicios dependientes del perfil.
         """
+
+        request_context = getattr(self, "channel_request_context", None)
+        authenticated_channel_user = getattr(request_context, "atlas_user_id", None)
+        if (
+            getattr(request_context, "channel", None) == "telegram"
+            and authenticated_channel_user
+            and self.get_main_user().casefold()
+            != str(authenticated_channel_user).casefold()
+        ):
+            info(
+                "Regreso al usuario principal rechazado: la identidad del "
+                "canal Telegram es autoritativa."
+            )
+            return
 
         previous_user = self.get_user()
 

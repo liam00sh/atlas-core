@@ -59,6 +59,7 @@ Descripción:
 # =============================================================================
 
 import json
+import os
 
 from pathlib import Path
 
@@ -371,6 +372,22 @@ class IdentityManager:
         """
 
         try:
+            # Varias interfaces pueden modificar preferencias desde procesos
+            # distintos (CLI y Telegram). Fusionamos con el estado más reciente
+            # del disco y escribimos de forma atómica para no perder cambios.
+            disk_preferences = {}
+            if self.preferences_path.exists():
+                try:
+                    raw = self.preferences_path.read_text(encoding="utf-8").strip()
+                    loaded = json.loads(raw) if raw else {}
+                    if isinstance(loaded, dict):
+                        disk_preferences = loaded
+                except (OSError, json.JSONDecodeError):
+                    disk_preferences = {}
+
+            merged = dict(disk_preferences)
+            merged.update(self._preferences)
+            self._preferences = merged
 
             serialized_data = json.dumps(
                 self._preferences,
@@ -378,14 +395,13 @@ class IdentityManager:
                 indent=4,
                 sort_keys=True,
             )
-
-            self.preferences_path.write_text(
-                serialized_data,
-                encoding="utf-8",
+            temporary_path = self.preferences_path.with_suffix(
+                self.preferences_path.suffix + ".tmp"
             )
+            temporary_path.write_text(serialized_data, encoding="utf-8")
+            os.replace(temporary_path, self.preferences_path)
 
         except OSError:
-
             return False
 
         return True
@@ -475,6 +491,11 @@ class IdentityManager:
         """
 
         clean_user_name = user_name.strip()
+
+        # Recarga siempre antes de activar un usuario. Así, un cambio realizado
+        # desde Telegram se observa inmediatamente al iniciar ese mismo usuario
+        # en la CLI, incluso si ambos procesos ya estaban abiertos.
+        self._load_preferences()
 
         if not clean_user_name:
 

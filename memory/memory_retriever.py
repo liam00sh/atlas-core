@@ -298,6 +298,17 @@ class MemoryRetriever:
             f"sobre {owner}."
         )
 
+        record_access = getattr(
+            self.memory_manager,
+            "record_access",
+            None,
+        )
+        if callable(record_access):
+            record_access(
+                owner=owner,
+                memory_ids=[str(item.get("id", "")) for item in selected_memories],
+            )
+
         return selected_memories
 
     def format_for_prompt(

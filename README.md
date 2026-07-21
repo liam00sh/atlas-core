@@ -65,6 +65,7 @@ atlas_core/
 ├── identity/            Personas, animales, relaciones e identidad conversacional
 ├── memory/              Memoria persistente, visibilidad y recuperación
 ├── tests/               Pruebas automatizadas
+├── tools/               Nuevo framework modular de herramientas
 ├── utils/               Normalización y utilidades compartidas
 ├── config.py            Configuración central
 ├── main.py              Punto de entrada
@@ -82,28 +83,26 @@ atlas_core/
 
 ## Estado actual
 
-La versión **0.3.1** de la **Fase 3.1** queda cerrada y validada como base estable para iniciar la Fase 4. Incluye:
+La versión **0.3.1** de la **Fase 3.1** queda cerrada y validada como base estable para iniciar la Fase 4.
 
-- identidad conversacional y separación de permisos;
-- personas, animales y relaciones familiares;
-- memoria autorizada y relevante;
-- herramientas locales controladas;
-- integración con Ollama;
-- identidades Daxter y Coco;
-- modos Clásico, Trabajo, Divertido y Empático;
-- selección automática y bloqueo manual de modo;
-- preferencias independientes por interlocutor.
-
-La batería completa de 288 pruebas ha sido superada. La Fase 4 todavía no se ha iniciado.
+El Sprint 1 de la Fase 4 ha añadido el núcleo independiente del nuevo Tools Framework, todavía sin conectarlo al flujo principal de Atlas.
 
 ## Pruebas
+
+Batería principal:
 
 ```bash
 python -m unittest discover -s tests -p "test_*.py" -v
 ```
 
+Pruebas del nuevo framework:
+
+```bash
+python -m pytest tests/tools -q
+```
+
 Comprobación previa de sintaxis:
 
 ```bash
-python -m compileall ai assistant_identity capabilities commands console conversation core identity memory tests utils
+python -m compileall ai assistant_identity capabilities commands console conversation core identity memory tests tools utils
 ```

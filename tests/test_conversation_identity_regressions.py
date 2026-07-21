@@ -1,5 +1,6 @@
 """Regresiones de identidad, relaciones, ambigüedad y limpieza de texto."""
 
+import re
 import unittest
 from types import SimpleNamespace
 
@@ -32,6 +33,12 @@ class _PeopleManager:
             _Person("REDACTED_e899cf89ab27_REDACTED_7b9528898599", "REDACTED_e3b252570a2f", ("REDACTED_342ad0893cb2",)),
             _Person("REDACTED_e899cf89ab27_REDACTED_f73137d930c3", "REDACTED_32885d880536", ("REDACTED_342ad0893cb2",)),
             _Person("REDACTED_7b9528898599", "REDACTED_8762331d93e2", ("REDACTED_bc04a68d9192",)),
+            _Person("REDACTED_1552db05a755", "REDACTED_65dc3df1f2c0", ("REDACTED_0392c3d1b4d3",)),
+            _Person("raul", "REDACTED_d3969f681ba1", ("REDACTED_de9c80449aae",)),
+            _Person("REDACTED_6915771be1c5", "REDACTED_ba2c2b03ba9a", ("REDACTED_aebac53c46bb",)),
+            _Person("ruben", "REDACTED_7b2ab41fc4b5", ("REDACTED_1b4b1a7f2126",)),
+            _Person("REDACTED_944f53978b12", "REDACTED_7ac2d8ee0281", ("REDACTED_abbdcaee9944",)),
+            _Person("REDACTED_7467b914d771", "REDACTED_91f6198b34bc", ("REDACTED_d296a64095dd",)),
         ]
         self.animals = [
             _Animal("REDACTED_b4096f88779e", "REDACTED_c0240dd983fa", ("REDACTED_0f38c2ded26f",)),
@@ -130,6 +137,12 @@ class _RelationshipEngine:
             ("REDACTED_7b9528898599", "REDACTED_e899cf89ab27_REDACTED_7b9528898599"): "hija",
             ("REDACTED_e899cf89ab27_REDACTED_f73137d930c3", "REDACTED_f73137d930c3"): "tía",
             ("REDACTED_f73137d930c3", "REDACTED_e899cf89ab27_REDACTED_f73137d930c3"): "sobrino",
+            ("REDACTED_1552db05a755", "REDACTED_f73137d930c3"): "hermana",
+            ("raul", "REDACTED_f73137d930c3"): "hermano",
+            ("REDACTED_6915771be1c5", "REDACTED_f73137d930c3"): "madre",
+            ("ruben", "REDACTED_7b9528898599"): "hermano",
+            ("REDACTED_944f53978b12", "REDACTED_7b9528898599"): "tía",
+            ("REDACTED_7467b914d771", "REDACTED_944f53978b12"): "hija",
         }
         return labels.get((source_entity_id, target_entity_id))
 
@@ -147,6 +160,12 @@ class _RelationshipEngine:
             "REDACTED_e899cf89ab27_REDACTED_7b9528898599": "REDACTED_e3b252570a2f",
             "REDACTED_e899cf89ab27_REDACTED_f73137d930c3": "REDACTED_32885d880536",
             "REDACTED_b4096f88779e": "REDACTED_c0240dd983fa",
+            "REDACTED_1552db05a755": "REDACTED_65dc3df1f2c0",
+            "raul": "REDACTED_d3969f681ba1",
+            "REDACTED_6915771be1c5": "REDACTED_ba2c2b03ba9a",
+            "ruben": "REDACTED_7b2ab41fc4b5",
+            "REDACTED_944f53978b12": "REDACTED_7ac2d8ee0281",
+            "REDACTED_7467b914d771": "REDACTED_91f6198b34bc",
         }
         label = self.infer_relationship_label(
             source_entity_id,
@@ -473,6 +492,145 @@ class ConversationIdentityRegressionTests(unittest.TestCase):
         )
         self.assertNotIn("la madre de REDACTED_bc04a68d9192 es.", cleaned.casefold())
 
+
+
+
+    def test_who_is_my_sister_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quién es mi hermana?"
+        )
+        self.assertEqual(
+            answer,
+            "Tu hermana es REDACTED_65dc3df1f2c0.",
+        )
+
+    def test_how_is_my_girlfriend_called_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama mi novia?"
+        )
+        self.assertEqual(
+            answer,
+            "Tu novia es REDACTED_8762331d93e2.",
+        )
+
+    def test_who_is_my_mother_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quién es mi madre?"
+        )
+        self.assertEqual(
+            answer,
+            "Tu madre es REDACTED_ba2c2b03ba9a.",
+        )
+
+    def test_sarays_brother_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama el hermano de REDACTED_bc04a68d9192?"
+        )
+        self.assertEqual(
+            answer,
+            "El hermano de REDACTED_8762331d93e2 "
+            "es REDACTED_7b2ab41fc4b5.",
+        )
+
+    def test_plural_siblings_are_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quiénes son mis hermanos?"
+        )
+        self.assertIn("REDACTED_65dc3df1f2c0", answer)
+        self.assertIn("REDACTED_d3969f681ba1", answer)
+
+
+
+    def test_brother_of_my_girlfriend_uses_two_steps(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quién es el hermano de mi novia?"
+        )
+        self.assertEqual(
+            answer,
+            "El hermano de tu novia es "
+            "REDACTED_7b2ab41fc4b5.",
+        )
+
+    def test_mother_of_my_girlfriend_uses_two_steps(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama la madre de mi novia?"
+        )
+        self.assertEqual(
+            answer,
+            "La madre de tu novia es "
+            "REDACTED_e3b252570a2f.",
+        )
+
+    def test_daughter_of_sarays_aunt_uses_three_steps(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama la hija de la tía de REDACTED_bc04a68d9192?"
+        )
+        self.assertEqual(
+            answer,
+            "La hija de la tía de REDACTED_8762331d93e2 es "
+            "REDACTED_91f6198b34bc.",
+        )
+
+
+
+    def test_relationship_pattern_groups_all_aliases(self):
+        atlas = _AtlasAI()
+        pattern = atlas._relationship_pattern()
+
+        self.assertIsNotNone(
+            re.fullmatch(
+                rf"(?:mi|mis)\s+{pattern}",
+                "mi hermana",
+            )
+        )
+        self.assertIsNotNone(
+            re.fullmatch(
+                rf"(?:mi|mis)\s+{pattern}",
+                "mi madre",
+            )
+        )
+        self.assertIsNotNone(
+            re.fullmatch(
+                rf"(?:mi|mis)\s+{pattern}",
+                "mi novia",
+            )
+        )
+
+    def test_relationship_articles_include_madre(self):
+        atlas = _AtlasAI()
+
+        self.assertEqual(
+            atlas._relationship_article(
+                "madre",
+                plural=False,
+            ),
+            "La",
+        )
+        self.assertEqual(
+            atlas._relationship_article(
+                "hermano",
+                plural=False,
+            ),
+            "El",
+        )
+
+    def test_nested_subject_phrase_preserves_article_and_name(self):
+        atlas = _AtlasAI()
+
+        self.assertEqual(
+            atlas._relationship_subject_phrase(
+                "tía de REDACTED_bc04a68d9192"
+            ),
+            "la tía de REDACTED_8762331d93e2",
+        )
 
 
 if __name__ == "__main__":

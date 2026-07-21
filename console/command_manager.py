@@ -373,11 +373,17 @@ def execute(command_name):
         print()
 
         print("No conozco ese comando.")
-
-        print(
-            "Escribe «ayuda» para ver "
-            "los disponibles."
-        )
+        try:
+            from console.command_help import suggest_entries
+            suggestions = suggest_entries(str(command_name), limit=4)
+        except Exception:
+            suggestions = []
+        if suggestions:
+            print("Quizá buscas alguno de estos:")
+            for suggestion in suggestions:
+                print(f"• {suggestion.name}")
+        else:
+            print("Escribe «ayuda» para ver los disponibles.")
 
         # Atlas continúa funcionando aunque el comando
         # no haya sido reconocido.

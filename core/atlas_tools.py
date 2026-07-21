@@ -37,7 +37,45 @@ Descripción:
 
 from ai.prompts.tool_prompt import build_tool_response_prompt
 
+from pathlib import Path
+
 from core.log_manager import info
+
+from knowledge.conversation import KnowledgeIntentRecognizer
+
+from tools.result import ToolResult
+from tools.google_drive import (
+    GoogleDriveClient,
+    GoogleDriveReadTool,
+)
+from tools.google_drive_oauth import (
+    GoogleDriveOAuthConfig,
+    GoogleDriveOAuthProvider,
+)
+
+
+ATLAS_PROJECT_GOOGLE_DRIVE_FOLDER_ID = "1odTh2pF7A_HxaiAIH0h5zqcLOqHUTm3x"
+
+from tools.google_drive_conversation import (
+    GoogleDriveConversationController,
+)
+from tools.google_drive_index import (
+    GoogleDriveDocumentIndex,
+    GoogleDriveIndexTool,
+)
+from tools.google_drive_rag import (
+    GoogleDriveRagTool,
+)
+from tools.google_drive_semantic import (
+    GoogleDriveSemanticIndex,
+    GoogleDriveSemanticTool,
+    build_embedding_client_from_provider,
+)
+from tools.google_drive_structure import (
+    DriveNavigationService,
+    GoogleDriveStructureIndex,
+    GoogleDriveStructureTool,
+)
 
 # =============================================================================
 # RESPUESTAS DE CONFIRMACIÓN
@@ -716,6 +754,415 @@ class AtlasToolsMixin:
         )
 
         return True
+
+    def _get_google_drive_conversation_controller(
+        self,
+    ) -> GoogleDriveConversationController:
+        """
+        Devuelve el controlador conversacional de Drive.
+
+        Se crea de forma diferida para que Atlas siga siendo compatible con
+        inicializaciones parciales utilizadas por algunas pruebas.
+        """
+
+        controller = getattr(
+            self,
+            "google_drive_conversation",
+            None,
+        )
+
+        if controller is None:
+            controller = (
+                GoogleDriveConversationController()
+            )
+            self.google_drive_conversation = (
+                controller
+            )
+
+        return controller
+
+    def _handle_framework_knowledge(
+        self,
+        original_text: str,
+    ) -> bool:
+        """Procesa preguntas naturales mediante una accion estructurada."""
+
+        recognizer = getattr(self, "knowledge_intent_recognizer", None)
+        if recognizer is None:
+            recognizer = KnowledgeIntentRecognizer()
+            self.knowledge_intent_recognizer = recognizer
+
+        intent = recognizer.recognize(original_text)
+        if intent is None:
+            return False
+
+        previous = getattr(self, "last_knowledge_sources", {}).get(
+            self.get_user(), ()
+        )
+        if intent.provenance_only:
+            if not previous:
+                message = "No tengo una respuesta unificada anterior con fuentes disponibles."
+            else:
+                lines = ["La respuesta anterior se baso en:"]
+                for index, source in enumerate(previous, start=1):
+                    lines.append(
+                        f"[{index}] {source.get('title', 'Fuente')} "
+                        f"({source.get('source_type', 'desconocida')})."
+                    )
+                message = "\n".join(lines)
+        else:
+            result = self.execute_framework_tool(
+                "knowledge.answer",
+                arguments={
+                    "question": intent.question,
+                    "allow_sensitive": intent.allow_sensitive,
+                },
+            )
+            if not result.success:
+                message = result.message
+            else:
+                message = str(result.data.get("answer", result.message))
+                sources = tuple(result.data.get("sources", ()))
+                state = getattr(self, "last_knowledge_sources", {})
+                state[self.get_user()] = sources
+                self.last_knowledge_sources = state
+
+        print()
+        print(message)
+        context = self.get_current_ai_context()
+        context.add_message(role="user", content=original_text)
+        context.add_message(role="assistant", content=message)
+        info(f"Consulta de conocimiento procesada. Usuario: {self.get_user()}.")
+        return True
+    def _handle_framework_google_drive(
+        self,
+        original_text: str,
+    ) -> bool:
+        """
+        Procesa solicitudes conversacionales explícitas de Google Drive.
+
+        La selección es determinista. La IA no decide ni ejecuta la
+        herramienta.
+        """
+
+        controller = (
+            self
+            ._get_google_drive_conversation_controller()
+        )
+
+        response = controller.handle(
+            self,
+            original_text,
+        )
+
+        if not response.handled:
+            return False
+
+        print()
+        print(response.message)
+
+        if response.add_to_context:
+            context = self.get_current_ai_context()
+            context.add_message(
+                role="user",
+                content=original_text,
+            )
+            context.add_message(
+                role="assistant",
+                content=response.message,
+            )
+
+        info(
+            "Solicitud conversacional de Google Drive procesada. "
+            f"Usuario: {self.get_user()}."
+        )
+
+        return True
+
+    def build_framework_tool_context(
+        self,
+        *,
+        channel: str = "cli",
+        metadata: dict | None = None,
+    ):
+        """
+        Construye un ToolContext mediante el adaptador del nuevo framework.
+
+        Este método no ejecuta ninguna herramienta y no modifica el flujo
+        heredado.
+        """
+
+        adapter = getattr(
+            self,
+            "framework_tool_adapter",
+            None,
+        )
+
+        if adapter is None:
+            return None
+
+        return adapter.build_context(
+            self,
+            channel=channel,
+            metadata=metadata,
+        )
+
+    def execute_framework_tool(
+        self,
+        capability: str,
+        *,
+        arguments: dict | None = None,
+        channel: str = "cli",
+        metadata: dict | None = None,
+    ) -> ToolResult:
+        """
+        Ejecuta directamente una capacidad del nuevo framework.
+
+        Está pensado para pruebas, comandos internos y futuras capas de
+        selección. La entrada conversacional continúa utilizando
+        `_handle_tool()` y el sistema heredado.
+        """
+
+        adapter = getattr(
+            self,
+            "framework_tool_adapter",
+            None,
+        )
+
+        if adapter is None:
+            result = ToolResult.fail(
+                "El nuevo framework de herramientas no está disponible.",
+                error="framework_not_configured",
+            )
+            result.capability = capability
+            return result
+
+        return adapter.execute(
+            self,
+            capability,
+            arguments=arguments,
+            channel=channel,
+            metadata=metadata,
+        )
+
+    def configure_google_drive_client(
+        self,
+        client: GoogleDriveClient,
+    ) -> None:
+        """
+        Sustituye el cliente provisional por una conexión configurada.
+
+        La autenticación y la creación del cliente real pertenecen a una capa
+        externa. Este método solo registra la herramienta ya configurada.
+        """
+
+        registry = getattr(
+            self,
+            "framework_tool_registry",
+            None,
+        )
+
+        if registry is None:
+            raise RuntimeError(
+                "El framework de herramientas no está configurado."
+            )
+
+        for tool_id in (
+            "google.drive.read",
+            "google.drive.index",
+            "google.drive.structure",
+            "google.drive.rag",
+            "google.drive.semantic",
+        ):
+            try:
+                registry.unregister(tool_id)
+            except Exception:
+                # Permite configurar el cliente incluso si la herramienta
+                # provisional no estaba registrada.
+                pass
+
+        registry.register(
+            GoogleDriveReadTool(client)
+        )
+
+        structure_index = getattr(self, "google_drive_structure_index", None)
+        if structure_index is None:
+            project_root = Path(__file__).resolve().parent.parent
+            structure_index = GoogleDriveStructureIndex(
+                project_root / "data" / "integrations" / "google_drive" / "structure_index.json"
+            )
+            self.google_drive_structure_index = structure_index
+        navigation = getattr(self, "google_drive_navigation", None)
+        if navigation is None:
+            navigation = DriveNavigationService(structure_index)
+            self.google_drive_navigation = navigation
+        registry.register(
+            GoogleDriveStructureTool(client, structure_index, navigation)
+        )
+
+        index = getattr(
+            self,
+            "google_drive_document_index",
+            None,
+        )
+        if index is None:
+            project_root = (
+                Path(__file__)
+                .resolve()
+                .parent
+                .parent
+            )
+            index = GoogleDriveDocumentIndex(
+                project_root
+                / "data"
+                / "integrations"
+                / "google_drive"
+                / "document_index.json"
+            )
+            self.google_drive_document_index = index
+
+        registry.register(
+            GoogleDriveIndexTool(
+                client,
+                index,
+                structure_index,
+            )
+        )
+
+        semantic_index = getattr(
+            self,
+            "google_drive_semantic_index",
+            None,
+        )
+        if semantic_index is None:
+            project_root = (
+                Path(__file__)
+                .resolve()
+                .parent
+                .parent
+            )
+            semantic_index = GoogleDriveSemanticIndex(
+                project_root
+                / "data"
+                / "integrations"
+                / "google_drive"
+                / "semantic_index.json",
+                index,
+                build_embedding_client_from_provider(
+                    getattr(
+                        self,
+                        "ai_provider",
+                        None,
+                    )
+                ),
+            )
+            self.google_drive_semantic_index = semantic_index
+
+        registry.register(
+            GoogleDriveSemanticTool(
+                semantic_index
+            )
+        )
+
+        registry.register(
+            GoogleDriveRagTool(
+                index,
+                getattr(
+                    self,
+                    "ai_provider",
+                    None,
+                ),
+                semantic_index,
+            )
+        )
+
+    def configure_google_drive_oauth(
+        self,
+        *,
+        config: GoogleDriveOAuthConfig | None = None,
+        interactive: bool = False,
+    ) -> bool:
+        """
+        Carga o autoriza el cliente real de Google Drive.
+
+        Con `interactive=False` nunca abre el navegador. Esta variante se usa
+        durante el arranque para restaurar una sesión existente de forma
+        silenciosa.
+
+        Con `interactive=True` puede iniciar el consentimiento OAuth.
+        """
+
+        if config is None:
+            project_root = (
+                Path(__file__)
+                .resolve()
+                .parent
+                .parent
+            )
+            config = GoogleDriveOAuthConfig.default(
+                project_root,
+                root_folder_id=(
+                    ATLAS_PROJECT_GOOGLE_DRIVE_FOLDER_ID
+                ),
+            )
+
+        if not str(
+            config.root_folder_id or ""
+        ).strip():
+            self.google_drive_oauth_error = (
+                "Google Drive requiere una carpeta raíz autorizada. "
+                "Por seguridad, Atlas no puede usar la raíz completa "
+                "de Mi unidad."
+            )
+            info(
+                "Google Drive no se ha configurado: "
+                f"{self.google_drive_oauth_error}"
+            )
+            return False
+
+        provider = GoogleDriveOAuthProvider(
+            config
+        )
+        self.google_drive_oauth_provider = provider
+        self.google_drive_oauth_error = None
+
+        try:
+            client = provider.build_client(
+                interactive=interactive
+            )
+        except Exception as exception:
+            self.google_drive_oauth_error = str(
+                exception
+            )
+            info(
+                "Google Drive no se ha configurado: "
+                f"{exception}"
+            )
+            return False
+
+        if client is None:
+            return False
+
+        self.configure_google_drive_client(
+            client
+        )
+        return True
+
+    def get_framework_tool_count(
+        self,
+    ) -> int:
+        """Devuelve el número de herramientas del nuevo framework."""
+
+        registry = getattr(
+            self,
+            "framework_tool_registry",
+            None,
+        )
+
+        if registry is None:
+            return 0
+
+        return registry.count
 
     def get_tools(
         self,

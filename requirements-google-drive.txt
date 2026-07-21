@@ -1,0 +1,8 @@
+# Dependencias opcionales para Google Drive en Proyecto Atlas
+#
+# Instalación:
+#     python -m pip install -r requirements-google-drive.txt
+
+google-api-python-client
+google-auth-httplib2
+google-auth-oauthlib

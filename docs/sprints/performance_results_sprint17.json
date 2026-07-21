@@ -1,0 +1,68 @@
+{
+  "python": "3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]",
+  "startup": {
+    "wall_ms": 2843.125,
+    "cpu_ms": 1828.125
+  },
+  "memory_bytes": {
+    "current": 19318803,
+    "peak": 19519206
+  },
+  "io": {
+    "json_reads": 17,
+    "json_writes": 1
+  },
+  "queries": {
+    "simple_first": {
+      "wall_ms": 32.641,
+      "cpu_ms": 31.25
+    },
+    "simple_second": {
+      "wall_ms": 41.377,
+      "cpu_ms": 15.625
+    },
+    "memory_first": {
+      "wall_ms": 51.659,
+      "cpu_ms": 31.25
+    },
+    "memory_second": {
+      "wall_ms": 70.869,
+      "cpu_ms": 15.625
+    },
+    "knowledge_first": {
+      "wall_ms": 32.599,
+      "cpu_ms": 15.625
+    },
+    "knowledge_second": {
+      "wall_ms": 18.689,
+      "cpu_ms": 15.625
+    },
+    "local_ai_pipeline": {
+      "wall_ms": 67.169,
+      "cpu_ms": 15.625
+    },
+    "document_first": {
+      "wall_ms": 1.041,
+      "cpu_ms": 0.0
+    },
+    "document_second": {
+      "wall_ms": 1.029,
+      "cpu_ms": 0.0
+    },
+    "tool_first": {
+      "wall_ms": 127.598,
+      "cpu_ms": 125.0
+    },
+    "tool_second": {
+      "wall_ms": 1.489,
+      "cpu_ms": 0.0
+    }
+  },
+  "local_provider_metrics": {
+    "availability_calls": 1,
+    "generate_calls": 1,
+    "prompt_chars": 406
+  },
+  "drive_calls": 0,
+  "profile_top": "         878395 function calls (635808 primitive calls) in 2.843 seconds\n\n   Ordered by: cumulative time\n   List reduced from 2548 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       58    0.002    0.000    3.126    0.054 __init__.py:1(<module>)\n        1    0.000    0.000    2.843    2.843 benchmark_sprint17.py:25(measure)\n        1    0.000    0.000    2.843    2.843 benchmark_sprint17.py:65(<lambda>)\n        1    0.001    0.001    2.843    2.843 atlas.py:197(__init__)\n        1    0.000    0.000    1.625    1.625 atlas_tools.py:1057(configure_google_drive_oauth)\n        1    0.000    0.000    1.622    1.622 google_drive_oauth.py:742(build_client)\n    836/6    0.006    0.000    1.610    0.268 <frozen importlib._bootstrap>:1360(_find_and_load)\n    363/6    0.006    0.000    1.608    0.268 <frozen importlib._bootstrap>:1308(_find_and_load_unlocked)\n        1    0.000    0.000    1.603    1.603 google_drive_oauth.py:680(_load_dependencies)\n   973/12    0.001    0.000    1.599    0.133 <frozen importlib._bootstrap>:483(_call_with_frames_removed)\n   342/10    0.003    0.000    1.569    0.157 <frozen importlib._bootstrap>:914(_load_unlocked)\n    328/9    0.002    0.000    1.568    0.174 <frozen importlib._bootstrap_external>:753(exec_module)\n    335/9    0.042    0.000    1.558    0.173 {built-in method builtins.exec}\n   273/60    0.001    0.000    1.367    0.023 {built-in method builtins.__import__}\n  303/130    0.002    0.000    0.946    0.007 <frozen importlib._bootstrap>:1409(_handle_fromlist)\n        1    0.000    0.000    0.756    0.756 requests.py:1(<module>)\n        1    0.000    0.000    0.686    0.686 family_initializer.py:63(initialize)\n      150    0.000    0.000    0.619    0.004 identity_storage.py:364(load_people)\n      166    0.003    0.000    0.585    0.004 identity_storage.py:137(_cached_entities)\n     1632    0.520    0.000    0.521    0.000 {built-in method nt.stat}\n      328    0.008    0.000    0.410    0.001 <frozen importlib._bootstrap_external>:826(get_code)\n        1    0.000    0.000    0.409    0.409 discovery.py:1(<module>)\n        1    0.001    0.001    0.408    0.408 family_initializer.py:565(_initialize_relationships)\n        1    0.000    0.000    0.404    0.404 service_account.py:1(<module>)\n       54    0.000    0.000    0.391    0.007 relationship_engine.py:231(resolve_entity_reference)\n\n\n"
+}
