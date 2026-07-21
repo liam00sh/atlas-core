@@ -41,6 +41,9 @@ Flujo principal:
 """
 
 
+from pathlib import Path
+
+
 # =============================================================================
 # INTELIGENCIA ARTIFICIAL
 # =============================================================================
@@ -50,7 +53,7 @@ from ai.context.context_manager import AIContextManager
 from ai.models.model_registry import ModelRegistry
 from ai.prompts.builder import PromptBuilder
 from ai.providers.base_provider import BaseAIProvider
-from ai.tools.tool_registry import ToolRegistry
+from ai.tools.tool_registry import ToolRegistry as LegacyToolRegistry
 from ai.tools.tool_selector import ToolSelector
 
 
@@ -83,7 +86,17 @@ from core.atlas_ai import AtlasAIMixin
 from core.atlas_capabilities import AtlasCapabilitiesMixin
 from core.atlas_commands import AtlasCommandsMixin
 from core.atlas_memory import AtlasMemoryMixin
+from core.atlas_social import AtlasSocialMixin
+from core.atlas_interuser import AtlasInteruserMixin
+from core.atlas_daily import AtlasDailyMixin
+from core.atlas_daily_brief import AtlasDailyBriefMixin
+from core.atlas_understanding import AtlasUnderstandingMixin
+from core.atlas_family import AtlasFamilyMixin
+from core.atlas_family_assistance import AtlasFamilyAssistanceMixin
+from core.atlas_humor import AtlasHumorMixin
+from core.atlas_self_knowledge import AtlasSelfKnowledgeMixin
 from core.atlas_tools import AtlasToolsMixin
+from core.atlas_telegram import AtlasTelegramMixin
 from core.atlas_users import AtlasUsersMixin
 from core.atlas_utils import AtlasUtilsMixin
 
@@ -112,6 +125,23 @@ from identity.visitor_manager import VisitorManager
 from memory.memory_manager import MemoryManager
 from memory.memory_retriever import MemoryRetriever
 from memory.memory_service import MemoryService
+from memory.semantic_index import PersonalMemorySemanticIndex
+from memory.links import MemoryLinkStore
+from memory.long_term import LongTermMemoryService
+from memory.workflow.conversation import MemoryWorkflowConversation
+from memory.workflow.service import MemoryWorkflowService
+from conversation.continuity_store import ConversationContinuityStore
+
+from knowledge.retriever import KnowledgeRetriever
+from knowledge.service import KnowledgeService
+from knowledge.sources import (
+    DriveIndexKnowledgeSource,
+    IdentityKnowledgeSource,
+    MemoryKnowledgeSource,
+    PersonalSemanticMemoryKnowledgeSource,
+    LinkedMemoryKnowledgeSource,
+    SemanticKnowledgeSource,
+)
 
 
 # =============================================================================
@@ -119,6 +149,44 @@ from memory.memory_service import MemoryService
 # =============================================================================
 
 from utils.text_normalizer import normalize_text
+
+
+# =============================================================================
+# NUEVO FRAMEWORK DE HERRAMIENTAS
+# =============================================================================
+
+from tools.atlas_adapter import AtlasToolAdapter
+from tools.filesystem_read import FilesystemReadTool
+from tools.google_drive import (
+    GoogleDriveReadTool,
+    UnavailableGoogleDriveClient,
+)
+from tools.google_drive_index import (
+    GoogleDriveDocumentIndex,
+    GoogleDriveIndexTool,
+)
+from tools.google_drive_rag import (
+    GoogleDriveRagTool,
+)
+from tools.google_drive_semantic import (
+    GoogleDriveSemanticIndex,
+    GoogleDriveSemanticTool,
+    build_embedding_client_from_provider,
+)
+from tools.google_drive_structure import (
+    DriveNavigationService,
+    GoogleDriveStructureIndex,
+    GoogleDriveStructureTool,
+)
+from tools.knowledge import KnowledgeTool
+from tools.memory_write import MemoryWorkflowTool
+from tools.manager import ToolManager
+from tools.registry import ToolRegistry as FrameworkToolRegistry
+from tools.system_status import SystemStatusTool
+from tools.telegram_accounts import TelegramAccountTool
+from telegram_interface.identity_linker import TelegramIdentityLinker
+from telegram_interface.storage import TelegramStorage
+from telegram_interface.audit import TelegramAuditLogger
 
 
 from identity.family_initializer import FamilyInitializer
@@ -135,7 +203,17 @@ class Atlas(
     AtlasCapabilitiesMixin,
     AtlasCommandsMixin,
     AtlasMemoryMixin,
+    AtlasSocialMixin,
+    AtlasInteruserMixin,
+    AtlasDailyMixin,
+    AtlasDailyBriefMixin,
+    AtlasUnderstandingMixin,
+    AtlasFamilyMixin,
+    AtlasFamilyAssistanceMixin,
+    AtlasSelfKnowledgeMixin,
+    AtlasHumorMixin,
     AtlasToolsMixin,
+    AtlasTelegramMixin,
     AtlasUsersMixin,
     AtlasUtilsMixin,
 ):
@@ -290,6 +368,30 @@ class Atlas(
             self
         )
 
+        self.memory_workflow_service = MemoryWorkflowService(
+            self.memory,
+            data_folder=(
+                Path(__file__).resolve().parent.parent
+                / "data"
+                / "memory_workflow"
+            ),
+            people_manager=self.people_manager,
+            relationship_engine=self.relationship_engine,
+        )
+
+        self.memory_workflow_conversation = MemoryWorkflowConversation()
+
+        self.memory_links = MemoryLinkStore(
+            Path(__file__).resolve().parent.parent
+            / "data" / "knowledge" / "memory_links.json",
+            self.memory,
+        )
+        self.long_term_memory = LongTermMemoryService(
+            Path(__file__).resolve().parent.parent
+            / "data" / "knowledge" / "long_term_memory.json",
+            self.memory,
+        )
+
         # ---------------------------------------------------------------------
         # INTELIGENCIA ARTIFICIAL
         # ---------------------------------------------------------------------
@@ -304,10 +406,225 @@ class Atlas(
         # HERRAMIENTAS
         # ---------------------------------------------------------------------
 
-        self.tool_registry = ToolRegistry()
+        # Sistema de herramientas heredado.
+        #
+        # Se conserva sin cambios durante la migración para mantener
+        # operativo AtlasToolsMixin y todas las herramientas actuales.
+        self.tool_registry = LegacyToolRegistry()
 
         self.tool_selector = ToolSelector(
             self.tool_registry
+        )
+
+        # Nuevo Atlas Tools Framework.
+        #
+        # Utiliza atributos independientes para evitar colisiones con
+        # el registro y el selector heredados.
+        self.framework_tool_registry = (
+            FrameworkToolRegistry()
+        )
+
+        self.framework_tool_registry.register(
+            SystemStatusTool()
+        )
+
+        # Primera herramienta funcional del nuevo framework.
+        #
+        # La raíz permitida se calcula a partir de este archivo:
+        # core/atlas.py -> atlas_core/
+        self.framework_tool_registry.register(
+            FilesystemReadTool(
+                allowed_roots=(
+                    Path(__file__).resolve().parent.parent,
+                )
+            )
+        )
+
+        # Integración de Google Drive en modo seguro.
+        #
+        # Se registra con un cliente no disponible y queda desactivada
+        # hasta que una capa de autenticación inyecte un cliente real.
+        google_drive_unavailable_client = (
+            UnavailableGoogleDriveClient()
+        )
+
+        self.framework_tool_registry.register(
+            GoogleDriveReadTool(
+                google_drive_unavailable_client
+            )
+        )
+
+        self.google_drive_document_index = (
+            GoogleDriveDocumentIndex(
+                Path(__file__)
+                .resolve()
+                .parent
+                .parent
+                / "data"
+                / "integrations"
+                / "google_drive"
+                / "document_index.json"
+            )
+        )
+
+        self.google_drive_structure_index = GoogleDriveStructureIndex(
+            Path(__file__).resolve().parent.parent
+            / "data" / "integrations" / "google_drive" / "structure_index.json"
+        )
+        self.google_drive_navigation = DriveNavigationService(
+            self.google_drive_structure_index
+        )
+
+        self.framework_tool_registry.register(
+            GoogleDriveStructureTool(
+                google_drive_unavailable_client,
+                self.google_drive_structure_index,
+                self.google_drive_navigation,
+            )
+        )
+
+        self.framework_tool_registry.register(
+            GoogleDriveIndexTool(
+                google_drive_unavailable_client,
+                self.google_drive_document_index,
+                self.google_drive_structure_index,
+            )
+        )
+
+        self.google_drive_semantic_index = (
+            GoogleDriveSemanticIndex(
+                Path(__file__)
+                .resolve()
+                .parent
+                .parent
+                / "data"
+                / "integrations"
+                / "google_drive"
+                / "semantic_index.json",
+                self.google_drive_document_index,
+                build_embedding_client_from_provider(
+                    self.ai_provider
+                ),
+            )
+        )
+
+        self.personal_memory_semantic_index = PersonalMemorySemanticIndex(
+            Path(__file__).resolve().parent.parent
+            / "data" / "knowledge" / "personal_memory_semantic.json",
+            self.memory,
+            build_embedding_client_from_provider(self.ai_provider),
+        )
+        if self.personal_memory_semantic_index.embedder is not None:
+            try:
+                self.personal_memory_semantic_index.sync()
+            except Exception as exception:
+                info(
+                    "El índice semántico personal queda pendiente de "
+                    f"sincronización: {type(exception).__name__}."
+                )
+
+        self.framework_tool_registry.register(
+            GoogleDriveSemanticTool(
+                self.google_drive_semantic_index
+            )
+        )
+
+        self.framework_tool_registry.register(
+            GoogleDriveRagTool(
+                self.google_drive_document_index,
+                self.ai_provider,
+                self.google_drive_semantic_index,
+            )
+        )
+
+        self.knowledge_retriever = KnowledgeRetriever(
+            (
+                MemoryKnowledgeSource(
+                    self.memory_retriever,
+                    self.users.get_profile,
+                ),
+                PersonalSemanticMemoryKnowledgeSource(
+                    self.personal_memory_semantic_index
+                ),
+                LinkedMemoryKnowledgeSource(
+                    self.memory_links
+                ),
+                IdentityKnowledgeSource(
+                    self.people_manager,
+                    self.relationship_engine,
+                ),
+                DriveIndexKnowledgeSource(
+                    self.google_drive_document_index
+                ),
+                SemanticKnowledgeSource(
+                    self.google_drive_semantic_index
+                ),
+            )
+        )
+
+        self.knowledge_service = KnowledgeService(
+            self.knowledge_retriever,
+            self.ai_provider,
+        )
+
+        self.framework_tool_registry.register(
+            KnowledgeTool(self.knowledge_service)
+        )
+
+        self.framework_tool_registry.register(
+            MemoryWorkflowTool(
+                self.memory_workflow_service
+            )
+        )
+
+        # Administracion local de la vinculacion Telegram. El almacen existe
+        # aunque el canal no tenga token, pero no inicia red ni polling.
+        self.telegram_storage = TelegramStorage(
+            Path(__file__).resolve().parent.parent
+            / "data" / "integrations" / "telegram" / "state.json"
+        )
+        self.telegram_identity_linker = TelegramIdentityLinker(
+            self.telegram_storage
+        )
+        self.framework_tool_registry.register(
+            TelegramAccountTool(
+                self.telegram_identity_linker,
+                user_exists=lambda user: (
+                    self.people_manager.find_person_by_user_profile(user)
+                    is not None
+                ),
+                audit=TelegramAuditLogger(
+                    Path(__file__).resolve().parent.parent
+                    / "data" / "integrations" / "telegram" / "audit.jsonl"
+                ),
+            )
+        )
+
+        self.tool_manager = ToolManager(
+            self.framework_tool_registry
+        )
+
+        # Estado de la integración OAuth.
+        self.google_drive_oauth_provider = None
+        self.google_drive_oauth_error = None
+
+        # Estado conversacional temporal de Google Drive.
+        self.google_drive_conversation = None
+
+        # Restaura una sesión existente sin abrir el navegador.
+        # Si faltan dependencias, credenciales o token, Atlas continúa
+        # normalmente con la herramienta de Drive desactivada.
+        self.configure_google_drive_oauth(
+            interactive=False
+        )
+
+        # Adaptador seguro entre Atlas y el nuevo framework.
+        #
+        # En este Sprint todavía no participa automáticamente en
+        # Atlas.process(). Su uso queda disponible para pruebas,
+        # comandos internos y la migración gradual.
+        self.framework_tool_adapter = AtlasToolAdapter(
+            self.tool_manager
         )
 
         # ---------------------------------------------------------------------
@@ -333,6 +650,13 @@ class Atlas(
             self.get_user()
         )
 
+        # Contexto breve compartido entre CLI y Telegram. No sustituye la
+        # memoria; solo permite retomar el hilo reciente entre interfaces.
+        self.conversation_continuity = ConversationContinuityStore(
+            Path(__file__).resolve().parents[1]
+            / "data" / "conversation" / "continuity.json"
+        )
+
         info(
             "Atlas Core inicializado."
         )
@@ -352,7 +676,8 @@ class Atlas(
                 Atlas debe finalizar.
         """
 
-        original_text = text.strip()
+        raw_original_text = text.strip()
+        original_text = self._interpret_user_text(raw_original_text)
 
         normalized_text = normalize_text(
             original_text,
@@ -360,12 +685,40 @@ class Atlas(
         )
 
         if normalized_text == "":
+            # Los mensajes formados solo por emojis se quedan vacíos tras la
+            # normalización textual. Deben pasar por la conversación social
+            # antes de descartarse, especialmente en canales como Telegram.
+            if original_text and self._handle_social_conversation(original_text):
+                return True
             return True
 
-        info(
-            f"Entrada del usuario: "
-            f"{normalized_text}"
-        )
+        request_context = getattr(self, "channel_request_context", None)
+        if getattr(request_context, "channel", None) == "telegram":
+            logged_text = "[CONTENIDO TELEGRAM OMITIDO]"
+        else:
+            logged_text = (
+                "[CONTENIDO SENSIBLE OMITIDO]"
+                if self.memory_workflow_service.detector.contains_secret(original_text)
+                else normalized_text
+            )
+        info(f"Entrada del usuario: {logged_text}")
+
+        # Conocimiento determinista sobre Atlas, identidades, modos, memoria y vinculación.
+        # Debe resolverse antes de la IA para impedir invenciones sobre el propio sistema.
+        if self._handle_self_knowledge(original_text):
+            return True
+
+        # Preparación para beta familiar: incorporación guiada, cancelación
+        # universal, confirmaciones sensibles, privacidad, incidencias y salud.
+        # Debe ejecutarse antes de cualquier confirmación o flujo pendiente.
+        if self._handle_family_readiness(original_text):
+            return True
+
+        # Las confirmaciones de búsquedas web son por sesión y deben resolverse
+        # antes que saludos, memoria, modos o IA. Así «sí» no se interpreta como
+        # una conversación nueva ni se pierde entre CLI y Telegram.
+        if self._handle_pending_internet_lookup(original_text):
+            return True
 
         # ---------------------------------------------------------------------
         # 1. CONFIRMACIÓN PENDIENTE
@@ -384,6 +737,48 @@ class Atlas(
 
             if confirmation_result is not None:
                 return confirmation_result
+
+        # Sprint 18: la vinculación local de Telegram es determinista.
+        # Nunca debe llegar al modelo de IA, que podría inventar una web o
+        # instrucciones inexistentes para introducir el código.
+        if self._handle_telegram_link_request(original_text):
+            return True
+
+        # Sprint 18.1: mensajes y recordatorios entre usuarios vinculados.
+        # Se resuelven de forma determinista y funcionan igual desde CLI y Telegram.
+        if self._handle_interuser_request(original_text):
+            return True
+
+        # Humor cotidiano clasificado. Se resuelve antes que la IA para que
+        # respete el tema pedido y no repita siempre chistes genéricos de IA.
+        if self._handle_classified_humor(original_text):
+            return True
+
+        # Resumen de inicio y cierre del día, compartido por todas las interfaces.
+        if self._handle_daily_brief(original_text):
+            return True
+
+        # Guías interactivas, accesibilidad y tratamiento seguro de enlaces.
+        if self._handle_family_assistance(original_text):
+            return True
+
+        # Funciones cotidianas: recordatorios propios, listas, cálculos,
+        # redacción y gestión conversacional de memoria.
+        if self._handle_daily_life(original_text):
+            return True
+
+        # Comprensión humana e interactiva: aclaraciones, hipótesis y seguimiento.
+        self._emit_due_wellbeing_followup(original_text)
+        if self._handle_pending_understanding(original_text):
+            return True
+
+        if self._handle_human_understanding(original_text):
+            return True
+
+        # Sprint 13: convierte la intención en una acción estructurada antes
+        # de que el flujo heredado pueda escribir directamente.
+        if self._handle_memory_workflow(original_text):
+            return True
 
         # ---------------------------------------------------------------------
         # 2. PRIVACIDAD DE MEMORIA PENDIENTE
@@ -434,7 +829,27 @@ class Atlas(
             return command_result
 
         # ---------------------------------------------------------------------
-        # 6. CAMBIO AUTOMÁTICO DE MODO
+        # 6. CONOCIMIENTO UNIFICADO
+        # ---------------------------------------------------------------------
+
+        if self._handle_framework_knowledge(
+            original_text
+        ):
+            return True
+
+        # ---------------------------------------------------------------------
+        # 7. GOOGLE DRIVE CONVERSACIONAL
+        # ---------------------------------------------------------------------
+
+        # Solo intercepta peticiones explícitas relacionadas con Drive.
+        # Una búsqueda genérica continúa por el flujo habitual.
+        if self._handle_framework_google_drive(
+            original_text
+        ):
+            return True
+
+        # ---------------------------------------------------------------------
+        # 8. CAMBIO AUTOMÁTICO DE MODO
         # ---------------------------------------------------------------------
 
         # IdentityManager decide si debe aplicar la sugerencia.
@@ -461,7 +876,14 @@ class Atlas(
         )
 
         # ---------------------------------------------------------------------
-        # 7. CONVERSACIÓN BÁSICA
+        # 9. CONVERSACIÓN SOCIAL COTIDIANA
+        # ---------------------------------------------------------------------
+
+        if self._handle_social_conversation(original_text):
+            return True
+
+        # ---------------------------------------------------------------------
+        # 10. CONVERSACIÓN BÁSICA
         # ---------------------------------------------------------------------
 
         if self._handle_conversation(

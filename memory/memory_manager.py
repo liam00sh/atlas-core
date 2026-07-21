@@ -55,6 +55,8 @@ Importante:
 #
 #     memory/data/memories.json
 import json
+import os
+import unicodedata
 
 # uuid permite generar identificadores únicos.
 #
@@ -106,7 +108,10 @@ class MemoryManager:
     - La fecha de creación.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        data_folder: Path | str | None = None,
+    ) -> None:
         """
         Inicializa el gestor de memoria.
 
@@ -143,8 +148,9 @@ class MemoryManager:
         # C:\Atlas\atlas_core\memory\data
         # ---------------------------------------------------------------------
         self.data_folder = (
-            Path(__file__).resolve().parent
-            / "data"
+            Path(data_folder).resolve()
+            if data_folder is not None
+            else Path(__file__).resolve().parent / "data"
         )
 
         # ---------------------------------------------------------------------
@@ -166,6 +172,7 @@ class MemoryManager:
             self.data_folder
             / "memories.json"
         )
+        self._change_listeners: list = []
 
         # Nos aseguramos de que el archivo exista
         # antes de intentar leerlo.
@@ -173,6 +180,24 @@ class MemoryManager:
 
         # Registramos que el gestor se ha iniciado.
         info("Memory Manager inicializado.")
+
+    def register_change_listener(self, listener) -> None:
+        """Registra un observador aislado para índices derivados."""
+
+        if not callable(listener):
+            raise TypeError("El observador de memoria debe ser invocable.")
+        if listener not in self._change_listeners:
+            self._change_listeners.append(listener)
+
+    def _notify_change(self, action: str, memory: dict) -> None:
+        for listener in tuple(self._change_listeners):
+            try:
+                listener(action, memory.copy())
+            except Exception as exception:
+                error(
+                    "Un índice derivado de memoria no pudo actualizarse: "
+                    f"{type(exception).__name__}."
+                )
 
     def _ensure_memory_file(self):
         """
@@ -291,14 +316,12 @@ class MemoryManager:
 
         try:
 
-            # Abrimos el archivo en modo escritura.
-            #
-            # "w" significa:
-            #     write / escritura.
-            #
-            # Este modo reemplaza el contenido anterior.
+            temporary_file = self.memory_file.with_suffix(
+                self.memory_file.suffix + ".tmp"
+            )
+
             with open(
-                self.memory_file,
+                temporary_file,
                 "w",
                 encoding="utf-8",
             ) as file:
@@ -323,9 +346,25 @@ class MemoryManager:
                     indent=4,
                 )
 
+                file.flush()
+                os.fsync(file.fileno())
+
+            os.replace(
+                temporary_file,
+                self.memory_file,
+            )
+
             return True
 
         except OSError as exception:
+
+            temporary_file = self.memory_file.with_suffix(
+                self.memory_file.suffix + ".tmp"
+            )
+            try:
+                temporary_file.unlink(missing_ok=True)
+            except OSError:
+                pass
 
             error(
                 f"No se pudo guardar la memoria: "
@@ -339,6 +378,7 @@ class MemoryManager:
         owner: str,
         content: str,
         visibility: str,
+        metadata: dict | None = None,
     ) -> bool:
         """
         Guarda un nuevo recuerdo.
@@ -406,8 +446,7 @@ class MemoryManager:
         if duplicate_exists:
 
             info(
-                f"Memoria duplicada ignorada para "
-                f"{owner}: {content}"
+                f"Memoria duplicada ignorada para {owner}."
             )
 
             # Devolvemos True porque el dato ya está almacenado.
@@ -448,6 +487,29 @@ class MemoryManager:
 
         }
 
+        if metadata:
+            protected_fields = {
+                "id",
+                "owner",
+                "content",
+                "visibility",
+                "created_at",
+            }
+            memory.update(
+                {
+                    key: value
+                    for key, value in metadata.items()
+                    if key not in protected_fields
+                }
+            )
+
+        memory.setdefault("importance", 0.5)
+        memory.setdefault("access_count", 0)
+        memory.setdefault("last_accessed_at", None)
+        memory.setdefault("updated_at", memory["created_at"])
+        memory.setdefault("state", "active")
+        memory.setdefault("history", [])
+
         # Añadimos el nuevo recuerdo a la lista.
         memories.append(memory)
 
@@ -462,11 +524,233 @@ class MemoryManager:
 
             info(
                 f"Memoria guardada para {owner} "
-                f"con visibilidad {visibility}: "
-                f"{content}"
+                f"con visibilidad {visibility}."
             )
+            self._notify_change("created", memory)
 
         return saved
+
+    @staticmethod
+    def _normalize_search_text(value: str) -> str:
+        normalized = unicodedata.normalize(
+            "NFD",
+            str(value).casefold(),
+        )
+        return " ".join(
+            "".join(
+                character
+                for character in normalized
+                if unicodedata.category(character) != "Mn"
+                and not unicodedata.category(character).startswith("P")
+            ).split()
+        )
+
+    def list_memories(
+        self,
+        *,
+        owner: str | None = None,
+        include_inactive: bool = False,
+    ) -> list[dict]:
+        """Devuelve copias de recuerdos activos, opcionalmente por propietario."""
+
+        memories = self._load_all_memories()
+        return [
+            memory.copy()
+            for memory in memories
+            if owner is None
+            or str(memory.get("owner", "")).casefold()
+            == owner.casefold()
+            if include_inactive or memory.get("state", "active") == "active"
+        ]
+
+    def get_memory_by_id(
+        self,
+        memory_id: str,
+        *,
+        owner: str | None = None,
+    ) -> dict | None:
+        """Localiza un recuerdo por ID sin eludir el aislamiento de propietario."""
+
+        for memory in self.list_memories(owner=owner, include_inactive=True):
+            if str(memory.get("id", "")) == memory_id:
+                return memory
+        return None
+
+    def find_exact_memory(
+        self,
+        *,
+        owner: str,
+        content: str,
+    ) -> dict | None:
+        """Busca un duplicado exacto normalizado para un propietario."""
+
+        expected = self._normalize_search_text(content)
+        for memory in self.list_memories(owner=owner):
+            if self._normalize_search_text(
+                memory.get("content", "")
+            ) == expected:
+                return memory
+        return None
+
+    def find_memories(
+        self,
+        *,
+        owner: str,
+        query: str,
+        limit: int = 10,
+    ) -> list[dict]:
+        """Busca recuerdos propios por términos, sin consultar otras fuentes."""
+
+        terms = self._normalize_search_text(query).split()
+        if not terms or limit < 1:
+            return []
+
+        scored: list[tuple[int, dict]] = []
+        for memory in self.list_memories(owner=owner):
+            content = self._normalize_search_text(
+                memory.get("content", "")
+            )
+            score = sum(
+                1
+                for term in terms
+                if term in content
+            )
+            if score:
+                scored.append((score, memory))
+
+        scored.sort(
+            key=lambda item: (
+                -item[0],
+                str(item[1].get("created_at", "")),
+            )
+        )
+        return [
+            memory
+            for _, memory in scored[:limit]
+        ]
+
+    def update_memory(
+        self,
+        *,
+        memory_id: str,
+        owner: str,
+        content: str,
+        metadata: dict | None = None,
+    ) -> dict | None:
+        """Actualiza un único recuerdo del propietario y devuelve su versión previa."""
+
+        clean_content = str(content).strip()
+        if not clean_content:
+            return None
+
+        memories = self._load_all_memories()
+        for memory in memories:
+            if (
+                str(memory.get("id", "")) == memory_id
+                and str(memory.get("owner", "")).casefold()
+                == owner.casefold()
+            ):
+                previous = memory.copy()
+                history = list(memory.get("history", []))
+                history.append(
+                    {
+                        "action": "updated",
+                        "timestamp": datetime.now().isoformat(timespec="seconds"),
+                        "previous_content": previous.get("content"),
+                    }
+                )
+                memory["content"] = clean_content
+                memory["updated_at"] = datetime.now().isoformat(
+                    timespec="seconds"
+                )
+                if metadata:
+                    memory.update(
+                        {
+                            key: value
+                            for key, value in metadata.items()
+                            if key not in {
+                                "id", "owner", "content", "visibility", "created_at"
+                            }
+                        }
+                    )
+                memory["history"] = history
+                if self._save_all_memories(memories):
+                    info(f"Memoria actualizada para {owner}.")
+                    self._notify_change("updated", memory)
+                    return previous
+                return None
+        return None
+
+    def archive_memory(self, *, memory_id: str, owner: str) -> bool:
+        """Archiva sin borrar y conserva historial para restauración."""
+
+        return self._set_memory_state(memory_id, owner, "archived")
+
+    def restore_memory(self, *, memory_id: str, owner: str) -> bool:
+        """Restaura un recuerdo archivado sin alterar su contenido."""
+
+        return self._set_memory_state(memory_id, owner, "active")
+
+    def expire_memory(self, *, memory_id: str, owner: str) -> bool:
+        """Marca como caducado sin activar políticas automáticas de olvido."""
+
+        return self._set_memory_state(memory_id, owner, "expired")
+
+    def _set_memory_state(self, memory_id: str, owner: str, state: str) -> bool:
+        if state not in {"active", "archived", "expired"}:
+            raise ValueError("Estado de memoria no válido.")
+        memories = self._load_all_memories()
+        for memory in memories:
+            if str(memory.get("id")) == memory_id and str(memory.get("owner", "")).casefold() == owner.casefold():
+                previous = memory.get("state", "active")
+                memory["state"] = state
+                memory["updated_at"] = datetime.now().isoformat(timespec="seconds")
+                memory.setdefault("history", []).append({"action": state, "previous_state": previous, "timestamp": memory["updated_at"]})
+                if self._save_all_memories(memories):
+                    self._notify_change("updated", memory)
+                    return True
+                return False
+        return False
+
+    def record_access(self, *, owner: str, memory_ids: list[str]) -> None:
+        """Actualiza frecuencia y última consulta en una sola escritura."""
+
+        selected = set(memory_ids)
+        if not selected:
+            return
+        memories = self._load_all_memories()
+        changed = False
+        timestamp = datetime.now().isoformat(timespec="seconds")
+        for memory in memories:
+            if str(memory.get("id")) in selected and str(memory.get("owner", "")).casefold() == owner.casefold():
+                memory["access_count"] = int(memory.get("access_count", 0)) + 1
+                memory["last_accessed_at"] = timestamp
+                changed = True
+        if changed:
+            self._save_all_memories(memories)
+
+    def delete_memory(
+        self,
+        *,
+        memory_id: str,
+        owner: str,
+    ) -> dict | None:
+        """Elimina un único recuerdo propio y devuelve la versión eliminada."""
+
+        memories = self._load_all_memories()
+        for index, memory in enumerate(memories):
+            if (
+                str(memory.get("id", "")) == memory_id
+                and str(memory.get("owner", "")).casefold()
+                == owner.casefold()
+            ):
+                removed = memories.pop(index)
+                if self._save_all_memories(memories):
+                    info(f"Memoria eliminada para {owner}.")
+                    self._notify_change("deleted", removed)
+                    return removed.copy()
+                return None
+        return None
 
     def get_accessible_memories(
         self,

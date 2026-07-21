@@ -3,15 +3,6 @@
 # Instalación:
 #     python -m pip install -r requirements.txt
 #
-# Estado actual:
-# La base del proyecto utiliza únicamente la biblioteca estándar de Python.
-# Este archivo se conserva para mantener instalaciones reproducibles y añadir
-# dependencias futuras de forma explícita y controlada.
-#
-# Dependencias opcionales previstas, todavía NO requeridas globalmente:
-# requests          # Comunicación HTTP con servicios locales como Ollama
-# pydantic          # Validación avanzada de configuración y datos
-# python-dotenv     # Variables de entorno y secretos locales
-# pytest            # Marco de pruebas alternativo a unittest
-# coverage          # Medición de cobertura de pruebas
-# psutil            # Información ampliada de CPU, RAM, batería y procesos
+# Datos IANA de zonas horarias. Necesario en Windows para ZoneInfo
+# (Europe/Madrid, UTC, cambios de horario de verano, etc.).
+tzdata==2026.3

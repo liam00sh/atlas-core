@@ -48,6 +48,7 @@ from conversation.personality import identity as identity_response
 from console.command_manager import COMMANDS
 from console.command_manager import execute
 from console.command_manager import resolve_command
+from console.command_help import handle_command_help_request
 
 from core.log_manager import info
 
@@ -107,7 +108,16 @@ class AtlasCommandsMixin:
             return identity_result
 
         # ---------------------------------------------------------------------
-        # 2. COMANDOS GENERALES
+        # 2. AYUDA, BÚSQUEDA Y ORIENTACIÓN DE COMANDOS
+        # ---------------------------------------------------------------------
+
+        help_response = handle_command_help_request(original_text)
+        if help_response is not None:
+            print(help_response)
+            return True
+
+        # ---------------------------------------------------------------------
+        # 3. COMANDOS GENERALES
         # ---------------------------------------------------------------------
 
         resolved_command = resolve_command(

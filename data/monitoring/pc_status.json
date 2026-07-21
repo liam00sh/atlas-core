@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-07-21T20:20:04",
+  "cpu_percent": 0.0,
+  "ram_percent": 46.6,
+  "ram_used_gb": 14.8,
+  "ram_total_gb": 31.8,
+  "cpu_temperature": "—",
+  "wifi_signal": "—",
+  "internet": "OK",
+  "gpu": {
+    "usage": "6",
+    "used": "1372",
+    "total": "8188",
+    "temp": "55"
+  }
+}

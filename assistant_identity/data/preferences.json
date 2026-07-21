@@ -1,7 +1,7 @@
 {
     "liam": {
         "automatic_mode": true,
-        "current_mode": "fun",
+        "current_mode": "classic",
         "default_mode": "classic",
         "identity": "daxter",
         "manual_mode_lock": true
@@ -13,11 +13,18 @@
         "identity": "coco",
         "manual_mode_lock": true
     },
-    "saray": {
+    "noa": {
         "automatic_mode": true,
         "current_mode": "classic",
         "default_mode": "classic",
         "identity": "daxter",
+        "manual_mode_lock": false
+    },
+    "saray": {
+        "automatic_mode": true,
+        "current_mode": "classic",
+        "default_mode": "classic",
+        "identity": "coco",
         "manual_mode_lock": false
     }
 }

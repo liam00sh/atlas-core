@@ -1,0 +1,40 @@
+{
+  "sessions": {
+    "cli:liam": {
+      "decision": {
+        "clarification_question": null,
+        "confidence": 0.62,
+        "enough_information": true,
+        "follow_up_due": false,
+        "intent": "general",
+        "internal_summary": "¿Qué hora es?",
+        "memory_scope": "conversation",
+        "sensitive": false,
+        "speaker": "Liam",
+        "style": "normal",
+        "suggested_action": null
+      },
+      "expires_at": "2026-07-22T00:20:30",
+      "updated_at": "2026-07-21T12:20:30"
+    },
+    "telegram:2119964629:2119964629": {
+      "decision": {
+        "clarification_question": null,
+        "confidence": 0.98,
+        "enough_information": true,
+        "follow_up_due": false,
+        "intent": "internet",
+        "internal_summary": "Busca en internet cuantos habitantes tiene Alicante",
+        "memory_scope": "conversation",
+        "sensitive": false,
+        "speaker": "Liam",
+        "style": "normal",
+        "suggested_action": null
+      },
+      "expires_at": "2026-07-22T00:25:03",
+      "updated_at": "2026-07-21T12:25:03"
+    }
+  },
+  "users": {},
+  "version": 1
+}

@@ -18,6 +18,7 @@ Descripción:
 ===============================================================================
 """
 import hashlib
+from datetime import date
 import json
 import re
 import unicodedata
@@ -28,6 +29,12 @@ from ai.context.context_manager import AIContextManager
 from core.log_manager import info
 from core.system_info import format_system_info_for_ai
 from core.system_info import get_system_info
+from core.household_data import find_household
+from core.household_data import order_family_names
+from core.household_data import find_person_location
+from core.household_data import preferred_person_name
+from core.internet_lookup import InternetLookupError
+from core.internet_lookup import search_internet
 
 from conversation.personality import private_context_denied
 
@@ -72,6 +79,10 @@ class AtlasAIMixin:
         Si todavía no existe una identidad conversacional
         reconocida, utiliza el usuario autenticado.
         """
+
+        temporary_speaker = getattr(self, "channel_temporary_speaker", None)
+        if isinstance(temporary_speaker, str) and temporary_speaker.strip():
+            return temporary_speaker.strip()
 
         conversation_identity = getattr(
             self,
@@ -461,35 +472,809 @@ class AtlasAIMixin:
         *,
         response_kind: str = "fact",
     ) -> str:
-        """Da voz a una respuesta verificada sin alterar sus hechos."""
+        """Conserva las respuestas verificadas directas, claras y naturales.
 
-        text = str(factual_response or "").strip()
-        if not text:
-            return text
+        Los datos breves no necesitan una coletilla repetitiva delante. La voz
+        del asistente se expresa en la conversación social, no deformando cada
+        fecha, parentesco o lugar confirmado.
+        """
 
-        identity, mode = self._active_assistant_and_mode()
-        is_coco = "coco" in identity
+        return str(factual_response or "").strip()
 
-        if "trabajo" in mode or "work" in mode:
-            opener = "Vamos con los datos verificados:"
-        elif "empatic" in mode or "empathetic" in mode:
-            opener = "Claro, te lo cuento con calma:"
-        elif "divertid" in mode or "fun" in mode or "fiesta" in mode:
-            opener = (
-                "Vale, ficha rápida y sin montar un drama:"
-                if not is_coco
-                else "Venga, te lo cuento de forma sencilla:"
+
+    @classmethod
+    def _relationship_query_aliases(
+        cls,
+    ) -> dict[str, tuple[str, ...]]:
+        """
+        Devuelve las formas naturales admitidas para consultar parentescos.
+
+        Las claves son expresiones que puede utilizar la persona usuaria. Los
+        valores son las etiquetas verificadas que puede devolver el grafo.
+        """
+
+        return {
+            "madre": ("madre",),
+            "mama": ("madre",),
+            "padre": ("padre",),
+            "papa": ("padre",),
+            "hermana": ("hermana",),
+            "hermano": ("hermano",),
+            "hermanas": ("hermana",),
+            "hermanos": ("hermano", "hermana"),
+            "pareja": ("pareja", "esposo", "esposa"),
+            "novia": ("pareja", "esposa"),
+            "novio": ("pareja", "esposo"),
+            "esposa": ("pareja", "esposa"),
+            "esposo": ("pareja", "esposo"),
+            "hija": ("hija",),
+            "hijo": ("hijo",),
+            "hijas": ("hija",),
+            "hijos": ("hijo", "hija"),
+            "abuela": ("abuela",),
+            "abuelo": ("abuelo",),
+            "abuelas": ("abuela",),
+            "abuelos": ("abuelo", "abuela"),
+            "tia": ("tia",),
+            "tio": ("tio",),
+            "tias": ("tia",),
+            "tios": ("tio", "tia"),
+            "prima": ("prima",),
+            "primo": ("primo",),
+            "primas": ("prima",),
+            "primos": ("primo", "prima"),
+            "sobrina": ("sobrina",),
+            "sobrino": ("sobrino",),
+            "sobrinas": ("sobrina",),
+            "sobrinos": ("sobrino", "sobrina"),
+            "nieta": ("nieta",),
+            "nieto": ("nieto",),
+            "nietas": ("nieta",),
+            "nietos": ("nieto", "nieta"),
+            "cunada": ("cunada",),
+            "cunado": ("cunado",),
+            "cunadas": ("cunada",),
+            "cunados": ("cunado", "cunada"),
+            "suegra": ("suegra",),
+            "suegro": ("suegro",),
+            "suegros": ("suegro", "suegra"),
+            "nuera": ("nuera",),
+            "yerno": ("yerno",),
+        }
+
+    @classmethod
+    def _relationship_display_name(
+        cls,
+        relation: str,
+    ) -> str:
+        displays = {
+            "mama": "mamá",
+            "papa": "papá",
+            "tia": "tía",
+            "tio": "tío",
+            "tias": "tías",
+            "tios": "tíos",
+            "cunada": "cuñada",
+            "cunado": "cuñado",
+            "cunadas": "cuñadas",
+            "cunados": "cuñados",
+        }
+        return displays.get(relation, relation)
+
+    @classmethod
+    def _normalize_relationship_expression(
+        cls,
+        value: str,
+    ) -> str:
+        normalized = cls._normalize_entity_text(
+            value
+        )
+        normalized = re.sub(
+            r"[¿?¡!.,;:]+",
+            " ",
+            normalized,
+        )
+        return re.sub(
+            r"\s+",
+            " ",
+            normalized,
+        ).strip()
+
+    @classmethod
+    def _extract_relationship_expression(
+        cls,
+        user_message: str,
+    ) -> tuple[str, bool] | None:
+        normalized = cls._normalize_relationship_expression(
+            user_message
+        )
+
+        prefixes = (
+            "quien es ",
+            "quienes son ",
+            "como se llama ",
+            "como se llaman ",
+            "cual es el nombre de ",
+            "cuales son los nombres de ",
+            "dime quien es ",
+            "dime quienes son ",
+            "dime como se llama ",
+            "dime como se llaman ",
+        )
+
+        for prefix in prefixes:
+            if not normalized.startswith(prefix):
+                continue
+            expression = normalized[
+                len(prefix):
+            ].strip()
+            plural = (
+                prefix.startswith("quienes ")
+                or " se llaman " in f" {prefix}"
+                or expression.startswith(
+                    ("los ", "las ", "mis ")
+                )
             )
-        elif is_coco:
-            opener = "Claro, te cuento:"
-        elif response_kind == "biography":
-            opener = "Vale, te pongo en situación:"
-        elif response_kind == "relationship":
-            opener = "Vamos al grano:"
-        else:
-            opener = "Vale, dato confirmado:"
+            return expression, plural
 
-        return f"{opener} {text}"
+        return None
+
+    @classmethod
+    def _relationship_pattern(
+        cls,
+    ) -> str:
+        alternatives = "|".join(
+            sorted(
+                (
+                    re.escape(alias)
+                    for alias
+                    in cls._relationship_query_aliases()
+                ),
+                key=len,
+                reverse=True,
+            )
+        )
+        return f"(?:{alternatives})"
+
+    def _resolve_named_relationship_person(
+        self,
+        reference: str,
+    ):
+        clean_reference = re.sub(
+            r"^(?:a|de|del|la|el|los|las)\s+",
+            "",
+            reference.strip(),
+        )
+
+        if clean_reference in {
+            "yo",
+            "mi",
+            "mis",
+            "el interlocutor",
+            "la interlocutora",
+        }:
+            clean_reference = (
+                self._get_current_conversation_user()
+            )
+
+        resolver = getattr(
+            self.people_manager,
+            "resolve_entity",
+            None,
+        )
+        if callable(resolver):
+            resolved = resolver(clean_reference)
+            if (
+                resolved is not None
+                and resolved[0] == "person"
+            ):
+                return resolved[1]
+
+        return self.people_manager.find_person_by_name(
+            clean_reference
+        )
+
+    def _people_matching_relationship(
+        self,
+        subjects: list,
+        requested_alias: str,
+    ) -> list:
+        accepted_labels = {
+            self._normalize_entity_text(label)
+            for label in self._relationship_query_aliases()[
+                requested_alias
+            ]
+        }
+
+        matches = []
+        seen: set[str] = set()
+
+        for subject in subjects:
+            for candidate in self.people_manager.get_people():
+                if candidate.id == subject.id:
+                    continue
+
+                label = (
+                    self.relationship_engine
+                    .infer_relationship_label(
+                        source_entity_id=candidate.id,
+                        source_entity_type="person",
+                        target_entity_id=subject.id,
+                        target_entity_type="person",
+                    )
+                )
+                normalized_label = (
+                    self._normalize_entity_text(
+                        label or ""
+                    )
+                )
+                if normalized_label not in accepted_labels:
+                    continue
+                if candidate.id in seen:
+                    continue
+
+                seen.add(candidate.id)
+                matches.append(candidate)
+
+        return sorted(
+            matches,
+            key=lambda person: person.name.casefold(),
+        )
+
+    def _resolve_relationship_expression(
+        self,
+        expression: str,
+        *,
+        depth: int = 0,
+    ) -> tuple[list, str | None]:
+        """
+        Resuelve expresiones encadenadas como:
+
+        - mi novia
+        - hermano de mi novia
+        - hija de la tía de Saray
+
+        Devuelve las personas resultantes y la relación exterior.
+        """
+
+        if depth > 8:
+            return [], None
+
+        normalized = self._normalize_relationship_expression(
+            expression
+        )
+        relation_pattern = self._relationship_pattern()
+
+        normalized = re.sub(
+            r"^(?:el|la|los|las)\s+",
+            "",
+            normalized,
+        )
+
+        possessive_match = re.fullmatch(
+            rf"(?:mi|mis)\s+"
+            rf"(?P<relation>{relation_pattern})",
+            normalized,
+        )
+        if possessive_match:
+            current = (
+                self.people_manager.find_person_by_name(
+                    self._get_current_conversation_user()
+                )
+            )
+            if current is None:
+                return [], None
+
+            relation = possessive_match.group(
+                "relation"
+            )
+            return (
+                self._people_matching_relationship(
+                    [current],
+                    relation,
+                ),
+                relation,
+            )
+
+        chain_match = re.fullmatch(
+            rf"(?P<relation>{relation_pattern})"
+            rf"\s+de\s+(?P<subject>.+)",
+            normalized,
+        )
+        if chain_match:
+            relation = chain_match.group(
+                "relation"
+            )
+            subject_expression = chain_match.group(
+                "subject"
+            )
+            subjects, _ = (
+                self._resolve_relationship_expression(
+                    subject_expression,
+                    depth=depth + 1,
+                )
+            )
+            if not subjects:
+                return [], relation
+
+            return (
+                self._people_matching_relationship(
+                    subjects,
+                    relation,
+                ),
+                relation,
+            )
+
+        person = self._resolve_named_relationship_person(
+            normalized
+        )
+        if person is None:
+            return [], None
+
+        return [person], None
+
+    def _relationship_subject_phrase(
+        self,
+        expression: str,
+        *,
+        depth: int = 0,
+    ) -> str:
+        """
+        Convierte una expresión familiar interna en texto natural.
+
+        Ejemplos:
+            mi novia -> tu novia
+            tía de Saray -> la tía de Saray Izquierdo Carreres
+            hija de la tía de Saray ->
+                la hija de la tía de Saray Izquierdo Carreres
+        """
+
+        if depth > 8:
+            return self._normalize_relationship_expression(
+                expression
+            )
+
+        phrase = self._normalize_relationship_expression(
+            expression
+        )
+        phrase = re.sub(
+            r"^(?:el|la|los|las)\s+",
+            "",
+            phrase,
+        )
+
+        relation_pattern = self._relationship_pattern()
+
+        possessive_match = re.fullmatch(
+            rf"(?P<possessive>mi|mis)\s+"
+            rf"(?P<relation>{relation_pattern})",
+            phrase,
+        )
+        if possessive_match:
+            relation = possessive_match.group(
+                "relation"
+            )
+            display = self._relationship_display_name(
+                relation
+            )
+            possessive = (
+                "tus"
+                if possessive_match.group(
+                    "possessive"
+                ) == "mis"
+                else "tu"
+            )
+            return f"{possessive} {display}"
+
+        chain_match = re.fullmatch(
+            rf"(?P<relation>{relation_pattern})"
+            rf"\s+de\s+(?P<subject>.+)",
+            phrase,
+        )
+        if chain_match:
+            relation = chain_match.group(
+                "relation"
+            )
+            display = self._relationship_display_name(
+                relation
+            )
+            plural = relation.endswith("s")
+            article = self._relationship_article(
+                relation,
+                plural=plural,
+            ).casefold()
+            nested = self._relationship_subject_phrase(
+                chain_match.group("subject"),
+                depth=depth + 1,
+            )
+            return (
+                f"{article} {display} de {nested}"
+            )
+
+        person = self._resolve_named_relationship_person(
+            phrase
+        )
+        if person is not None:
+            return person.name
+
+        replacements = (
+            ("tia", "tía"),
+            ("tio", "tío"),
+            ("tias", "tías"),
+            ("tios", "tíos"),
+            ("cunada", "cuñada"),
+            ("cunado", "cuñado"),
+            ("cunadas", "cuñadas"),
+            ("cunados", "cuñados"),
+            ("mama", "mamá"),
+            ("papa", "papá"),
+        )
+        for raw, display in replacements:
+            phrase = re.sub(
+                rf"\b{raw}\b",
+                display,
+                phrase,
+            )
+
+        return phrase
+
+    @classmethod
+    def _relationship_article(
+        cls,
+        relation: str,
+        *,
+        plural: bool,
+    ) -> str:
+        feminine_relations = {
+            "madre",
+            "mama",
+            "hermana",
+            "hermanas",
+            "pareja",
+            "novia",
+            "esposa",
+            "hija",
+            "hijas",
+            "abuela",
+            "abuelas",
+            "tia",
+            "tias",
+            "prima",
+            "primas",
+            "sobrina",
+            "sobrinas",
+            "nieta",
+            "nietas",
+            "cunada",
+            "cunadas",
+            "suegra",
+            "nuera",
+        }
+        feminine = relation in feminine_relations
+
+        if plural:
+            return "Las" if feminine else "Los"
+
+        return "La" if feminine else "El"
+
+    def _answer_natural_relationship_query(
+        self,
+        user_message: str,
+    ) -> str | None:
+        """
+        Responde relaciones directas y cadenas de parentesco verificadas.
+
+        Nunca inventa pasos: cada tramo se resuelve contra el grafo familiar.
+        """
+
+        extracted = self._extract_relationship_expression(
+            user_message
+        )
+        if extracted is None:
+            return None
+
+        expression, requested_plural = extracted
+        people, outer_relation = (
+            self._resolve_relationship_expression(
+                expression
+            )
+        )
+
+        # Una pregunta como «quién es Saray» no es una consulta de parentesco.
+        if outer_relation is None:
+            return None
+
+        relation_display = (
+            self._relationship_display_name(
+                outer_relation
+            )
+        )
+        plural = (
+            requested_plural
+            or outer_relation.endswith("s")
+            or len(people) > 1
+        )
+
+        if not people:
+            return (
+                "No he podido resolver esa cadena familiar "
+                "con las relaciones verificadas."
+            )
+
+        names = self._join_names(
+            [person.name for person in people]
+        )
+
+        normalized_expression = (
+            self._normalize_relationship_expression(
+                expression
+            )
+        )
+
+        direct_possessive = re.fullmatch(
+            rf"(?P<possessive>mi|mis)\s+"
+            rf"(?P<relation>{self._relationship_pattern()})",
+            normalized_expression,
+        )
+
+        if direct_possessive:
+            possessive = "Tus" if plural else "Tu"
+            verb = "son" if plural else "es"
+            return (
+                f"{possessive} {relation_display} "
+                f"{verb} {names}."
+            )
+
+        chain_match = re.fullmatch(
+            rf"(?:el|la|los|las)?\s*"
+            rf"{re.escape(outer_relation)}"
+            rf"\s+de\s+(?P<subject>.+)",
+            normalized_expression,
+        )
+        subject_phrase = (
+            self._relationship_subject_phrase(
+                chain_match.group("subject")
+            )
+            if chain_match
+            else ""
+        )
+
+        article = self._relationship_article(
+            outer_relation,
+            plural=plural,
+        )
+        verb = "son" if plural else "es"
+
+        return (
+            f"{article} {relation_display} de "
+            f"{subject_phrase} {verb} {names}."
+        )
+
+    def _resolve_factual_subject(
+        self,
+        subject_text: str,
+        mentioned: list[tuple[str, object]],
+    ):
+        """Resuelve «yo», un nombre o una referencia como «mi novia»."""
+
+        normalized_subject = self._normalize_entity_text(subject_text)
+        speaker = self.people_manager.find_person_by_name(
+            self._get_current_conversation_user()
+        )
+
+        if normalized_subject in {"", "yo", "mi", "me"}:
+            return speaker
+
+        for entity_type, entity in reversed(mentioned):
+            if entity_type == "person":
+                entity_name = self._normalize_entity_text(entity.name)
+                if entity_name in normalized_subject or normalized_subject in entity_name:
+                    return entity
+
+        people, _ = self._resolve_relationship_expression(normalized_subject)
+        if len(people) == 1:
+            return people[0]
+
+        direct = self.people_manager.find_person_by_name(subject_text.strip())
+        return direct
+
+    def _short_person_name(self, person_or_name) -> str:
+        """Nombre cotidiano para conversación, sin alterar la identidad interna."""
+
+        name = getattr(person_or_name, "name", person_or_name)
+        return preferred_person_name(str(name or ""))
+
+    def _choose_factual_variant(self, key: str, variants: list[str]) -> str:
+        """Alterna formulaciones para no repetir literalmente la misma respuesta."""
+
+        clean = [item.strip() for item in variants if str(item).strip()]
+        if not clean:
+            return ""
+        history = getattr(self, "_factual_variant_history", None)
+        if not isinstance(history, dict):
+            history = {}
+            self._factual_variant_history = history
+        index = int(history.get(key, 0)) % len(clean)
+        history[key] = index + 1
+        return clean[index]
+
+    @staticmethod
+    def _is_summer_period(today: date | None = None) -> bool:
+        current = today or date.today()
+        return current.month in {6, 7, 8}
+
+    def _answer_location_query(
+        self,
+        normalized: str,
+        mentioned: list[tuple[str, object]],
+    ) -> str | None:
+        """Responde origen, nacimiento y residencia actual con lenguaje cotidiano."""
+
+        clean = normalized.strip(" .?!¡¿")
+        patterns = (
+            ("residence", r"(?:donde|en que (?:pueblo|ciudad))\s+vive\s+(?P<subject>.+)"),
+            ("residence", r"(?:donde|en que (?:pueblo|ciudad))\s+vivo(?P<subject>)"),
+            ("origin", r"de\s+donde\s+es\s+(?P<subject>.+)"),
+            ("origin", r"de\s+donde\s+soy(?P<subject>)"),
+            ("birth", r"donde\s+nacio\s+(?P<subject>.+)"),
+            ("birth", r"donde\s+naci(?P<subject>)"),
+        )
+        kind = ""
+        raw_subject = ""
+        for candidate_kind, pattern in patterns:
+            match = re.fullmatch(pattern, clean)
+            if match:
+                kind = candidate_kind
+                raw_subject = match.group("subject").strip()
+                break
+        if not kind:
+            return None
+
+        person = self._resolve_factual_subject(raw_subject, mentioned)
+        reference = person.name if person is not None else raw_subject
+        profile = find_person_location(reference)
+        if profile is None:
+            return None
+
+        name = self._short_person_name(person or profile.person)
+        if kind == "birth":
+            place = profile.birth_place or profile.origin
+            return f"{name} nació en {place}."
+
+        if kind == "origin":
+            if profile.origin == profile.habitual_residence:
+                variants = [
+                    f"{name} es de {profile.origin} y vive allí.",
+                    f"{name} es de {profile.origin}, donde también vive.",
+                ]
+            elif profile.summer_residence and self._is_summer_period():
+                variants = [
+                    f"{name} es de {profile.origin}. Normalmente vive en {profile.habitual_residence}, pero ahora está pasando el verano en {profile.summer_residence}.",
+                    f"{name} nació en {profile.birth_place or profile.origin}; vive habitualmente en {profile.habitual_residence} y en verano está en {profile.summer_residence}.",
+                ]
+            else:
+                move_text = ""
+                if profile.previous_residences and profile.habitual_residence:
+                    move_text = f" y después se mudó a {profile.habitual_residence}, donde vive ahora"
+                variants = [
+                    f"{name} nació en {profile.birth_place or profile.origin}{move_text}.",
+                    f"{name} es de {profile.origin}, aunque ahora vive en {profile.habitual_residence}.",
+                ]
+            return self._choose_factual_variant(f"origin:{profile.person}", variants)
+
+        if profile.summer_residence and self._is_summer_period():
+            variants = [
+                f"{name} normalmente vive en {profile.habitual_residence}, pero ahora está pasando el verano en {profile.summer_residence}.",
+                f"Ahora mismo {name} está en {profile.summer_residence} por el verano; el resto del año vive en {profile.habitual_residence}.",
+            ]
+        else:
+            variants = [
+                f"{name} vive en {profile.habitual_residence}.",
+                f"Ahora {name} vive en {profile.habitual_residence}.",
+            ]
+        return self._choose_factual_variant(f"residence:{profile.person}", variants)
+
+    def _answer_household_query(
+        self,
+        normalized: str,
+        mentioned: list[tuple[str, object]],
+    ) -> str | None:
+        """Responde quién convive con una persona o en una vivienda."""
+
+        clean = normalized.strip(" .?!¡¿")
+        patterns = (
+            r"(?:quien|quienes)\s+(?:vive|viven)\s+(?:en\s+)?(?:la\s+)?casa\s+de\s+(?P<subject>.+)",
+            r"(?:con\s+quien|quienes)\s+(?:vive|viven)\s+(?P<subject>.+)",
+            r"(?:quien|quienes)\s+(?:vive|viven)\s+con\s+(?P<subject>.+)",
+            r"(?:quien|quienes)\s+(?:vive|viven)\s+conmigo(?P<subject>)",
+        )
+        match = None
+        for pattern in patterns:
+            match = re.fullmatch(pattern, clean)
+            if match is not None:
+                break
+        if match is None:
+            return None
+
+        raw_subject = match.group("subject").strip()
+        person = self._resolve_factual_subject(raw_subject, mentioned)
+        reference = person.name if person is not None else raw_subject
+        household = find_household(reference)
+        if household is None:
+            return None
+
+        subject_name = self._short_person_name(person or reference)
+        subject_normalized = self._normalize_entity_text(
+            person.name if person is not None else reference
+        )
+        companions = [
+            self._short_person_name(name)
+            for name in household.people
+            if self._normalize_entity_text(name) != subject_normalized
+        ]
+        anonymous = list(getattr(household, "anonymous_companions", ()) or ())
+        all_companions = companions + anonymous
+
+        if not all_companions:
+            variants = [
+                f"{subject_name} vive solo.",
+                f"En casa, {subject_name} vive solo.",
+            ]
+        else:
+            joined = self._join_names(all_companions)
+            identity, _ = self._active_assistant_and_mode()
+            variants = [
+                f"{subject_name} vive con {joined}.",
+                f"Con {subject_name} viven {joined}.",
+            ]
+            if identity == "daxter":
+                variants.append(f"En la base de {subject_name} viven {joined}.")
+            elif identity == "coco":
+                variants.append(f"{subject_name} comparte casa con {joined}.")
+            else:
+                variants.append(f"En casa, {subject_name} convive con {joined}.")
+
+        answer = self._choose_factual_variant(
+            f"household:{household.key}:{subject_normalized}",
+            variants,
+        )
+        if household.animals:
+            animal_names = self._join_names(list(household.animals))
+            animal_variants = [
+                f" También viven allí {animal_names}.",
+                f" Y también están {animal_names}.",
+            ]
+            answer += self._choose_factual_variant(
+                f"household-animals:{household.key}",
+                animal_variants,
+            )
+        return answer
+
+    def _format_relationship_count(
+        self,
+        subject,
+        relation_alias: str,
+        people: list,
+        *,
+        is_speaker: bool,
+    ) -> str:
+        """Construye cantidades y listas agrupadas por ramas familiares."""
+
+        names = order_family_names([person.name for person in people])
+        names = [self._short_person_name(name) for name in names]
+        count = len(names)
+        display = self._relationship_display_name(relation_alias)
+
+        if count == 0:
+            owner = "ti" if is_speaker else self._short_person_name(subject)
+            return f"No tengo {display} verificadas para {owner}."
+
+        if count == 1:
+            prefix = "Tienes" if is_speaker else f"{self._short_person_name(subject)} tiene"
+            return f"{prefix} una {display}: {names[0]}."
+
+        prefix = "Tienes" if is_speaker else f"{self._short_person_name(subject)} tiene"
+        return f"{prefix} {count} {display}: {self._join_names(names)}."
 
     def _answer_verified_entity_query(
         self,
@@ -505,6 +1290,81 @@ class AtlasAIMixin:
 
         normalized = self._normalize_entity_text(user_message)
         mentioned = self._find_entities_mentioned(user_message)
+
+        # Cantidades de familiares:
+        # «¿Cuántos primos tengo?», «¿Cuántos primos tiene Saray?»,
+        # «¿Cuántos primos tiene mi novia?».
+        count_match = re.fullmatch(
+            rf"cuant(?:o|a|os|as)\s+"
+            rf"(?P<relation>{self._relationship_pattern()})\s+"
+            rf"(?P<verb>tengo|tenemos|tiene|tienen)"
+            rf"(?:\s+(?P<subject>.+))?",
+            normalized.strip(" .?!¡¿"),
+        )
+        if count_match:
+            relation_alias = count_match.group("relation")
+            verb = count_match.group("verb")
+            subject_text = count_match.group("subject") or ""
+            speaker = self.people_manager.find_person_by_name(
+                self._get_current_conversation_user()
+            )
+            subject = (
+                speaker
+                if verb in {"tengo", "tenemos"}
+                else self._resolve_factual_subject(subject_text, mentioned)
+            )
+            if subject is not None:
+                people = self._people_matching_relationship(
+                    [subject],
+                    relation_alias,
+                )
+                return self._format_relationship_count(
+                    subject,
+                    relation_alias,
+                    people,
+                    is_speaker=bool(
+                        speaker is not None and speaker.id == subject.id
+                    ),
+                )
+
+        location_answer = self._answer_location_query(
+            normalized,
+            mentioned,
+        )
+        if location_answer is not None:
+            return location_answer
+
+        household_answer = self._answer_household_query(
+            normalized,
+            mentioned,
+        )
+        if household_answer is not None:
+            return household_answer
+
+        # Relación directa con el interlocutor: «¿Quién es Noa para mí?».
+        if len(mentioned) == 1 and any(marker in normalized for marker in ("para mi", "conmigo", "respecto a mi")):
+            entity_type, entity = mentioned[0]
+            speaker = self.people_manager.find_person_by_name(
+                self._get_current_conversation_user()
+            )
+            if speaker is not None and entity_type == "person" and entity.id != speaker.id:
+                label = self.relationship_engine.infer_relationship_label(
+                    source_entity_id=entity.id,
+                    source_entity_type="person",
+                    target_entity_id=speaker.id,
+                    target_entity_type="person",
+                )
+                if label:
+                    clean_label = str(label).strip().rstrip(".")
+                    return f"{self._short_person_name(entity)} es tu {clean_label}."
+
+        natural_relationship = (
+            self._answer_natural_relationship_query(
+                user_message
+            )
+        )
+        if natural_relationship is not None:
+            return natural_relationship
 
         if mentioned:
             self._last_factual_entity_id = mentioned[-1][1].id
@@ -626,6 +1486,11 @@ class AtlasAIMixin:
         # entidad seleccionada de forma explícita, no todo el historial.
         biography_markers = (
             "quien es ",
+            "quienes son ",
+            "como se llama ",
+            "como se llaman ",
+            "cual es el nombre de ",
+            "cuales son los nombres de ",
             "quien era ",
             "hablame de ",
             "cuentame sobre ",
@@ -649,6 +1514,25 @@ class AtlasAIMixin:
                     entity = self._entity_by_id(last_id)
             if entity is None:
                 return None
+
+            # Privacidad por defecto: una persona no recibe la ficha biográfica
+            # completa de otra. Las fichas pueden contener cumpleaños exacto,
+            # empleo, domicilio, identidad de género o nombres anteriores.
+            speaker_name = self._get_current_conversation_user()
+            speaker = self.people_manager.find_person_by_name(speaker_name)
+            same_person = bool(speaker is not None and speaker.id == getattr(entity, "id", None))
+            if not same_person:
+                relationship = None
+                if speaker is not None and hasattr(entity, "id"):
+                    relationship = self.relationship_engine.describe_relationship_between_entities(
+                        source_entity_id=entity.id,
+                        source_entity_type="person",
+                        target_entity_id=speaker.id,
+                        target_entity_type="person",
+                    )
+                if relationship:
+                    return relationship
+                return f"Conozco a {entity.name}."
 
             summary = str(getattr(entity, "summary", "") or "").strip()
             if not summary:
@@ -1388,9 +2272,17 @@ class AtlasAIMixin:
                 )
             )
 
-            if person.summary:
+            speaker_name = self._get_current_conversation_user()
+            speaker = self.people_manager.find_person_by_name(speaker_name)
+            same_person = bool(speaker is not None and speaker.id == person.id)
+            if same_person and person.summary:
+                lines.append(f"Resumen verificado: {person.summary}")
+            elif not same_person:
                 lines.append(
-                    f"Resumen verificado: {person.summary}"
+                    "Privacidad: no incluyas biografía, cumpleaños, domicilio, "
+                    "empleo, identidad de género, nombre anterior ni otros datos "
+                    "personales de esta persona. Limítate a la relación verificada "
+                    "con quien pregunta y a información expresamente pública."
                 )
 
             relationships = (
@@ -1553,7 +2445,29 @@ class AtlasAIMixin:
             "mascota de ",
             "animal de ",
         )
-        return any(marker in normalized for marker in query_markers)
+        if any(
+            marker in normalized
+            for marker in query_markers
+        ):
+            return True
+
+        relation_words = "|".join(
+            sorted(
+                (
+                    re.escape(alias)
+                    for alias in cls._relationship_query_aliases()
+                ),
+                key=len,
+                reverse=True,
+            )
+        )
+        return bool(
+            re.search(
+                rf"\b(?:mi|mis|tu|tus|su|sus)\s+"
+                rf"(?:{relation_words})\b",
+                normalized,
+            )
+        )
 
     @classmethod
     def _needs_conversation_continuity(
@@ -1696,6 +2610,52 @@ class AtlasAIMixin:
         normalized = re.sub(r"\s+", " ", normalized).strip()
         return f"{cls._normalize_entity_text(conversation_user)}:{normalized}"
 
+    @staticmethod
+    def _contains_unexpected_cjk(text: str) -> bool:
+        """Detecta caracteres chinos, japoneses o coreanos inesperados."""
+
+        return bool(
+            re.search(
+                "[\u3400-\u4DBF\u4E00-\u9FFF"
+                "\u3040-\u30FF\uAC00-\uD7AF]",
+                str(text),
+            )
+        )
+
+    def _ensure_spanish_response(self, response: str, prompt: str) -> str:
+        """Reintenta una vez si el modelo mezcla español con escritura CJK."""
+
+        clean_response = str(response).strip()
+        if not self._contains_unexpected_cjk(clean_response):
+            return clean_response
+
+        info(
+            "Respuesta de IA descartada por contener escritura CJK "
+            "inesperada. Se solicita una reformulación en español."
+        )
+
+        repair_prompt = (
+            prompt
+            + "\n\nREGLA CRÍTICA DE IDIOMA PARA ESTA RESPUESTA:\n"
+            + "Responde exclusivamente en español de España. No incluyas "
+              "caracteres chinos, japoneses o coreanos, traducciones entre "
+              "paréntesis, texto multilingüe ni fragmentos en otros idiomas. "
+              "Reformula desde cero conservando solo la información útil."
+        )
+
+        repaired = str(self.ai_provider.generate(repair_prompt)).strip()
+        if repaired and not self._contains_unexpected_cjk(repaired):
+            return repaired
+
+        info(
+            "La reformulación de IA continuó conteniendo escritura CJK. "
+            "Se devuelve una respuesta segura."
+        )
+        return (
+            "No he podido generar una respuesta limpia en español. "
+            "Repite la petición y lo intentaré de nuevo."
+        )
+
     def _generate_varied_response(
         self,
         prompt: str,
@@ -1718,7 +2678,10 @@ class AtlasAIMixin:
         topic_history = list(history.get(topic_key, []))[-4:]
         forbidden = [*recent, *topic_history]
 
-        response = self.ai_provider.generate(prompt)
+        response = self._ensure_spanish_response(
+            self.ai_provider.generate(prompt),
+            prompt,
+        )
 
         def is_repeated(candidate: str) -> bool:
             return any(
@@ -1741,13 +2704,239 @@ class AtlasAIMixin:
                   "y el cierre. No copies frases completas ni añadas datos.\n"
                 + f"Redacciones que debes evitar:\n{avoided_text}"
             )
-            alternative = self.ai_provider.generate(variation_prompt)
+            alternative = self._ensure_spanish_response(
+                self.ai_provider.generate(variation_prompt),
+                variation_prompt,
+            )
             if alternative.strip() and not is_repeated(alternative):
                 response = alternative
 
         history.setdefault(topic_key, []).append(response)
         history[topic_key] = history[topic_key][-5:]
         return response
+
+    @classmethod
+    def _requires_external_verification(cls, user_message: str) -> bool:
+        """Detecta consultas factuales que no deben responderse de memoria.
+
+        Se aplica después de intentar resolver conocimiento verificado de Atlas.
+        Evita que el modelo local invente cifras, fechas, población, precios,
+        resultados u otros datos externos que pueden ser falsos o estar caducados.
+        """
+
+        normalized = cls._normalize_entity_text(user_message).strip()
+        if not normalized:
+            return False
+
+        # Conversación, creatividad, opinión y ayuda práctica pueden seguir
+        # llegando a la IA local sin exigir una búsqueda web.
+        non_factual_prefixes = (
+            "escribe ", "redacta ", "inventa ", "crea ", "imagina ",
+            "dame ideas", "que opinas", "como puedo", "ayudame",
+            "cuentame un chiste", "jugamos", "vamos a jugar",
+        )
+        if normalized.startswith(non_factual_prefixes):
+            return False
+
+        current_or_numeric_markers = (
+            "cuantos habitantes", "cuantas personas viven", "poblacion de",
+            "precio de", "cuanto cuesta", "temperatura", "que tiempo hace",
+            "resultado de", "marcador de", "clasificacion de",
+            "quien es el presidente", "quien es el alcalde", "quien es el ceo",
+            "cuantos kilometros", "a que distancia", "estadisticas de",
+            "tasa de", "porcentaje de", "fecha exacta", "cuando ocurrio",
+            "cuando se estreno", "cuanto mide", "cuanto pesa",
+            "numero de habitantes", "datos actuales", "actualmente", "hoy",
+        )
+        if any(marker in normalized for marker in current_or_numeric_markers):
+            return True
+
+        # Preguntas directas de hechos externos. Las preguntas personales y
+        # familiares verificadas ya se han resuelto antes de llegar aquí.
+        factual_starts = (
+            "cuantos ", "cuantas ", "cual es la capital", "cual es el precio",
+            "donde esta ", "cuando fue ", "cuando ocurrio ",
+        )
+        return normalized.startswith(factual_starts)
+
+    @staticmethod
+    def _internet_confirmation_value(text: str) -> bool | None:
+        normalized = " ".join(
+            "".join(
+                ch for ch in unicodedata.normalize("NFD", str(text).casefold())
+                if unicodedata.category(ch) != "Mn"
+            ).split()
+        ).strip(" .,!¡!¿?")
+        if normalized in {
+            "si", "si porfa", "si por favor", "vale", "adelante", "hazlo",
+            "consultalo", "buscalo", "busca", "consulta", "claro",
+        }:
+            return True
+        if normalized in {"no", "no gracias", "cancelar", "dejalo", "mejor no"}:
+            return False
+        return None
+
+    def _internet_state_key(self) -> str:
+        request_context = getattr(self, "channel_request_context", None)
+        session_id = getattr(request_context, "session_id", None)
+        if session_id:
+            return f"telegram:{session_id}"
+        return f"cli:{self.get_user().casefold()}"
+
+    def _set_pending_internet_query(self, query: str | None) -> None:
+        pending = getattr(self, "_pending_internet_queries", None)
+        if not isinstance(pending, dict):
+            pending = {}
+            self._pending_internet_queries = pending
+        key = self._internet_state_key()
+        if query:
+            pending[key] = query.strip()
+        else:
+            pending.pop(key, None)
+
+    def _get_pending_internet_query(self) -> str | None:
+        pending = getattr(self, "_pending_internet_queries", None)
+        if not isinstance(pending, dict):
+            return None
+        return pending.get(self._internet_state_key())
+
+    @classmethod
+    def _extract_explicit_internet_query(cls, text: str) -> str | None:
+        normalized = cls._normalize_entity_text(text)
+        patterns = (
+            r"^(?:busca|buscar|consulta|consultar|investiga|investigar)\s+(?:en\s+)?internet\s+(.+)$",
+            r"^(?:busca|consulta|investiga)\s+en\s+la\s+web\s+(.+)$",
+            r"^(?:busca|consulta)\s+online\s+(.+)$",
+        )
+        for pattern in patterns:
+            match = re.match(pattern, normalized)
+            if match:
+                return match.group(1).strip()
+        return None
+
+    def _execute_internet_lookup(self, query: str) -> bool:
+        print()
+        print(f"Voy a consultar Internet sobre «{query}».")
+        try:
+            sources = search_internet(query)
+        except (InternetLookupError, OSError, TimeoutError, ValueError):
+            print(
+                "No he podido completar la consulta ahora mismo. "
+                "Comprueba la conexión e inténtalo de nuevo."
+            )
+            return True
+        if not sources:
+            print(
+                "No he encontrado una fuente suficientemente clara para responder "
+                "sin inventar datos."
+            )
+            return True
+
+        source_block = "\n\n".join(
+            f"FUENTE {index}: {source.title}\nURL: {source.url}\nCONTENIDO: {source.snippet}"
+            for index, source in enumerate(sources, start=1)
+        )
+        if self.ai_provider is not None and self.ai_provider.is_available():
+            prompt = (
+                "Responde en español usando EXCLUSIVAMENTE las fuentes incluidas. "
+                "No añadas datos que no aparezcan en ellas. Si las fuentes no bastan, "
+                "dilo claramente. Sé breve y menciona al final las fuentes utilizadas "
+                "con su título y URL.\n\n"
+                f"PREGUNTA: {query}\n\n{source_block}"
+            )
+            try:
+                answer = str(self.ai_provider.generate(prompt)).strip()
+            except (OSError, RuntimeError, TypeError, ValueError):
+                answer = ""
+            if answer:
+                print(answer)
+                return True
+
+        print("He encontrado estas fuentes relevantes:")
+        for source in sources:
+            print(f"- {source.title}: {source.snippet[:350]}\n  {source.url}")
+        return True
+
+    def _handle_pending_internet_lookup(self, text: str) -> bool:
+        pending = self._get_pending_internet_query()
+        if not pending:
+            return False
+        decision = self._internet_confirmation_value(text)
+        if decision is None:
+            return False
+        self._set_pending_internet_query(None)
+        if not decision:
+            print(); print("De acuerdo, no lo consultaré en Internet.")
+            return True
+        return self._execute_internet_lookup(pending)
+
+    @staticmethod
+    def _supported_translation_languages() -> dict[str, str]:
+        return {
+            "ingles": "inglés", "inglés": "inglés", "english": "inglés",
+            "americano": "inglés de Estados Unidos", "estadounidense": "inglés de Estados Unidos",
+            "valenciano": "valenciano", "valencia": "valenciano",
+            "catalan": "catalán", "catalán": "catalán",
+            "frances": "francés", "francés": "francés",
+            "portugues": "portugués", "portugués": "portugués",
+            "italiano": "italiano", "aleman": "alemán", "alemán": "alemán",
+            "espanol": "español", "español": "español", "castellano": "español",
+        }
+
+    def _handle_translation_request(self, original_text: str) -> bool:
+        normalized = self._normalize_entity_text(original_text)
+        languages = self._supported_translation_languages()
+        target = None
+        content = None
+        patterns = (
+            r"^traduce\s+(?P<content>.+?)\s+(?:al|a|en)\s+(?P<lang>[a-záéíóúüñ ]+)$",
+            r"^traduce\s+(?:al|a|en)\s+(?P<lang>[a-záéíóúüñ]+)\s+(?P<content>.+)$",
+            r"^traduce\s+(?:al|a|en)\s+(?P<lang>[a-záéíóúüñ ]+)\s*[:,-]\s*(?P<content>.+)$",
+            r"^como\s+se\s+dice\s+(?P<content>.+?)\s+en\s+(?P<lang>[a-záéíóúüñ ]+)$",
+        )
+        for pattern in patterns:
+            match = re.match(pattern, normalized)
+            if not match:
+                continue
+            raw_lang = match.group("lang").strip()
+            for alias, label in languages.items():
+                if raw_lang == self._normalize_entity_text(alias):
+                    target = label
+                    break
+            content = match.group("content").strip(" \"'“”")
+            if target and content:
+                break
+        if not target or not content:
+            return False
+        if self.ai_provider is None or not self.ai_provider.is_available():
+            print(); print("Ahora mismo no tengo disponible el traductor local.")
+            return True
+        prompt = (
+            f"Traduce el texto al {target}. Devuelve únicamente la traducción, "
+            "sin explicaciones, salvo que exista una ambigüedad imprescindible.\n\n"
+            f"TEXTO: {content}"
+        )
+        try:
+            translated = str(self.ai_provider.generate(prompt)).strip()
+        except (OSError, RuntimeError, TypeError, ValueError):
+            translated = ""
+        print()
+        print(translated or "No he podido completar la traducción.")
+        return True
+
+    def _offer_internet_lookup(self, original_text: str) -> bool:
+        """Ofrece una búsqueda externa en vez de fabricar una respuesta."""
+
+        if not self._requires_external_verification(original_text):
+            return False
+
+        self._set_pending_internet_query(original_text)
+        print()
+        print(
+            "No tengo ese dato verificado y prefiero no inventarlo. "
+            "¿Quieres que lo consulte en Internet?"
+        )
+        return True
 
     def _handle_ai(
         self,
@@ -1764,6 +2953,16 @@ class AtlasAIMixin:
                 La IA está desactivada o no está disponible.
         """
 
+        if self._handle_pending_internet_lookup(original_text):
+            return True
+
+        explicit_internet_query = self._extract_explicit_internet_query(original_text)
+        if explicit_internet_query:
+            return self._execute_internet_lookup(explicit_internet_query)
+
+        if self._handle_translation_request(original_text):
+            return True
+
         original_text, clarification_handled = (
             self._prepare_entity_clarification(
                 original_text
@@ -1778,14 +2977,30 @@ class AtlasAIMixin:
         )
         if verified_response is not None:
             normalized_verified_query = self._normalize_entity_text(original_text)
+            relationship_terms = set(
+                self._relationship_query_aliases()
+            )
+            verified_tokens = set(
+                normalized_verified_query.split()
+            )
+            is_relationship_query = bool(
+                verified_tokens.intersection(
+                    relationship_terms
+                )
+            )
             response_kind = (
-                "biography"
-                if any(marker in normalized_verified_query for marker in (
-                    "quien es", "quien era", "hablame de",
-                    "cuentame sobre", "que sabes de",
-                    "donde vive", "donde nacio", "cuando nacio",
-                    "en que trabaja", "donde trabaja",
-                ))
+                "relationship"
+                if is_relationship_query
+                else "biography"
+                if any(
+                    marker in normalized_verified_query
+                    for marker in (
+                        "quien es", "quien era", "hablame de",
+                        "cuentame sobre", "que sabes de",
+                        "donde vive", "donde nacio", "cuando nacio",
+                        "en que trabaja", "donde trabaja",
+                    )
+                )
                 else "relationship"
             )
             verified_response = self._style_verified_response(
@@ -1806,10 +3021,36 @@ class AtlasAIMixin:
                     role="assistant",
                     content=verified_response,
                 )
-            except (AttributeError, TypeError):
+                continuity_store = getattr(self, "conversation_continuity", None)
+                if continuity_store is not None:
+                    request_context = getattr(self, "channel_request_context", None)
+                    channel = getattr(request_context, "channel", "cli") or "cli"
+                    continuity_store.append_exchange(
+                        self._get_current_conversation_user(),
+                        original_text,
+                        verified_response,
+                        channel=channel,
+                    )
+            except (AttributeError, TypeError, OSError):
                 pass
             self._resolved_entity_id = None
             self._resolved_entity_candidate_ids = set()
+            return True
+
+        # Nunca se permite que el modelo improvise relaciones o biografías de
+        # personas conocidas. Si no existe una respuesta verificada, se reconoce
+        # la limitación en lugar de fabricar parentescos o datos personales.
+        if self._is_entity_or_relationship_query(original_text):
+            print()
+            print(
+                "No puedo confirmar esa información con los datos verificados "
+                "que tengo. Prefiero no inventar relaciones ni datos personales."
+            )
+            return True
+
+        # Si Atlas no ha encontrado una respuesta en sus fuentes verificadas,
+        # las consultas factuales externas no se delegan ciegamente al modelo.
+        if self._offer_internet_lookup(original_text):
             return True
 
         if not self.can_use_ai():
@@ -1870,6 +3111,14 @@ class AtlasAIMixin:
                 original_text,
             )
         )
+        continuity_store = getattr(self, "conversation_continuity", None)
+        if continuity_store is not None:
+            shared_context = continuity_store.format_for_prompt(conversation_user)
+            if shared_context:
+                conversation_context = (
+                    shared_context + "\n\n" + conversation_context
+                    if conversation_context else shared_context
+                )
 
         # ---------------------------------------------------------------------
         # INFORMACIÓN REAL DEL SISTEMA
@@ -2005,6 +3254,22 @@ class AtlasAIMixin:
             conversation_context=conversation_context,
         )
 
+        executive_context_getter = getattr(self, "_executive_prompt_context", None)
+        if callable(executive_context_getter):
+            prompt += "\n\n" + executive_context_getter(original_text)
+
+        prompt += (
+            "\n\nREGLA DE FIABILIDAD OBLIGATORIA\n"
+            "No inventes nombres, cifras, fechas, lugares ni hechos. "
+            "Si la respuesta factual no aparece en el contexto proporcionado, "
+            "indica que no tienes el dato verificado y ofrece consultarlo en Internet. "
+            "No presentes una suposición como si fuera un hecho. "
+            "No atribuyas posesión al interlocutor sin confirmación. Por ejemplo, si el contexto dice "
+            "que Funcio pertenece a Lidia, escribe «Funcio es el gato de Lidia», nunca "
+            "«Funcio es tu gato de Lidia». Si el usuario solo presenta una foto o un nombre, "
+            "no inventes parentescos, propietarios, lugares ni anécdotas."
+        )
+
         try:
 
             response = self._generate_varied_response(
@@ -2040,6 +3305,16 @@ class AtlasAIMixin:
             role="assistant",
             content=response,
         )
+        continuity_store = getattr(self, "conversation_continuity", None)
+        if continuity_store is not None:
+            request_context = getattr(self, "channel_request_context", None)
+            channel = getattr(request_context, "channel", "cli") or "cli"
+            try:
+                continuity_store.append_exchange(
+                    conversation_user, original_text, response, channel=channel
+                )
+            except OSError:
+                pass
 
         info(
             f"Respuesta generada por IA local. "

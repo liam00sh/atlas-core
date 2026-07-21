@@ -1,0 +1,60 @@
+{
+  "python": "3.14.6 (tags/v3.14.6:c63aec6, Jun 10 2026, 10:26:10) [MSC v.1944 64 bit (AMD64)]",
+  "startup": {
+    "wall_ms": 19914.956,
+    "cpu_ms": 13703.125
+  },
+  "memory_bytes": {
+    "current": 19319564,
+    "peak": 19520622
+  },
+  "io": {
+    "json_reads": 13,
+    "json_writes": 1
+  },
+  "queries": {
+    "simple_first": {
+      "wall_ms": 53.052,
+      "cpu_ms": 15.625
+    },
+    "simple_second": {
+      "wall_ms": 47.898,
+      "cpu_ms": 31.25
+    },
+    "memory_first": {
+      "wall_ms": 62.435,
+      "cpu_ms": 15.625
+    },
+    "memory_second": {
+      "wall_ms": 77.146,
+      "cpu_ms": 0.0
+    },
+    "knowledge_first": {
+      "wall_ms": 74.004,
+      "cpu_ms": 15.625
+    },
+    "knowledge_second": {
+      "wall_ms": 50.543,
+      "cpu_ms": 15.625
+    },
+    "document_first": {
+      "wall_ms": 0.369,
+      "cpu_ms": 0.0
+    },
+    "document_second": {
+      "wall_ms": 0.469,
+      "cpu_ms": 0.0
+    },
+    "tool_first": {
+      "wall_ms": 191.065,
+      "cpu_ms": 125.0
+    },
+    "tool_second": {
+      "wall_ms": 3.77,
+      "cpu_ms": 0.0
+    }
+  },
+  "ollama_calls": 0,
+  "drive_calls": 0,
+  "profile_top": "         11226111 function calls (6205591 primitive calls) in 19.915 seconds\n\n   Ordered by: cumulative time\n   List reduced from 2556 to 25 due to restriction <25>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n        1    0.000    0.000   19.915   19.915 benchmark_sprint17.py:25(measure)\n        1    0.000    0.000   19.915   19.915 benchmark_sprint17.py:54(<lambda>)\n        1    0.001    0.001   19.915   19.915 atlas.py:197(__init__)\n        1    0.000    0.000   17.519   17.519 family_initializer.py:63(initialize)\n        1    0.003    0.003   17.270   17.270 family_initializer.py:565(_initialize_relationships)\n     1453    0.122    0.000   14.222    0.010 identity_storage.py:137(_cached_entities)\n      127    0.002    0.000   12.677    0.100 relationship_engine.py:712(create_relationship_by_name)\n4969664/1453    3.623    0.000   11.238    0.008 copy.py:110(deepcopy)\n41669/1453    0.234    0.000   11.219    0.008 copy.py:172(_deepcopy_list)\n      127    0.004    0.000    9.774    0.077 relationship_engine.py:519(create_relationship)\n      509    0.001    0.000    9.357    0.018 relationship_engine.py:251(get_relationships)\n      509    0.001    0.000    9.357    0.018 identity_storage.py:848(load_relationships)\n   169952    1.304    0.000    7.530    0.000 copy.py:228(_reconstruct)\n      254    0.061    0.000    4.982    0.020 relationship_engine.py:283(find_exact_relationship)\n      911    0.002    0.000    4.896    0.005 identity_storage.py:364(load_people)\n      254    0.038    0.000    4.590    0.018 relationship_engine.py:260(get_relationship_count)\n   169502    2.094    0.000    3.790    0.000 copy.py:198(_deepcopy_dict)\n       58    0.004    0.000    3.750    0.065 __init__.py:1(<module>)\n      616    0.020    0.000    3.475    0.006 people_manager.py:200(get_person_by_id)\n      616    0.002    0.000    3.455    0.006 identity_storage.py:584(get_person_by_id)\n      127    0.001    0.000    3.263    0.026 relationship_engine.py:992(find_inverse_for_relationship)\n     2919    3.072    0.001    3.076    0.001 {built-in method nt.stat}\n      142    0.002    0.000    3.010    0.021 log_manager.py:27(info)\n      142    0.004    0.000    3.008    0.021 log_manager.py:13(write)\n      254    0.000    0.000    2.901    0.011 relationship_engine.py:231(resolve_entity_reference)\n\n\n"
+}

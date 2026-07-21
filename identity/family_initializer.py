@@ -573,27 +573,85 @@ class FamilyInitializer:
         relaciones nuevas aunque el motor reutilice objetos existentes.
         """
 
-        created_count = 0
+        existing_relationships = (
+            self.relationship_engine
+            .get_relationships()
+        )
+        before_count = len(existing_relationships)
+        existing_keys = {
+            (
+                item.source_entity_id,
+                item.source_entity_type,
+                item.relationship_type,
+                item.target_entity_id,
+                item.target_entity_type,
+            )
+            for item in existing_relationships
+        }
+        resolved: dict[tuple[str, str | None], tuple | None] = {}
 
         for data in FAMILY_RELATIONSHIPS:
-
-            before_count = (
-                self.relationship_engine
-                .get_relationship_count()
+            source_reference = (
+                data["source"],
+                data.get("source_type"),
             )
+            target_reference = (
+                data["target"],
+                data.get("target_type"),
+            )
+            if source_reference not in resolved:
+                resolved[source_reference] = (
+                    self.relationship_engine.resolve_entity_reference(
+                        value=source_reference[0],
+                        preferred_type=source_reference[1],
+                    )
+                )
+            if target_reference not in resolved:
+                resolved[target_reference] = (
+                    self.relationship_engine.resolve_entity_reference(
+                        value=target_reference[0],
+                        preferred_type=target_reference[1],
+                    )
+                )
+            source = resolved[source_reference]
+            target = resolved[target_reference]
+            if source is None or target is None:
+                # Conserva el mismo error descriptivo de la ruta anterior.
+                self.relationship_engine.create_relationship_by_name(
+                    source=data["source"],
+                    source_type=data.get("source_type"),
+                    relationship_type=data["relationship_type"],
+                    target=data["target"],
+                    target_type=data.get("target_type"),
+                    confirmed=True,
+                    information_source="user",
+                    registered_by="Liam",
+                    confidence=1.0,
+                    notes=data.get("notes", ""),
+                    create_inverse=True,
+                )
+                continue
 
-            self.relationship_engine.create_relationship_by_name(
-                source=data["source"],
-                source_type=data.get(
-                    "source_type"
-                ),
+            source_type, source_entity = source
+            target_type, target_entity = target
+            key = (
+                source_entity.id,
+                source_type,
+                data["relationship_type"],
+                target_entity.id,
+                target_type,
+            )
+            if key in existing_keys:
+                continue
+
+            relationship, inverse = self.relationship_engine.create_relationship(
+                source_entity_id=source_entity.id,
+                source_entity_type=source_type,
                 relationship_type=(
                     data["relationship_type"]
                 ),
-                target=data["target"],
-                target_type=data.get(
-                    "target_type"
-                ),
+                target_entity_id=target_entity.id,
+                target_entity_type=target_type,
                 confirmed=True,
                 information_source="user",
                 registered_by="Liam",
@@ -604,15 +662,18 @@ class FamilyInitializer:
                 ),
                 create_inverse=True,
             )
+            if relationship is not None:
+                existing_keys.add(key)
+            if inverse is not None:
+                existing_keys.add(
+                    (
+                        inverse.source_entity_id,
+                        inverse.source_entity_type,
+                        inverse.relationship_type,
+                        inverse.target_entity_id,
+                        inverse.target_entity_type,
+                    )
+                )
 
-            after_count = (
-                self.relationship_engine
-                .get_relationship_count()
-            )
-
-            created_count += max(
-                0,
-                after_count - before_count,
-            )
-
-        return created_count
+        after_count = self.relationship_engine.get_relationship_count()
+        return max(0, after_count - before_count)

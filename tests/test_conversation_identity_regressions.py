@@ -1,5 +1,6 @@
 """Regresiones de identidad, relaciones, ambigüedad y limpieza de texto."""
 
+import re
 import unittest
 from types import SimpleNamespace
 
@@ -32,6 +33,12 @@ class _PeopleManager:
             _Person("pepi_saray", "Pepi Carreres López", ("Pepi",)),
             _Person("pepi_liam", "Pepi Vicente Navarro", ("Pepi",)),
             _Person("saray", "Saray Izquierdo Carreres", ("Saray",)),
+            _Person("lidia", "Lidia Vicente Martínez", ("Lidia",)),
+            _Person("raul", "Raúl Isidro Vicente Martínez", ("Raúl",)),
+            _Person("mary", "María José Martínez Sanz", ("Mary",)),
+            _Person("ruben", "Rubén Izquierdo Carreres", ("Rubén",)),
+            _Person("manoli", "Manoli Carreres López", ("Manoli",)),
+            _Person("noa", "Noa Melinte Carreres", ("Noa",)),
         ]
         self.animals = [
             _Animal("funcio", "Funcionario", ("Funcio",)),
@@ -130,6 +137,12 @@ class _RelationshipEngine:
             ("saray", "pepi_saray"): "hija",
             ("pepi_liam", "liam"): "tía",
             ("liam", "pepi_liam"): "sobrino",
+            ("lidia", "liam"): "hermana",
+            ("raul", "liam"): "hermano",
+            ("mary", "liam"): "madre",
+            ("ruben", "saray"): "hermano",
+            ("manoli", "saray"): "tía",
+            ("noa", "manoli"): "hija",
         }
         return labels.get((source_entity_id, target_entity_id))
 
@@ -147,6 +160,12 @@ class _RelationshipEngine:
             "pepi_saray": "Pepi Carreres López",
             "pepi_liam": "Pepi Vicente Navarro",
             "funcio": "Funcionario",
+            "lidia": "Lidia Vicente Martínez",
+            "raul": "Raúl Isidro Vicente Martínez",
+            "mary": "María José Martínez Sanz",
+            "ruben": "Rubén Izquierdo Carreres",
+            "manoli": "Manoli Carreres López",
+            "noa": "Noa Melinte Carreres",
         }
         label = self.infer_relationship_label(
             source_entity_id,
@@ -473,6 +492,145 @@ class ConversationIdentityRegressionTests(unittest.TestCase):
         )
         self.assertNotIn("la madre de Saray es.", cleaned.casefold())
 
+
+
+
+    def test_who_is_my_sister_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quién es mi hermana?"
+        )
+        self.assertEqual(
+            answer,
+            "Tu hermana es Lidia Vicente Martínez.",
+        )
+
+    def test_how_is_my_girlfriend_called_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama mi novia?"
+        )
+        self.assertEqual(
+            answer,
+            "Tu novia es Saray Izquierdo Carreres.",
+        )
+
+    def test_who_is_my_mother_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quién es mi madre?"
+        )
+        self.assertEqual(
+            answer,
+            "Tu madre es María José Martínez Sanz.",
+        )
+
+    def test_sarays_brother_is_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama el hermano de Saray?"
+        )
+        self.assertEqual(
+            answer,
+            "El hermano de Saray Izquierdo Carreres "
+            "es Rubén Izquierdo Carreres.",
+        )
+
+    def test_plural_siblings_are_resolved_from_graph(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quiénes son mis hermanos?"
+        )
+        self.assertIn("Lidia Vicente Martínez", answer)
+        self.assertIn("Raúl Isidro Vicente Martínez", answer)
+
+
+
+    def test_brother_of_my_girlfriend_uses_two_steps(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Quién es el hermano de mi novia?"
+        )
+        self.assertEqual(
+            answer,
+            "El hermano de tu novia es "
+            "Rubén Izquierdo Carreres.",
+        )
+
+    def test_mother_of_my_girlfriend_uses_two_steps(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama la madre de mi novia?"
+        )
+        self.assertEqual(
+            answer,
+            "La madre de tu novia es "
+            "Pepi Carreres López.",
+        )
+
+    def test_daughter_of_sarays_aunt_uses_three_steps(self):
+        atlas = _AtlasAI()
+        answer = atlas._answer_verified_entity_query(
+            "¿Cómo se llama la hija de la tía de Saray?"
+        )
+        self.assertEqual(
+            answer,
+            "La hija de la tía de Saray Izquierdo Carreres es "
+            "Noa Melinte Carreres.",
+        )
+
+
+
+    def test_relationship_pattern_groups_all_aliases(self):
+        atlas = _AtlasAI()
+        pattern = atlas._relationship_pattern()
+
+        self.assertIsNotNone(
+            re.fullmatch(
+                rf"(?:mi|mis)\s+{pattern}",
+                "mi hermana",
+            )
+        )
+        self.assertIsNotNone(
+            re.fullmatch(
+                rf"(?:mi|mis)\s+{pattern}",
+                "mi madre",
+            )
+        )
+        self.assertIsNotNone(
+            re.fullmatch(
+                rf"(?:mi|mis)\s+{pattern}",
+                "mi novia",
+            )
+        )
+
+    def test_relationship_articles_include_madre(self):
+        atlas = _AtlasAI()
+
+        self.assertEqual(
+            atlas._relationship_article(
+                "madre",
+                plural=False,
+            ),
+            "La",
+        )
+        self.assertEqual(
+            atlas._relationship_article(
+                "hermano",
+                plural=False,
+            ),
+            "El",
+        )
+
+    def test_nested_subject_phrase_preserves_article_and_name(self):
+        atlas = _AtlasAI()
+
+        self.assertEqual(
+            atlas._relationship_subject_phrase(
+                "tía de Saray"
+            ),
+            "la tía de Saray Izquierdo Carreres",
+        )
 
 
 if __name__ == "__main__":

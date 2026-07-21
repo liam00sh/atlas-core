@@ -9,14 +9,14 @@
         ],
         "grammatical_gender": "masculine",
         "status": "user",
-        "encounter_count": 37,
+        "encounter_count": 1029,
         "first_seen_at": "2026-07-14T18:57:03",
-        "last_seen_at": "2026-07-18T11:54:06",
+        "last_seen_at": "2026-07-21T20:13:07",
         "introduced_by": null,
         "summary": "Usuario principal de Atlas. Su nombre habitual es Liam. Cumpleaños: 25 de noviembre de 2000. Nació en Beneixama, vive en Beneixama y ha vivido en Alicante. Trabaja como administrador de sistemas en Métrica, con Kyndryl y Banco Sabadell como cliente, realizando parcheo y actualización de servidores. Ha trabajado en Burger King de Alicante, en limpieza en Conforama de San Juan de Alicante, como informático en Delfín Group de Villena, como administrador de sistemas en NTT Data y como soporte técnico en MetaEnlace para Sprinter y JD. Liam es un hombre trans, pero este dato es personal y sensible: no debe mencionarse espontáneamente ni usarse para presentarlo. Solo puede citarse cuando Liam lo introduzca expresamente o la conversación trate de forma directa y pertinente sobre ese asunto. Nerea Vicente Martínez es su nombre anterior y solo debe utilizarse para reconocer documentos antiguos, nunca para dirigirse a él.",
         "user_profile": "Liam",
         "created_at": "2026-07-14T18:57:03",
-        "updated_at": "2026-07-18T11:54:06"
+        "updated_at": "2026-07-21T20:13:07"
     },
     {
         "id": "9510bef0-7cff-401d-a67f-b9dd39a85611",
@@ -26,14 +26,14 @@
         ],
         "grammatical_gender": "feminine",
         "status": "user",
-        "encounter_count": 8,
+        "encounter_count": 245,
         "first_seen_at": "2026-07-15T16:29:13",
-        "last_seen_at": "2026-07-15T21:31:06",
+        "last_seen_at": "2026-07-21T20:13:07",
         "introduced_by": null,
         "summary": "Pareja de Liam. Cumpleaños: 18 de noviembre de 2003. Nació en Caudete, vive en Alicante y ha vivido en Caudete. Actualmente no trabaja. Ha trabajado de educadora infantil en una escuela infantil y de administrativa. Terminó dos ciclos de grado superior en un instituto: Educación Infantil y Administración. Ya terminó sus estudios, no estudia en la universidad y no debe afirmarse que siga estudiando.",
         "user_profile": "Saray",
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-18T09:35:51"
+        "updated_at": "2026-07-21T20:13:07"
     },
     {
         "id": "82ea29a5-1227-4846-ba2a-df7a0d0b1e10",
@@ -181,14 +181,14 @@
         ],
         "grammatical_gender": "feminine",
         "status": "guest",
-        "encounter_count": 1,
+        "encounter_count": 2,
         "first_seen_at": "2026-07-16T18:57:54",
-        "last_seen_at": "2026-07-16T18:57:54",
+        "last_seen_at": "2026-07-20T12:17:38",
         "introduced_by": null,
         "summary": "Hermana de Liam y Raúl. Cumpleaños: 22 de mayo de 2005. Nació en Beneixama, vive en Beneixama y ha vivido en Elche. Es auxiliar veterinaria. Actualmente no trabaja; ha trabajado como auxiliar veterinaria y como camarera en el Discovery de Beneixama y en el bar de la piscina.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:37",
-        "updated_at": "2026-07-18T09:35:51"
+        "updated_at": "2026-07-20T12:17:38"
     },
     {
         "id": "3b503105-9407-47d4-a010-36f4b32bcdc3",
@@ -710,14 +710,14 @@
         ],
         "grammatical_gender": "feminine",
         "status": "guest",
-        "encounter_count": 0,
-        "first_seen_at": null,
-        "last_seen_at": null,
+        "encounter_count": 1,
+        "first_seen_at": "2026-07-20T12:17:57",
+        "last_seen_at": "2026-07-20T12:17:57",
         "introduced_by": null,
         "summary": "Prima de Saray e hija de Manoli y Georgel. Cumpleaños: 24 de julio de 2013. Nació en Caudete y vive en Caudete. Juega al tenis.",
         "user_profile": null,
         "created_at": "2026-07-14T22:16:39",
-        "updated_at": "2026-07-18T09:35:51"
+        "updated_at": "2026-07-20T12:17:57"
     },
     {
         "id": "b99c7294-835d-4bcd-8601-d8882f1e1e28",

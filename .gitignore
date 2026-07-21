@@ -37,6 +37,7 @@ __pycache__/
 
 .env
 .env.*
+!.env.example
 
 
 ###############################################################################
@@ -76,6 +77,8 @@ venv/
 
 memory/data/*.json
 memory/data/memories.json
+data/memory_workflow/
+data/knowledge/
 
 
 ###############################################################################
@@ -145,3 +148,15 @@ ollama_models/
 ###############################################################################
 
 .ipynb_checkpoints/
+
+###############################################################################
+# CREDENCIALES E INTEGRACIONES DE GOOGLE
+###############################################################################
+
+data/integrations/google_drive/credentials.json
+data/integrations/google_drive/token.json
+data/integrations/google_drive/document_index.json
+data/integrations/google_drive/semantic_index.json
+data/integrations/google_drive/structure_index.json
+data/performance/
+data/integrations/telegram/

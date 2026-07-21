@@ -345,165 +345,226 @@ class MemoryService:
 
         return True
 
+    @staticmethod
+    def _memory_in_second_person(content: str, *, self_view: bool) -> str:
+        """Convierte recuerdos redactados en primera persona a lenguaje natural."""
+        text = " ".join(str(content).split()).strip().rstrip(".")
+        if not self_view:
+            return text
+        lower = text.casefold()
+        replacements = (
+            ("mi coche es ", "Tu coche es "),
+            ("mi movil es ", "Tu móvil es "),
+            ("mi móvil es ", "Tu móvil es "),
+            ("mi telefono es ", "Tu teléfono es "),
+            ("mi teléfono es ", "Tu teléfono es "),
+            ("mi trabajo es ", "Tu trabajo es "),
+            ("trabajo como ", "Trabajas como "),
+            ("trabajo en ", "Trabajas en "),
+            ("mi fecha de nacimiento es ", "Tu fecha de nacimiento es "),
+            ("naci el ", "Naciste el "),
+            ("nací el ", "Naciste el "),
+            ("mi cumpleaños es ", "Tu cumpleaños es "),
+            ("cumplo años el ", "Cumples años el "),
+            ("tengo ", "Tienes "),
+            ("vivo en ", "Vives en "),
+            ("soy de ", "Eres de "),
+            ("naci en ", "Naciste en "),
+            ("nací en ", "Naciste en "),
+            ("mi mascota es ", "Tu mascota es "),
+            ("mis mascotas son ", "Tus mascotas son "),
+            ("tengo un perro ", "Tienes un perro "),
+            ("tengo una perra ", "Tienes una perra "),
+            ("tengo un gato ", "Tienes un gato "),
+            ("tengo una gata ", "Tienes una gata "),
+            ("me gusta ", "Te gusta "),
+            ("soy ", "Eres "),
+        )
+        for source, target in replacements:
+            if lower.startswith(source):
+                return target + text[len(source):]
+        if lower.startswith("mi "):
+            return "Tu " + text[3:]
+        return text[:1].upper() + text[1:]
+
+    @staticmethod
+    def _memory_signature(content: str) -> str:
+        import re
+        import unicodedata
+        value = unicodedata.normalize("NFKD", str(content).casefold())
+        value = "".join(ch for ch in value if not unicodedata.combining(ch))
+        value = re.sub(r"\b(mi|mis|un|una|el|la|de|del|es|son)\b", " ", value)
+        return re.sub(r"[^a-z0-9]+", " ", value).strip()
+
+    @staticmethod
+    def _essential_category(content: str) -> str | None:
+        """Clasifica datos personales útiles para un resumen humano."""
+        import re
+        import unicodedata
+        value = unicodedata.normalize("NFKD", str(content).casefold())
+        value = "".join(ch for ch in value if not unicodedata.combining(ch))
+        value = re.sub(r"[^a-z0-9ñ ]+", " ", value)
+        value = re.sub(r"\s+", " ", value).strip()
+        categories = (
+            ("birth", ("fecha de nacimiento", "naci el", "cumpleanos", "cumplo anos")),
+            ("age", ("tengo años", "tengo anos", "mi edad", "anos de edad")),
+            ("work", ("trabajo como", "trabajo en", "mi trabajo", "mi profesion", "mi profesión")),
+            ("residence", ("vivo en", "resido en", "mi domicilio", "mi residencia")),
+            ("origin", ("soy de", "naci en", "mi pueblo", "mi ciudad natal")),
+            ("pets", ("mascota", "mascotas", "mi perro", "mi perra", "mi gato", "mi gata", "tengo un perro", "tengo una perra", "tengo un gato", "tengo una gata")),
+            ("family", ("mi pareja", "mi madre", "mi padre", "mi hermana", "mi hermano", "mi hijo", "mi hija")),
+            ("vehicle", ("mi coche", "mi moto", "mi vehiculo", "mi vehículo")),
+            ("phone", ("mi movil", "mi móvil", "mi telefono", "mi teléfono")),
+        )
+        for category, markers in categories:
+            if any(marker in value for marker in markers):
+                return category
+        return None
+
+    def _select_brief_memories(self, memories: list[dict], limit: int = 6) -> list[dict]:
+        """Prioriza identidad cotidiana sin repetir categorías equivalentes."""
+        ranked = sorted(memories, key=lambda item: (
+            {"critical": 4, "high": 3, "medium": 2}.get(str(item.get("priority", "")).casefold(), 1),
+            int(item.get("access_count", 0) or 0),
+            str(item.get("updated_at") or item.get("created_at") or ""),
+        ), reverse=True)
+        selected: list[dict] = []
+        used_categories: set[str] = set()
+        essential_order = ("birth", "age", "work", "residence", "origin", "pets", "family", "vehicle", "phone")
+        by_category: dict[str, list[dict]] = {}
+        for memory in ranked:
+            category = self._essential_category(memory.get("content", ""))
+            if category:
+                by_category.setdefault(category, []).append(memory)
+        for category in essential_order:
+            if category in by_category and len(selected) < limit:
+                selected.append(by_category[category][0])
+                used_categories.add(category)
+        for memory in ranked:
+            if len(selected) >= limit:
+                break
+            category = self._essential_category(memory.get("content", ""))
+            if category and category in used_categories:
+                continue
+            if memory not in selected:
+                selected.append(memory)
+                if category:
+                    used_categories.add(category)
+        return selected
+
     def show_memories_about(
         self,
         owner: str,
+        *,
+        exhaustive: bool = False,
     ) -> None:
-        """
-        Muestra los recuerdos accesibles sobre una persona.
-
-        Parámetros:
-            owner:
-                Propietario de los recuerdos buscados.
-
-        La información mostrada depende de:
-
-            - La persona que realiza la consulta.
-            - Sus roles.
-            - Sus relaciones.
-            - La visibilidad de cada recuerdo.
-
-        Importante:
-            Los permisos se comprueban utilizando a la persona
-            que habla actualmente.
-
-            No se heredan los permisos del usuario autenticado.
-        """
-
+        """Muestra un resumen breve o el listado autorizado completo."""
         owner = owner.strip()
-
         if not owner:
-
             print()
-
-            print(
-                "No me has indicado sobre quién "
-                "quieres consultar recuerdos."
-            )
-
+            print("No me has indicado sobre quién quieres consultar recuerdos.")
             return
 
-        # ---------------------------------------------------------------------
-        # PERSONA QUE ESTÁ REALIZANDO LA CONSULTA
-        # ---------------------------------------------------------------------
-
-        viewer = (
-            self.atlas
-            .conversation_identity
-            .get_memory_viewer()
-        )
-
+        viewer = self.atlas.conversation_identity.get_memory_viewer()
         if viewer is None:
-
             print()
-
-            print(
-                "No hay ninguna persona identificada."
-            )
-
+            print("No hay ninguna persona identificada.")
             return
 
-        # ---------------------------------------------------------------------
-        # PERFIL DE LA PERSONA QUE CONSULTA
-        # ---------------------------------------------------------------------
-
-        # Si la persona tiene un perfil completo de usuario,
-        # UserManager devolverá sus roles y relaciones.
-        #
-        # Si se trata de un invitado sin perfil, deberá devolver
-        # un diccionario vacío o un perfil sin privilegios.
-        viewer_profile = self.atlas.users.get_profile(
-            viewer
-        )
-
-        if not isinstance(
-            viewer_profile,
-            dict,
-        ):
-
+        viewer_profile = self.atlas.users.get_profile(viewer)
+        if not isinstance(viewer_profile, dict):
             viewer_profile = {}
 
-        # ---------------------------------------------------------------------
-        # RECUERDOS AUTORIZADOS
-        # ---------------------------------------------------------------------
+        is_owner = owner.casefold() == viewer.casefold()
+        is_admin = viewer.casefold() == "liam"
 
-        # MemoryManager devuelve únicamente los recuerdos
-        # que puede leer la persona que está hablando.
-        memories = (
-            self.atlas.memory.get_accessible_memories(
+        if is_admin:
+            memories = self.atlas.memory.list_memories(owner=owner)
+        else:
+            memories = self.atlas.memory.get_accessible_memories(
                 owner=owner,
                 viewer=viewer,
                 viewer_profile=viewer_profile,
             )
-        )
 
         info(
-            f"Consulta de recuerdos. "
-            f"Propietario: {owner}. "
-            f"Consultante: {viewer}. "
-            f"Resultados autorizados: {len(memories)}."
+            f"Consulta de recuerdos. Propietario: {owner}. "
+            f"Consultante: {viewer}. Resultados autorizados: {len(memories)}. "
+            f"Listado completo: {exhaustive}."
         )
-
         print()
 
-        # No se ha encontrado ningún recuerdo accesible.
-        if not memories:
+        # Para otra persona, «todo» significa todo lo que el consultante tiene
+        # autorizado a ver, nunca los datos privados ocultos.
+        restricted_other = exhaustive and not (is_owner or is_admin)
 
-            # Consulta sobre uno mismo.
-            if owner.casefold() == viewer.casefold():
-
-                print(
-                    f"Todavía no recuerdo nada "
-                    f"sobre {owner}."
-                )
-
-            # Consulta sobre otra persona.
-            else:
-
-                print(
-                    f"No tengo información sobre "
-                    f"{owner} que pueda compartir "
-                    f"con {viewer}."
-                )
-
-            return
-
-        # Cabecera de la lista.
-        print(
-            f"Esto es lo que puedo compartir "
-            f"con {viewer} sobre {owner}:"
-        )
-
-        print()
-
-        # Mostramos los recuerdos numerados.
-        for index, memory in enumerate(
-            memories,
-            start=1,
-        ):
-
-            # Nombre legible de la visibilidad.
-            visibility = memory.get(
-                "visibility",
-                "",
-            )
-
-            label = VISIBILITY_LABELS.get(
-                visibility,
-                "Visibilidad desconocida",
-            )
-
-            content = str(
-                memory.get(
-                    "content",
-                    "",
-                )
-            ).strip()
-
+        candidates: list[dict] = []
+        for memory in reversed(memories):
+            content = " ".join(str(memory.get("content", "")).split()).strip()
             if not content:
                 continue
+            signature = self._memory_signature(content)
+            duplicate_index = None
+            for index, existing in enumerate(candidates):
+                existing_signature = self._memory_signature(existing["content"])
+                if (
+                    signature == existing_signature
+                    or signature in existing_signature
+                    or existing_signature in signature
+                ):
+                    duplicate_index = index
+                    break
+            copy = memory.copy()
+            copy["content"] = content
+            if duplicate_index is None:
+                candidates.append(copy)
+            elif len(content) > len(candidates[duplicate_index]["content"]):
+                candidates[duplicate_index] = copy
+        unique = list(reversed(candidates))
 
-            print(
-                f"{index}. {content} "
-                f"[{label}]"
-            )
+        if not unique:
+            if is_owner:
+                print("Todavía no tengo información guardada sobre ti.")
+            else:
+                print(f"No tengo información sobre {owner} que pueda compartir contigo.")
+            return
+
+        def importance(memory: dict) -> tuple[int, int, str]:
+            priority = str(memory.get("priority", "")).casefold()
+            priority_score = {"critical": 4, "high": 3, "medium": 2}.get(priority, 1)
+            access_score = int(memory.get("access_count", 0) or 0)
+            timestamp = str(memory.get("updated_at") or memory.get("created_at") or "")
+            return (priority_score, access_score, timestamp)
+
+        if exhaustive:
+            selected = sorted(unique, key=importance, reverse=True)
+            if is_owner:
+                print("Esto es todo lo que tengo guardado sobre ti:")
+            elif is_admin:
+                print(f"Esto es todo lo que tengo guardado sobre {owner}:")
+            else:
+                print(
+                    f"Esto es todo lo que tienes autorizado a conocer sobre {owner}. "
+                    "Sus datos privados no se muestran:"
+                )
+            print()
+            for index, memory in enumerate(selected, start=1):
+                line = self._memory_in_second_person(memory["content"], self_view=is_owner)
+                print(f"{index}. {line}")
+                if index < len(selected):
+                    print()
+            return
+
+        selected = self._select_brief_memories(unique, limit=6)
+        if is_owner:
+            print("Estas son algunas de las cosas importantes que recuerdo sobre ti:")
+        else:
+            print(f"Esto es lo más importante que puedo contarte sobre {owner}:")
+        print()
+        for memory in selected:
+            line = self._memory_in_second_person(memory["content"], self_view=is_owner)
+            print(f"• {line}")
+
+        if len(unique) > len(selected) and (is_owner or is_admin):
+            print()
+            print("También tengo más información guardada; puedes pedirme el listado completo.")

@@ -46,6 +46,7 @@ Descripción:
 # =============================================================================
 
 import json
+from copy import deepcopy
 
 from pathlib import Path
 
@@ -118,12 +119,44 @@ class IdentityStorage:
             self.data_folder
             / "relationships.json"
         )
+        # Tres entradas como máximo, una por archivo. La firma del archivo
+        # invalida cambios externos y cada lectura devuelve copias profundas.
+        self._entity_cache: dict[Path, tuple[tuple[int, int], list]] = {}
 
         self._ensure_storage()
 
         info(
             "IdentityStorage inicializado."
         )
+
+    @staticmethod
+    def _file_signature(file_path: Path) -> tuple[int, int]:
+        stat = file_path.stat()
+        return stat.st_mtime_ns, stat.st_size
+
+    def _cached_entities(self, file_path: Path):
+        cached = self._entity_cache.get(file_path)
+        if cached is None:
+            return None
+        try:
+            signature = self._file_signature(file_path)
+        except OSError:
+            self._entity_cache.pop(file_path, None)
+            return None
+        if cached[0] != signature:
+            self._entity_cache.pop(file_path, None)
+            return None
+        return deepcopy(cached[1])
+
+    def _store_cached_entities(self, file_path: Path, entities: list) -> None:
+        try:
+            signature = self._file_signature(file_path)
+        except OSError:
+            return
+        self._entity_cache[file_path] = (signature, deepcopy(entities))
+
+    def _invalidate_cache(self, file_path: Path) -> None:
+        self._entity_cache.pop(file_path, None)
 
     # =========================================================================
     # INICIALIZACIÓN
@@ -338,6 +371,10 @@ class IdentityStorage:
         elemento dañado impida utilizar el resto del sistema.
         """
 
+        cached = self._cached_entities(self.people_file)
+        if cached is not None:
+            return cached
+
         raw_people = self._load_json_list(
             self.people_file
         )
@@ -368,6 +405,7 @@ class IdentityStorage:
                 person
             )
 
+        self._store_cached_entities(self.people_file, people)
         return people
 
     def save_people(
@@ -401,6 +439,8 @@ class IdentityStorage:
         )
 
         if saved:
+
+            self._invalidate_cache(self.people_file)
 
             info(
                 f"Personas guardadas: {len(people)}."
@@ -574,6 +614,10 @@ class IdentityStorage:
         Carga todos los animales almacenados.
         """
 
+        cached = self._cached_entities(self.animals_file)
+        if cached is not None:
+            return cached
+
         raw_animals = self._load_json_list(
             self.animals_file
         )
@@ -604,6 +648,7 @@ class IdentityStorage:
                 animal
             )
 
+        self._store_cached_entities(self.animals_file, animals)
         return animals
 
     def save_animals(
@@ -637,6 +682,8 @@ class IdentityStorage:
         )
 
         if saved:
+
+            self._invalidate_cache(self.animals_file)
 
             info(
                 f"Animales guardados: {len(animals)}."
@@ -805,6 +852,10 @@ class IdentityStorage:
         Carga todas las relaciones almacenadas.
         """
 
+        cached = self._cached_entities(self.relationships_file)
+        if cached is not None:
+            return cached
+
         raw_relationships = self._load_json_list(
             self.relationships_file
         )
@@ -835,6 +886,7 @@ class IdentityStorage:
                 relationship
             )
 
+        self._store_cached_entities(self.relationships_file, relationships)
         return relationships
 
     def save_relationships(
@@ -869,6 +921,8 @@ class IdentityStorage:
         )
 
         if saved:
+
+            self._invalidate_cache(self.relationships_file)
 
             info(
                 "Relaciones guardadas: "
