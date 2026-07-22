@@ -10,12 +10,13 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import py_compile
 import signal
 import subprocess
-import py_compile
 import sys
 import time
 from typing import Iterable
+
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 RUN_BOT = PROJECT_ROOT / "scripts" / "run_telegram_bot.py"
@@ -37,12 +38,17 @@ WATCH_ROOTS = (
     "tools",
     "ai",
 )
-WATCH_FILES = (
-    "config.py",
-    ".env",
-)
+WATCH_FILES = ("config.py", ".env")
 WATCH_SUFFIXES = {".py", ".json", ".yaml", ".yml", ".toml"}
-EXCLUDED_PARTS = {"__pycache__", ".git", ".agents", "tests", "logs", "data", "backups"}
+EXCLUDED_PARTS = {
+    "__pycache__",
+    ".git",
+    ".agents",
+    "tests",
+    "logs",
+    "data",
+    "backups",
+}
 
 POLL_SECONDS = 2.0
 DEBOUNCE_SECONDS = 2.0
@@ -61,28 +67,74 @@ def _log(message: str) -> None:
         stream.write(f"{timestamp} {message}\n")
 
 
-
-
-def _write_status(state: str, process: subprocess.Popen[bytes] | None = None) -> None:
-    """Publica un latido atómico para diagnóstico sin inspeccionar procesos."""
+def _write_status(
+    state: str,
+    process: subprocess.Popen[bytes] | None = None,
+) -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
     payload = {
         "state": state,
         "supervisor_pid": os.getpid(),
-        "bot_pid": process.pid if process is not None and process.poll() is None else None,
+        "bot_pid": (
+            process.pid
+            if process is not None and process.poll() is None
+            else None
+        ),
         "heartbeat": time.strftime("%Y-%m-%dT%H:%M:%S"),
         "restart_count": _restart_count,
         "last_exit_code": _last_exit_code,
         "python": sys.executable,
     }
     temporary = STATUS_FILE.with_suffix(".tmp")
-    temporary.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     temporary.replace(STATUS_FILE)
 
 
-def _pid_is_alive(pid: int) -> bool:
+def _process_command_line(pid: int) -> str:
+    if os.name != "nt" or pid <= 0:
+        return ""
+
+    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+    command = [
+        "powershell.exe",
+        "-NoProfile",
+        "-Command",
+        (
+            "$p = Get-CimInstance Win32_Process "
+            f"-Filter \"ProcessId={pid}\"; "
+            "if ($p) { $p.CommandLine }"
+        ),
+    ]
+
+    try:
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            creationflags=creation_flags,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+    return completed.stdout.strip()
+
+
+def _pid_is_matching_supervisor(pid: int) -> bool:
     if pid <= 0:
         return False
+
+    if os.name == "nt":
+        command_line = _process_command_line(pid).casefold()
+        return (
+            "python" in command_line
+            and "run_telegram_supervisor.py" in command_line
+        )
+
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -90,37 +142,63 @@ def _pid_is_alive(pid: int) -> bool:
     except PermissionError:
         return True
     except OSError:
-        # En Windows algunos procesos no permiten la comprobación, pero pueden
-        # seguir vivos. Conservamos el bloqueo por seguridad.
-        return True
+        return False
+
     return True
 
 
 def _acquire_supervisor_lock() -> None:
     STATE_DIR.mkdir(parents=True, exist_ok=True)
+
     if SUPERVISOR_LOCK.exists():
         try:
-            payload = json.loads(SUPERVISOR_LOCK.read_text(encoding="utf-8"))
+            payload = json.loads(
+                SUPERVISOR_LOCK.read_text(encoding="utf-8")
+            )
             previous_pid = int(payload.get("pid", 0))
-        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        except (
+            OSError,
+            ValueError,
+            TypeError,
+            json.JSONDecodeError,
+        ):
             previous_pid = 0
-        if previous_pid and _pid_is_alive(previous_pid):
-            raise RuntimeError("Ya existe un supervisor de Atlas Telegram activo.")
-        SUPERVISOR_LOCK.unlink(missing_ok=True)
 
-    descriptor = os.open(SUPERVISOR_LOCK, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        if previous_pid and _pid_is_matching_supervisor(previous_pid):
+            raise RuntimeError(
+                "Ya existe un supervisor de Atlas Telegram activo."
+            )
+
+        SUPERVISOR_LOCK.unlink(missing_ok=True)
+        _log("supervisor.lock obsoleto eliminado.")
+
+    descriptor = os.open(
+        SUPERVISOR_LOCK,
+        os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+        0o600,
+    )
     try:
-        os.write(descriptor, json.dumps({"pid": os.getpid()}).encode("utf-8"))
+        os.write(
+            descriptor,
+            json.dumps({"pid": os.getpid()}).encode("utf-8"),
+        )
     finally:
         os.close(descriptor)
 
 
 def _release_supervisor_lock() -> None:
     try:
-        payload = json.loads(SUPERVISOR_LOCK.read_text(encoding="utf-8"))
+        payload = json.loads(
+            SUPERVISOR_LOCK.read_text(encoding="utf-8")
+        )
         if int(payload.get("pid", 0)) == os.getpid():
             SUPERVISOR_LOCK.unlink(missing_ok=True)
-    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+    except (
+        OSError,
+        ValueError,
+        TypeError,
+        json.JSONDecodeError,
+    ):
         pass
 
 
@@ -140,61 +218,119 @@ def _iter_watch_files() -> Iterable[Path]:
         root = PROJECT_ROOT / relative
         if not root.is_dir():
             continue
+
         for path in root.rglob("*"):
-            if not path.is_file() or path.suffix.lower() not in WATCH_SUFFIXES:
+            if (
+                not path.is_file()
+                or path.suffix.lower() not in WATCH_SUFFIXES
+            ):
                 continue
-            relative_parts = set(path.relative_to(PROJECT_ROOT).parts)
+
+            relative_parts = set(
+                path.relative_to(PROJECT_ROOT).parts
+            )
             if relative_parts & EXCLUDED_PARTS:
                 continue
+
             yield path
 
 
 def _snapshot() -> dict[str, tuple[int, int]]:
     result: dict[str, tuple[int, int]] = {}
+
     for path in _iter_watch_files():
         try:
             stat = path.stat()
         except OSError:
             continue
-        result[str(path)] = (stat.st_mtime_ns, stat.st_size)
+
+        result[str(path)] = (
+            stat.st_mtime_ns,
+            stat.st_size,
+        )
+
     return result
 
 
 def _sources_compile() -> tuple[bool, str]:
-    """Evita matar el bot sano mientras Drive está copiando un archivo parcial."""
     for path in _iter_watch_files():
         if path.suffix.lower() != ".py":
             continue
+
         try:
             py_compile.compile(str(path), doraise=True)
         except py_compile.PyCompileError as exc:
             return False, f"{path}: {exc.msg}"
         except OSError as exc:
             return False, f"{path}: {exc}"
+
     return True, ""
 
+
+def _pid_is_matching_bot(pid: int) -> bool:
+    if pid <= 0:
+        return False
+
+    if os.name == "nt":
+        command_line = _process_command_line(pid).casefold()
+        return (
+            "python" in command_line
+            and "run_telegram_bot.py" in command_line
+        )
+
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    except OSError:
+        return False
+
+    return True
+
+
 def _clear_stale_polling_lock() -> None:
-    """Elimina polling.lock únicamente cuando su PID ya no está activo."""
     if not POLLING_LOCK.exists():
         return
+
     try:
-        payload = json.loads(POLLING_LOCK.read_text(encoding="utf-8"))
+        payload = json.loads(
+            POLLING_LOCK.read_text(encoding="utf-8")
+        )
         pid = int(payload.get("pid", 0))
-    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+    except (
+        OSError,
+        ValueError,
+        TypeError,
+        json.JSONDecodeError,
+    ):
         pid = 0
-    if pid and _pid_is_alive(pid):
-        _log(f"polling.lock pertenece a un proceso activo PID={pid}; no se elimina.")
+
+    if pid and _pid_is_matching_bot(pid):
+        _log(
+            "polling.lock pertenece a un proceso activo "
+            f"PID={pid}; no se elimina."
+        )
         return
+
     try:
         POLLING_LOCK.unlink(missing_ok=True)
         _log("polling.lock obsoleto eliminado.")
     except OSError as exc:
         _log(f"No se pudo limpiar polling.lock: {exc}")
 
+
 def _start_bot(log_stream) -> subprocess.Popen[bytes]:
-    creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+    creation_flags = getattr(
+        subprocess,
+        "CREATE_NO_WINDOW",
+        0,
+    )
     command = [sys.executable, str(RUN_BOT)]
+
     _log("Iniciando proceso Atlas Telegram.")
+
     return subprocess.Popen(
         command,
         cwd=str(PROJECT_ROOT),
@@ -206,17 +342,28 @@ def _start_bot(log_stream) -> subprocess.Popen[bytes]:
     )
 
 
-def _stop_bot(process: subprocess.Popen[bytes] | None) -> None:
+def _stop_bot(
+    process: subprocess.Popen[bytes] | None,
+) -> None:
     if process is None or process.poll() is not None:
         return
-    _log(f"Deteniendo proceso Atlas Telegram PID={process.pid}.")
+
+    _log(
+        "Deteniendo proceso Atlas Telegram "
+        f"PID={process.pid}."
+    )
     process.terminate()
+
     try:
         process.wait(timeout=GRACEFUL_STOP_SECONDS)
     except subprocess.TimeoutExpired:
-        _log("El proceso no terminó a tiempo; se fuerza su cierre.")
+        _log(
+            "El proceso no terminó a tiempo; "
+            "se fuerza su cierre."
+        )
         process.kill()
         process.wait(timeout=5)
+
     _clear_stale_polling_lock()
 
 
@@ -231,6 +378,7 @@ def main() -> int:
         return 10
 
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+
     try:
         _acquire_supervisor_lock()
     except RuntimeError as exc:
@@ -241,16 +389,22 @@ def main() -> int:
     signal.signal(signal.SIGTERM, _handle_stop)
 
     global _restart_count, _last_exit_code
+
     process: subprocess.Popen[bytes] | None = None
     previous_snapshot = _snapshot()
     pending_change_at: float | None = None
 
-    _log(f"Supervisor iniciado PID={os.getpid()} con Python {sys.executable}.")
+    _log(
+        "Supervisor iniciado "
+        f"PID={os.getpid()} con Python {sys.executable}."
+    )
+
     try:
         with BOT_LOG.open("ab", buffering=0) as bot_log:
             _clear_stale_polling_lock()
             process = _start_bot(bot_log)
             _write_status("running", process)
+
             while not _stop_requested:
                 time.sleep(POLL_SECONDS)
                 _write_status("running", process)
@@ -261,13 +415,25 @@ def main() -> int:
                     pending_change_at = time.monotonic()
 
                 if pending_change_at is not None:
-                    if time.monotonic() - pending_change_at >= DEBOUNCE_SECONDS:
+                    if (
+                        time.monotonic() - pending_change_at
+                        >= DEBOUNCE_SECONDS
+                    ):
                         valid, detail = _sources_compile()
+
                         if not valid:
-                            _log(f"Cambio todavía no válido; se mantiene el bot actual. {detail}")
+                            _log(
+                                "Cambio todavía no válido; "
+                                "se mantiene el bot actual. "
+                                f"{detail}"
+                            )
                             pending_change_at = time.monotonic()
                             continue
-                        _log("Cambios válidos detectados; reiniciando el bot.")
+
+                        _log(
+                            "Cambios válidos detectados; "
+                            "reiniciando el bot."
+                        )
                         _stop_bot(process)
                         time.sleep(1)
                         _restart_count += 1
@@ -277,10 +443,22 @@ def main() -> int:
                         pending_change_at = None
                         continue
 
-                exit_code = process.poll() if process is not None else None
-                if exit_code is not None and not _stop_requested:
+                exit_code = (
+                    process.poll()
+                    if process is not None
+                    else None
+                )
+
+                if (
+                    exit_code is not None
+                    and not _stop_requested
+                ):
                     _last_exit_code = int(exit_code)
-                    _log(f"El bot terminó con código {exit_code}; reinicio automático en {RESTART_DELAY_SECONDS}s.")
+                    _log(
+                        "El bot terminó con código "
+                        f"{exit_code}; reinicio automático "
+                        f"en {RESTART_DELAY_SECONDS}s."
+                    )
                     _clear_stale_polling_lock()
                     time.sleep(RESTART_DELAY_SECONDS)
                     _restart_count += 1
@@ -293,6 +471,7 @@ def main() -> int:
         _write_status("stopped", None)
         _release_supervisor_lock()
         _log("Supervisor detenido.")
+
     return 0
 
 

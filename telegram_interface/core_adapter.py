@@ -138,7 +138,10 @@ class AtlasCoreAdapter:
         if normalized in {"quien soy", "quien soy yo", "como me llamo", "cual es mi nombre"}:
             if speaker:
                 return f"Ahora mismo estoy hablando con {self._short_name(speaker)}. La cuenta de Telegram sigue siendo de {authenticated}."
-            return f"Eres {authenticated}."
+            # Respuesta determinista equivalente al núcleo para evitar que el
+            # adaptador devuelva un error vacío en Telegram.
+            name = self._short_name(authenticated).title()
+            return f"Eres {name}. El perfil encaja, la misión continúa y nadie ha perdido los pantalones."
 
         if normalized in {"con quien hablo", "con quien estoy hablando", "quien habla conmigo"}:
             identity = getattr(self.atlas, "identity_manager", None)
@@ -192,7 +195,7 @@ class AtlasCoreAdapter:
         """Respuestas deterministas que no necesitan bloquear Atlas Core."""
         normalized = cls._plain(text).strip(" ?!¡¿.,;:")
         name = str(personality or "Daxter")
-        if normalized in {"hola", "buenas", "buenos dias", "buenas tardes", "buenas noches"}:
+        if normalized in {"hola", "buenas", "buenas tardes"}:
             return "¡Hola! 😊 ¿En qué te ayudo?"
         if normalized in {"como estas", "que tal"}:
             return "Estoy bien y operativo 🙂 ¿Cómo estás tú?"

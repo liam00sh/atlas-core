@@ -691,9 +691,16 @@ class AtlasDailyMixin:
             if resolved is None:
                 self._print(f"No encuentro un usuario de Telegram vinculado llamado {target}.")
                 return True
-            request = InteruserRequest(resolved, f"te comparte su lista de {name}: {', '.join(items)}", datetime.now(UTC), False)
-            result = self._queue().enqueue(owner, request)
-            self._print(f"He compartido la lista de {name} con {resolved}." if result.get("ok") else "No he podido compartir la lista.")
+            state["pending_daily_action"] = {
+                "type": "share_list",
+                "list_name": name,
+                "target_user_id": resolved,
+                "items": items,
+            }
+            self._print(
+                f"¿Seguro que quieres compartir la lista de {name} con {resolved}? "
+                "Responde sí para enviarla o no para cancelar."
+            )
             return True
         return False
 
@@ -883,6 +890,26 @@ class AtlasDailyMixin:
         if action["type"] == "delete_memory":
             removed = self.memory.delete_memory(memory_id=action["id"], owner=owner)
             self._print("He borrado el recuerdo." if removed else "No he podido borrar ese recuerdo.")
+            return True
+        if action["type"] == "share_list":
+            target = str(action.get("target_user_id", "")).strip()
+            name = str(action.get("list_name", "compra")).strip() or "compra"
+            items = [str(item).strip() for item in action.get("items", []) if str(item).strip()]
+            if not target or not items:
+                self._print("No he podido reconstruir la lista pendiente. No se ha enviado nada.")
+                return True
+            request = InteruserRequest(
+                target,
+                f"te comparte su lista de {name}: {', '.join(items)}",
+                datetime.now(UTC),
+                False,
+            )
+            result = self._queue().enqueue(owner, request)
+            self._print(
+                f"He compartido la lista de {name} con {target}."
+                if result.get("ok")
+                else "No he podido compartir la lista. No se ha enviado nada."
+            )
             return True
         return False
 

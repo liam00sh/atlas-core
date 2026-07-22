@@ -42,6 +42,7 @@ Flujo principal:
 
 
 from pathlib import Path
+import re
 
 
 # =============================================================================
@@ -300,6 +301,11 @@ class Atlas(
         )
 
         self.family_initializer.initialize()
+
+        # Reconstruye al arrancar los perfiles dinámicos persistidos en
+        # people.json. Así un familiar dado de alta conserva su perfil tras
+        # reiniciar Atlas y puede volver a usar Telegram sin errores.
+        self.sync_identity_user_profiles()
 
         # Separa:
         #
@@ -589,9 +595,12 @@ class Atlas(
         self.framework_tool_registry.register(
             TelegramAccountTool(
                 self.telegram_identity_linker,
+                # UserManager es la fuente canónica de perfiles Atlas.
+                # people.json describe personas y relaciones, pero no debe
+                # impedir la vinculación de un perfil válido por desajustes
+                # temporales de sincronización entre ambos almacenes.
                 user_exists=lambda user: (
-                    self.people_manager.find_person_by_user_profile(user)
-                    is not None
+                    self.users.resolve_user_name(str(user)) is not None
                 ),
                 audit=TelegramAuditLogger(
                     Path(__file__).resolve().parent.parent
@@ -703,9 +712,48 @@ class Atlas(
             )
         info(f"Entrada del usuario: {logged_text}")
 
+        # Cambio explícito de usuario en la consola local.
+        # Telegram conserva siempre la identidad vinculada a su cuenta.
+        request_context = getattr(self, "channel_request_context", None)
+        if getattr(request_context, "channel", None) != "telegram":
+            user_switch_match = re.match(
+                r"^(?:soy|cambiar usuario(?: a)?|cambia(?:r)? "
+                r"(?:el )?usuario(?: a)?)\s+(.+?)\s*$",
+                self.users._normalize_identity_name(original_text),
+            )
+            if user_switch_match is not None:
+                requested_user = user_switch_match.group(1).strip(" .,:;!?¡¿")
+                resolved_user = self.users.resolve_user_name(requested_user)
+                if resolved_user is None:
+                    print()
+                    print(
+                        "Ese perfil de usuario no existe en Atlas. "
+                        "Usa «listar usuarios» para ver los perfiles disponibles."
+                    )
+                    return True
+                if self.change_user(resolved_user):
+                    print()
+                    print(f"Hola, {self.get_user()}. He cambiado a tu perfil.")
+                return True
+
         # Conocimiento determinista sobre Atlas, identidades, modos, memoria y vinculación.
         # Debe resolverse antes de la IA para impedir invenciones sobre el propio sistema.
         if self._handle_self_knowledge(original_text):
+            return True
+
+        # Los comandos simples y la ayuda deben resolverse antes de los
+        # manejadores conversacionales. De lo contrario, palabras como «ayuda»
+        # pueden ser absorbidas por la conversación general y no ejecutar el
+        # catálogo real de comandos.
+        command_result = self._handle_command(
+            original_text,
+            normalized_text,
+        )
+        if command_result is not None:
+            return command_result
+
+        # Consultas deterministas de perfiles disponibles y usuario autenticado.
+        if self._handle_user_management_request(original_text):
             return True
 
         # Preparación para beta familiar: incorporación guiada, cancelación
@@ -741,6 +789,9 @@ class Atlas(
         # Sprint 18: la vinculación local de Telegram es determinista.
         # Nunca debe llegar al modelo de IA, que podría inventar una web o
         # instrucciones inexistentes para introducir el código.
+        if self._handle_profile_creation_request(original_text):
+            return True
+
         if self._handle_telegram_link_request(original_text):
             return True
 
@@ -752,6 +803,11 @@ class Atlas(
         # Humor cotidiano clasificado. Se resuelve antes que la IA para que
         # respete el tema pedido y no repita siempre chistes genéricos de IA.
         if self._handle_classified_humor(original_text):
+            return True
+
+        # Consultas meteorológicas: siempre se resuelven automáticamente y no
+        # pasan por la confirmación genérica de Internet.
+        if self._handle_weather(original_text):
             return True
 
         # Resumen de inicio y cierre del día, compartido por todas las interfaces.
@@ -815,18 +871,6 @@ class Atlas(
             original_text
         ):
             return True
-
-        # ---------------------------------------------------------------------
-        # 5. EJECUTAR COMANDOS
-        # ---------------------------------------------------------------------
-
-        command_result = self._handle_command(
-            original_text,
-            normalized_text,
-        )
-
-        if command_result is not None:
-            return command_result
 
         # ---------------------------------------------------------------------
         # 6. CONOCIMIENTO UNIFICADO

@@ -1,8 +1,11 @@
 """Consulta web explícita, verificable y acotada para Proyecto Atlas."""
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 import json
+from datetime import UTC, datetime
+from pathlib import Path
+from urllib.parse import urlparse
 import re
 import unicodedata
 from typing import Iterable
@@ -17,7 +20,92 @@ class InternetSource:
     title: str
     url: str
     snippet: str
+    source_type: str = "unknown"
+    authority_score: float = 0.5
+    published_at: str | None = None
+    updated_at: str | None = None
+    data_date: str | None = None
+    consulted_at: str | None = None
 
+
+
+SENSITIVE_PATTERNS = (
+    r"\b(?:dni|nie|pasaporte|numero de seguridad social)\b",
+    r"\b(?:diagnostico|medicacion|historial medico|salud mental)\b",
+    r"\b(?:contrasena|password|token|clave privada|api key)\b",
+    r"\b(?:direccion completa|cuenta bancaria|iban|tarjeta)\b",
+)
+
+
+def sanitize_external_query(query: str) -> str:
+    """Bloquea o minimiza datos privados antes de cualquier consulta externa."""
+    clean = " ".join(str(query).strip().split())
+    plain = _plain(clean)
+    if any(re.search(pattern, plain, re.IGNORECASE) for pattern in SENSITIVE_PATTERNS):
+        raise InternetLookupError(
+            "La consulta contiene datos privados o sensibles que no deben enviarse a Internet. "
+            "Reformula la pregunta sin información personal."
+        )
+    clean = re.sub(r"\b[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}\b", "[correo]", clean)
+    clean = re.sub(r"\b(?:\+?34)?[6789]\d{8}\b", "[teléfono]", clean)
+    return clean
+
+
+def classify_source(source: InternetSource) -> InternetSource:
+    host = urlparse(source.url).hostname or ""
+    host = host.casefold().removeprefix("www.")
+    official_suffixes = (".gob.es", ".gov", ".europa.eu", ".edu", ".ac.uk")
+    if "wikidata.org" in host:
+        kind, score = "primary_structured", 0.92
+    elif "wikipedia.org" in host:
+        kind, score = "encyclopedia", 0.78
+    elif host.endswith(official_suffixes) or host in {"boe.es", "ine.es", "aemet.es"}:
+        kind, score = "official", 1.0
+    elif any(token in host for token in ("reuters", "apnews", "efe.com", "elpais", "elmundo", "lavanguardia")):
+        kind, score = "news_media", 0.82
+    elif any(token in host for token in ("reddit", "foro", "forum")):
+        kind, score = "forum", 0.35
+    elif any(token in host for token in ("amazon", "aliexpress", "ebay", "tienda", "shop")):
+        kind, score = "commercial", 0.45
+    else:
+        kind, score = "web", 0.55
+    return replace(
+        source,
+        source_type=kind,
+        authority_score=score,
+        consulted_at=source.consulted_at or datetime.now(UTC).isoformat(),
+    )
+
+
+class InternetSourceHistory:
+    """Historial JSONL por usuario, separado de la memoria personal."""
+    def __init__(self, path: str | Path) -> None:
+        self.path = Path(path)
+
+    def record(self, *, user_id: str, query: str, sources: list[InternetSource], response: str | None = None) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        record = {
+            "consulted_at": datetime.now(UTC).isoformat(),
+            "user_id": str(user_id),
+            "query": query,
+            "sources": [asdict(source) for source in sources],
+            "response": response,
+        }
+        with self.path.open("a", encoding="utf-8") as stream:
+            stream.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    def list_for_user(self, user_id: str, limit: int = 20) -> list[dict]:
+        if not self.path.exists():
+            return []
+        rows: list[dict] = []
+        for line in self.path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if str(row.get("user_id", "")).casefold() == str(user_id).casefold():
+                rows.append(row)
+        return rows[-max(1, limit):]
 
 class InternetLookupError(RuntimeError):
     """Error controlado durante una consulta externa."""
@@ -156,6 +244,7 @@ def _claim_entity_ids(claims: dict, prop: str) -> list[str]:
 def _wikidata_population(query: str) -> list[InternetSource]:
     if not _is_population_query(query):
         return []
+    query = sanitize_external_query(query)
     entity = _extract_entity_query(query)
     selected = _select_wikidata_entity(entity, _wikidata_search(entity))
     if not selected:
@@ -391,9 +480,15 @@ def _source_is_relevant(source: InternetSource, entity: str) -> bool:
     return bool(tokens) and all(token in haystack for token in tokens)
 
 
-def search_internet(query: str) -> list[InternetSource]:
+def search_internet(
+    query: str,
+    *,
+    user_id: str | None = None,
+    history_path: str | Path | None = None,
+    response_text: str | None = None,
+) -> list[InternetSource]:
     """Busca una consulta explícita y devuelve fuentes relevantes y deduplicadas."""
-    clean = " ".join(str(query).split()).strip()
+    clean = sanitize_external_query(query)
     if not clean:
         raise ValueError("La consulta de Internet no puede estar vacía.")
     entity = _extract_entity_query(clean)
@@ -428,4 +523,14 @@ def search_internet(query: str) -> list[InternetSource]:
         unique.append(source)
     if not unique and errors:
         raise InternetLookupError("No se pudo completar la consulta externa.")
-    return unique[:5]
+    ranked = [classify_source(source) for source in unique]
+    ranked.sort(key=lambda source: (-source.authority_score, source.title.casefold()))
+    selected = ranked[:8]
+    if user_id and history_path:
+        InternetSourceHistory(history_path).record(
+            user_id=user_id,
+            query=clean,
+            sources=selected,
+            response=response_text,
+        )
+    return selected

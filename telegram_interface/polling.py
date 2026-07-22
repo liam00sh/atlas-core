@@ -2,6 +2,12 @@
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+from dataclasses import replace
+from datetime import UTC, datetime
+from pathlib import Path
+import hashlib
+import mimetypes
+import os
 import random
 import threading
 from time import sleep, monotonic
@@ -54,6 +60,10 @@ class TelegramPoller:
         self._message_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="atlas-progress")
         self.scheduler = scheduler or ConversationScheduler(owner_user_id=owner_user_id)
         self.lifecycle_notifier = lifecycle_notifier
+        root = Path(__file__).resolve().parents[1]
+        self.media_root = root / "data" / "telegram_media" / "quarantine"
+        self.media_max_bytes = int(os.getenv("ATLAS_TELEGRAM_MEDIA_MAX_BYTES", str(25 * 1024 * 1024)))
+        self.media_ttl_hours = int(os.getenv("ATLAS_TELEGRAM_MEDIA_TTL_HOURS", "24"))
 
     def validate_long_polling(self) -> None:
         info = self.client.get_webhook_info()
@@ -93,6 +103,7 @@ class TelegramPoller:
                         self.storage.set_offset(offset)
                         self._recent_updates.add(update_id)
                         if message is not None:
+                            message = self._prepare_media(message)
                             self._submit_message(message)
                         if len(self._recent_updates) > 2048:
                             self._recent_updates = set(sorted(self._recent_updates)[-1024:])
@@ -108,6 +119,36 @@ class TelegramPoller:
         finally:
             if self.lifecycle_notifier is not None:
                 self.lifecycle_notifier.notify_stop()
+    def _prepare_media(self, message: TelegramMessage) -> TelegramMessage:
+        if not message.media_type or not message.file_id:
+            return message
+        if message.file_size and message.file_size > self.media_max_bytes:
+            return replace(message, media_status="rejected_too_large")
+        allowed = {
+            "photo": {"image/jpeg", "image/png", "image/webp"},
+            "voice": {"audio/ogg", "audio/opus"},
+            "audio": {"audio/mpeg", "audio/mp4", "audio/ogg", "audio/wav", "audio/x-wav"},
+            "video": {"video/mp4", "video/webm"},
+            "document": {"application/pdf", "text/plain", "text/csv", "application/json", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+            "animation": {"video/mp4", "image/gif"},
+        }
+        mime = (message.mime_type or mimetypes.guess_type(message.file_name or "")[0] or "application/octet-stream").casefold()
+        if mime not in allowed.get(message.media_type, set()):
+            return replace(message, media_status="rejected_type")
+        try:
+            metadata = self.client.get_file(file_id=message.file_id)
+            remote_path = str(metadata.get("file_path") or "").strip()
+            if not remote_path:
+                return replace(message, media_status="metadata_missing")
+            extension = Path(message.file_name or remote_path).suffix[:10] or mimetypes.guess_extension(mime) or ".bin"
+            digest = hashlib.sha256(f"{message.user.telegram_user_id}:{message.message_id}:{message.file_id}".encode()).hexdigest()[:24]
+            day = datetime.now(UTC).strftime("%Y-%m-%d")
+            destination = self.media_root / day / f"{digest}{extension}"
+            path = self.client.download_file(file_path=remote_path, destination=destination, max_bytes=self.media_max_bytes)
+            return replace(message, local_path=str(path), media_status="quarantined")
+        except TelegramClientError as exc:
+            return replace(message, media_status=exc.code)
+
     def _submit_message(self, message: TelegramMessage) -> None:
         account = self.gateway.linker.get_account(message.user.telegram_user_id)
         atlas_user_id = str(account.get("atlas_user_id") or message.user.telegram_user_id)

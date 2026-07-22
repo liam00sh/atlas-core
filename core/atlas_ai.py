@@ -34,6 +34,7 @@ from core.household_data import order_family_names
 from core.household_data import find_person_location
 from core.household_data import preferred_person_name
 from core.internet_lookup import InternetLookupError
+from core.internet_lookup import InternetSourceHistory
 from core.internet_lookup import search_internet
 
 from conversation.personality import private_context_denied
@@ -2814,9 +2815,30 @@ class AtlasAIMixin:
                 return match.group(1).strip()
         return None
 
+    def _authenticated_internet_user(self) -> str:
+        """Identidad autenticada que será propietaria del historial web."""
+        request_context = getattr(self, "channel_request_context", None)
+        channel_user = str(getattr(request_context, "atlas_user_id", "") or "").strip()
+        return channel_user or str(self.get_user()).strip()
+
+    def _record_internet_history(self, *, user_id: str, query: str, sources, response: str) -> None:
+        """Guarda la consulta exclusivamente en el espacio privado del usuario."""
+        try:
+            history_path = self.users.get_internet_history_path(user_id)
+            self.users.ensure_profile_storage(user_id)
+            InternetSourceHistory(history_path).record(
+                user_id=user_id,
+                query=query,
+                sources=list(sources),
+                response=response,
+            )
+        except (OSError, ValueError, TypeError):
+            pass
+
     def _execute_internet_lookup(self, query: str) -> bool:
         print()
         print(f"Voy a consultar Internet sobre «{query}».")
+        authenticated_user = self._authenticated_internet_user()
         try:
             sources = search_internet(query)
         except (InternetLookupError, OSError, TimeoutError, ValueError):
@@ -2850,11 +2872,19 @@ class AtlasAIMixin:
                 answer = ""
             if answer:
                 print(answer)
+                self._record_internet_history(
+                    user_id=authenticated_user, query=query, sources=sources, response=answer
+                )
                 return True
 
-        print("He encontrado estas fuentes relevantes:")
+        lines = ["He encontrado estas fuentes relevantes:"]
         for source in sources:
-            print(f"- {source.title}: {source.snippet[:350]}\n  {source.url}")
+            lines.append(f"- {source.title}: {source.snippet[:350]}\n  {source.url}")
+        fallback_response = "\n".join(lines)
+        print(fallback_response)
+        self._record_internet_history(
+            user_id=authenticated_user, query=query, sources=sources, response=fallback_response
+        )
         return True
 
     def _handle_pending_internet_lookup(self, text: str) -> bool:
