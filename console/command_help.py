@@ -38,13 +38,76 @@ CATEGORY_ORDER = (
 # Operaciones que viven en mixins y servicios, no necesariamente como módulos
 # commands/*.py. Se mantienen aquí para que la ayuda describa el Atlas real.
 CONVERSATIONAL_ENTRIES = (
-    HelpEntry("crear usuario", "Crea un perfil nuevo.", "Usuarios", ("crear usuario",), ("alta", "persona", "perfil")),
-    HelpEntry("listar usuarios", "Muestra los perfiles registrados.", "Usuarios", ("listar usuarios",), ("usuarios", "perfiles")),
-    HelpEntry("cambiar usuario", "Cambia el perfil activo en la consola.", "Usuarios", ("cambiar usuario a Saray",), ("sesion", "perfil")),
-    HelpEntry("quién soy", "Indica el perfil autenticado y el interlocutor actual.", "Usuarios", ("quién soy",), ("identidad", "perfil")),
-    HelpEntry("generar código telegram", "Genera un código temporal para vincular una cuenta.", "Telegram", ("generar código telegram para Pepi",), ("vincular", "enlazar", "cuenta", "madre"), detail="Primero genera el código para el perfil. Después, desde la cuenta que se va a vincular, envía la frase de confirmación."),
-    HelpEntry("confirmar código telegram", "Vincula la cuenta de Telegram al perfil indicado.", "Telegram", ("Confirma el código de Telegram 483291 para Pepi",), ("confirmar", "vincular", "enlazar")),
-    HelpEntry("estado de telegram", "Comprueba el estado técnico del bot.", "Telegram", ("estado de telegram",), ("bot", "conectado"), owner_only=True),
+    HelpEntry(
+        "crear perfil de usuario",
+        "Crea un perfil Atlas para una persona que Atlas ya conoce. Solo Liam puede hacerlo.",
+        "Usuarios",
+        ("crear perfil de usuario para Mary", "crear perfil Atlas para Lidia"),
+        ("alta", "persona conocida", "perfil", "usuario"),
+        detail="La persona debe existir previamente en el registro de personas. No crea personas desconocidas.",
+        owner_only=True,
+    ),
+    HelpEntry(
+        "listar usuarios",
+        "Muestra todos los perfiles de usuario registrados en Atlas.",
+        "Usuarios",
+        ("listar usuarios", "usuarios"),
+        ("perfiles", "cuentas"),
+    ),
+    HelpEntry(
+        "cambiar usuario",
+        "Cambia el perfil activo en la consola local.",
+        "Usuarios",
+        ("cambiar usuario a Saray",),
+        ("sesión", "perfil"),
+        detail="En Telegram no permite suplantar otro perfil: cada cuenta conserva siempre su identidad vinculada.",
+    ),
+    HelpEntry(
+        "quién soy",
+        "Indica qué perfil está autenticado en el canal actual.",
+        "Usuarios",
+        ("quién soy", "mi perfil"),
+        ("identidad", "perfil", "usuario actual"),
+    ),
+    HelpEntry(
+        "iniciar bot de Telegram",
+        "Inicia el bot desde la cuenta que se desea vincular y genera un código temporal.",
+        "Telegram",
+        ("/start",),
+        ("código", "temporal", "vincular", "cuenta"),
+        detail="Antes de este paso, Liam debe haber creado el perfil Atlas de esa persona.",
+    ),
+    HelpEntry(
+        "confirmar código de Telegram",
+        "Vincula el Telegram que generó el código temporal con el perfil indicado.",
+        "Telegram",
+        ("Confirma el código de Telegram ABC234DEFG para Mary",),
+        ("confirmar", "vincular", "enlazar", "cuenta"),
+        detail="Debe confirmarlo Liam desde su Telegram vinculado o desde la consola del PC.",
+        owner_only=True,
+    ),
+    HelpEntry(
+        "estado de Telegram",
+        "Comprueba el estado técnico del bot y de la integración.",
+        "Telegram",
+        ("estado de Telegram",),
+        ("bot", "conectado", "servicio"),
+        owner_only=True,
+    ),
+    HelpEntry(
+        "buenos días",
+        "Muestra el resumen de inicio del día con información útil y asuntos pendientes.",
+        "Organización",
+        ("buenos días",),
+        ("mañana", "resumen diario", "inicio del día"),
+    ),
+    HelpEntry(
+        "buenas noches",
+        "Muestra el resumen de cierre del día y permite revisar asuntos pendientes.",
+        "Organización",
+        ("buenas noches",),
+        ("noche", "cierre diario", "final del día"),
+    ),
     HelpEntry("recordar", "Propone guardar un recuerdo con confirmación y privacidad.", "Memoria", ("recuerda que mi cumpleaños es el 14 de marzo",), ("guardar", "memoria", "dato")),
     HelpEntry("qué sabes de mí", "Resume los datos importantes que Atlas recuerda sobre ti.", "Memoria", ("qué sabes de mí", "dime todo lo que sabes de mí"), ("recuerdos", "datos")),
     HelpEntry("corregir recuerdo", "Corrige un recuerdo después de confirmarlo.", "Memoria", ("corrige lo que sabes sobre mi trabajo",), ("modificar", "actualizar")),
@@ -52,18 +115,19 @@ CONVERSATIONAL_ENTRIES = (
     HelpEntry("exportar mis datos", "Prepara una exportación de los datos propios autorizados.", "Memoria", ("exporta mis datos",), ("descargar", "privacidad")),
     HelpEntry("recordatorio", "Crea, consulta, cambia o cancela recordatorios.", "Organización", ("recuérdame mañana llamar al médico", "qué recordatorios tengo"), ("avisar", "agenda", "tarea")),
     HelpEntry("listas", "Gestiona listas personales y compartidas.", "Organización", ("añade leche a la lista de la compra",), ("compra", "pendientes")),
-    HelpEntry("rutinas", "Crea y marca rutinas cotidianas.", "Organización", ("crea una rutina diaria para tomar la medicación",), ("habito", "diaria")),
+    HelpEntry("rutinas", "Crea y marca rutinas cotidianas.", "Organización", ("crea una rutina diaria para tomar la medicación",), ("hábito", "diaria")),
     HelpEntry("Daxter", "Activa la identidad Daxter.", "Identidad y modos", ("pon a Daxter",), ("identidad", "asistente")),
     HelpEntry("Coco", "Activa la identidad Coco.", "Identidad y modos", ("pon a Coco",), ("identidad", "asistente")),
     HelpEntry("modo", "Cambia el estilo de conversación sin cambiar permisos ni memoria.", "Identidad y modos", ("modo trabajo", "modo empático", "modo divertido", "modo clásico", "modo sencillo"), ("personalidad", "estilo")),
     HelpEntry("buscar en Internet", "Busca información actual solo cuando el usuario lo pide.", "Internet y fuentes", ("busca en Internet...",), ("web", "navegador", "actual")),
-    HelpEntry("mostrar fuentes", "Explica qué páginas se consultaron y por qué.", "Internet y fuentes", ("enséñame las fuentes", "busca otra fuente"), ("pagina", "origen", "cita")),
+    HelpEntry("mostrar fuentes", "Explica qué páginas se consultaron y por qué.", "Internet y fuentes", ("enséñame las fuentes", "busca otra fuente"), ("página", "origen", "cita")),
     HelpEntry("comparar", "Compara opciones indicando criterios, ventajas, inconvenientes y fuentes.", "Internet y fuentes", ("compara A y B",), ("diferencias", "mejor", "versus")),
     HelpEntry("reescribir texto", "Reescribe, corrige, resume o cambia el tono de un texto.", "Redacción", ("reescribe este texto de forma más formal: ...",), ("formal", "corregir", "resumir")),
-    HelpEntry("presentación laboral", "Redacta una presentación adaptada a una oferta.", "Redacción", ("haz una presentación mía para una oferta de trabajo",), ("curriculum", "empleo", "oferta")),
-    HelpEntry("estado de Atlas", "Muestra diagnóstico del núcleo, Ollama y servicios.", "Sistema y administración", ("estado de Atlas",), ("salud", "diagnostico"), owner_only=True),
+    HelpEntry("presentación laboral", "Redacta una presentación adaptada a una oferta.", "Redacción", ("haz una presentación mía para una oferta de trabajo",), ("currículum", "empleo", "oferta")),
+    HelpEntry("estado de Atlas", "Muestra diagnóstico del núcleo, Ollama y servicios.", "Sistema y administración", ("estado de Atlas",), ("salud", "diagnóstico"), owner_only=True),
     HelpEntry("copia de seguridad", "Guía la creación y validación de copias de Atlas.", "Sistema y administración", ("crear copia de seguridad de Atlas",), ("backup", "restaurar"), owner_only=True),
 )
+
 
 
 def _registered_entries() -> list[HelpEntry]:
@@ -159,7 +223,7 @@ def render_help(topic: str | None = None) -> str:
     grouped: dict[str, list[HelpEntry]] = {}
     for entry in entries:
         grouped.setdefault(entry.category, []).append(entry)
-    lines = ["=" * 30, "Comandos disponibles (ejemplos)", "=" * 30]
+    lines = ["=" * 34, "AYUDA DE ATLAS — COMANDOS", "=" * 34]
     categories = list(CATEGORY_ORDER) + sorted(set(grouped) - set(CATEGORY_ORDER))
     for category in categories:
         items = grouped.get(category)
@@ -167,9 +231,13 @@ def render_help(topic: str | None = None) -> str:
             continue
         lines.extend(("", category.upper(), ""))
         for entry in sorted(items, key=lambda e: _norm(e.name)):
-            lines.append(entry.name)
-            lines.append(entry.description)
-    lines.extend(("", "Puedes usar «ayuda <categoría o comando>» y «buscar comandos <tema>»."))
+            suffix = " [solo Liam]" if entry.owner_only else ""
+            lines.append(f"• {entry.name}{suffix}: {entry.description}")
+    lines.extend((
+        "",
+        "Para ver más detalle: «ayuda <categoría o comando>».",
+        "Para buscar por intención: «buscar comandos <tema>».",
+    ))
     return "\n".join(lines)
 
 
@@ -191,8 +259,21 @@ def _natural_intent(text: str) -> str | None:
 
 def handle_command_help_request(text: str) -> str | None:
     n = _norm(text)
-    if n in {"ayuda", "help", "comandos", "lista de comandos", "que comandos hay"}:
+    if n in {
+        "ayuda", "help", "comandos", "lista de comandos", "listar comandos",
+        "mostrar comandos", "ver comandos", "que comandos hay", "menu", "menú",
+    }:
         return render_help()
+
+    # Una orden exacta registrada debe ejecutarse, no convertirse en una
+    # sugerencia de ayuda. Antes, «salir» quedaba interceptado aquí porque la
+    # heurística de entradas cortas también contenía la palabra «salir».
+    try:
+        from console.command_manager import COMMANDS
+        if n in {_norm(name) for name in COMMANDS}:
+            return None
+    except Exception:
+        pass
     for prefix in ("ayuda ", "help "):
         if n.startswith(prefix):
             return render_help(n[len(prefix):])

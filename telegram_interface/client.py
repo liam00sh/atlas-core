@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import socket
+from pathlib import Path
 from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -22,6 +23,8 @@ class TelegramClientProtocol(Protocol):
     def send_message(self, *, chat_id: str, text: str, parse_mode: str | None = None) -> dict[str, Any]: ...
     def get_me(self) -> dict[str, Any]: ...
     def get_webhook_info(self) -> dict[str, Any]: ...
+    def get_file(self, *, file_id: str) -> dict[str, Any]: ...
+    def download_file(self, *, file_path: str, destination: str | Path, max_bytes: int) -> Path: ...
 
 
 class TelegramBotClient:
@@ -86,3 +89,37 @@ class TelegramBotClient:
     def get_webhook_info(self) -> dict[str, Any]:
         result = self._call("getWebhookInfo", timeout=15)
         return result if isinstance(result, dict) else {}
+
+    def get_file(self, *, file_id: str) -> dict[str, Any]:
+        result = self._call("getFile", {"file_id": file_id}, timeout=30)
+        return result if isinstance(result, dict) else {}
+
+    def download_file(self, *, file_path: str, destination: str | Path, max_bytes: int) -> Path:
+        target = Path(destination)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        url = f"{self._base_url.rsplit('/bot', 1)[0]}/file/bot{self.__token}/{file_path.lstrip('/')}"
+        request = Request(url, method="GET")
+        try:
+            with self._opener(request, timeout=60) as response:
+                declared = int(response.headers.get("Content-Length") or 0)
+                if declared and declared > max_bytes:
+                    raise TelegramClientError("El archivo supera el límite permitido.", code="media_too_large")
+                temporary = target.with_suffix(target.suffix + ".part")
+                total = 0
+                with temporary.open("wb") as stream:
+                    while True:
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        total += len(chunk)
+                        if total > max_bytes:
+                            stream.close()
+                            temporary.unlink(missing_ok=True)
+                            raise TelegramClientError("El archivo supera el límite permitido.", code="media_too_large")
+                        stream.write(chunk)
+                temporary.replace(target)
+                return target
+        except TelegramClientError:
+            raise
+        except (HTTPError, URLError, TimeoutError, socket.timeout, OSError) as exc:
+            raise TelegramClientError("No se pudo descargar el archivo de Telegram.", code="media_download_failed", retryable=True) from exc

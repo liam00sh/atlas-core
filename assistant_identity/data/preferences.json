@@ -13,6 +13,13 @@
         "identity": "coco",
         "manual_mode_lock": true
     },
+    "mary": {
+        "automatic_mode": true,
+        "current_mode": "classic",
+        "default_mode": "classic",
+        "identity": "daxter",
+        "manual_mode_lock": false
+    },
     "noa": {
         "automatic_mode": true,
         "current_mode": "classic",

@@ -38,36 +38,88 @@ class AtlasTelegramMixin:
         )
         return re.sub(r"\s+", " ", normalized.casefold()).strip()
 
-    def _extract_telegram_target_user(self, original_text: str) -> str:
-        """
-        Obtiene el usuario de destino.
+    def _extract_telegram_target_user(self, original_text: str) -> str | None:
+        """Obtiene de forma segura el perfil Atlas indicado tras «para».
 
-        Por seguridad, si no existe una referencia explícita válida se utiliza
-        siempre el usuario local autenticado, nunca un nombre inventado por IA.
+        Si el usuario escribió un destino explícito que no puede resolverse,
+        devuelve ``None``. Nunca sustituye silenciosamente ese destino por el
+        usuario activo, porque eso podría vincular una cuenta familiar a Liam.
         """
 
         current_user = self.get_user()
         normalized = self._normalize_telegram_admin_text(original_text)
+        # El destino puede expresarse con «para», «de», «al usuario»,
+        # «usuario» o «a nombre de». El patrón exige que aparezca después
+        # del código temporal para no confundir «código de Telegram» con
+        # el nombre del perfil.
+        code_match = self._TELEGRAM_LINK_CODE_RE.search(normalized.upper())
+        suffix = (
+            normalized[code_match.end():].strip()
+            if code_match is not None
+            else normalized
+        )
+        explicit_match = re.search(
+            r"^(?:para|de|al usuario|usuario|a nombre de)\s+"
+            r"(?:el\s+usuario\s+)?(.+?)\s*$",
+            suffix,
+        )
+        if explicit_match is None:
+            return current_user
 
+        requested = explicit_match.group(1).strip(" .,:;!?¡¿")
         users = getattr(self, "users", None)
         profiles = getattr(users, "profiles", None)
         if not isinstance(profiles, dict):
-            return current_user
+            return None
 
-        for candidate in profiles:
-            clean_candidate = str(candidate).strip()
-            if not clean_candidate:
+        resolver = getattr(users, "resolve_user_name", None)
+        if callable(resolver):
+            resolved = resolver(requested)
+            if resolved:
+                return str(resolved)
+
+        for profile_key, profile in profiles.items():
+            if not isinstance(profile, dict):
                 continue
-            normalized_candidate = self._normalize_telegram_admin_text(clean_candidate)
-            patterns = (
-                rf"\bpara\s+(?:el\s+usuario\s+)?{re.escape(normalized_candidate)}\b",
-                rf"\bal\s+usuario\s+{re.escape(normalized_candidate)}\b",
-                rf"\busuario\s+{re.escape(normalized_candidate)}\b",
-            )
-            if any(re.search(pattern, normalized) for pattern in patterns):
-                return clean_candidate
+            aliases = {str(profile_key), str(profile.get("name", ""))}
+            for field in ("alias", "aliases", "nickname", "preferred_name"):
+                value = profile.get(field)
+                if isinstance(value, str):
+                    aliases.add(value)
+                elif isinstance(value, (list, tuple, set)):
+                    aliases.update(str(item) for item in value)
+            normalized_aliases = {
+                self._normalize_telegram_admin_text(alias)
+                for alias in aliases
+                if str(alias).strip()
+            }
+            if requested in normalized_aliases:
+                return str(profile.get("name") or profile_key)
 
-        return current_user
+        return None
+
+
+    def _handle_profile_creation_request(self, original_text: str) -> bool:
+        """Crea perfiles únicamente para personas ya conocidas y solo por Liam."""
+
+        normalized = self._normalize_telegram_admin_text(original_text)
+        match = re.match(
+            r"^(?:crear|crea|anadir|añadir|anade|añade|dar de alta) "
+            r"(?:un )?perfil(?: de usuario| atlas)? (?:para|a|de) (.+?)\s*$",
+            normalized,
+        )
+        if match is None:
+            return False
+
+        requested_name = match.group(1).strip(" .,:;!?¡¿")
+        success, message, _profile = self.create_profile_for_known_person(requested_name)
+        print()
+        print(message)
+        info(
+            "Alta de perfil de persona conocida "
+            + ("completada." if success else "rechazada.")
+        )
+        return True
 
     def _handle_telegram_link_request(self, original_text: str) -> bool:
         """
@@ -106,6 +158,14 @@ class AtlasTelegramMixin:
 
         code = code_match.group(0).upper()
         target_user = self._extract_telegram_target_user(original_text)
+        if target_user is None:
+            print()
+            print(
+                "No encuentro ese perfil de usuario en Atlas. Escribe el nombre "
+                "exacto del perfil o créalo antes de vincular Telegram. No he "
+                "vinculado la cuenta a ningún usuario."
+            )
+            return True
 
         result = self.execute_framework_tool(
             "telegram.link.confirm",

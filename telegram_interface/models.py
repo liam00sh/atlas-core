@@ -38,6 +38,8 @@ class TelegramMessage:
     file_name: str | None = None
     mime_type: str | None = None
     file_size: int | None = None
+    local_path: str | None = None
+    media_status: str | None = None
 
     @classmethod
     def from_update(cls, update: dict[str, Any]) -> TelegramMessage | None:

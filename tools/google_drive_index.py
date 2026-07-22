@@ -33,8 +33,8 @@ from tools.google_drive import (
 from tools.result import ToolResult
 
 
-INDEX_VERSION = 3
-CHUNKER_VERSION = "fixed_chars_v1"
+INDEX_VERSION = 4
+CHUNKER_VERSION = "fixed_chars_v2_priority_policy"
 
 GOOGLE_FOLDER_MIME = "application/vnd.google-apps.folder"
 GOOGLE_DOC_MIME = "application/vnd.google-apps.document"
@@ -78,6 +78,10 @@ EXCLUDED_FILE_SUFFIXES = frozenset(
         ".bin",
         ".pyc",
         ".log",
+        ".tmp",
+        ".part",
+        ".crdownload",
+        ".download",
     }
 )
 
@@ -333,6 +337,10 @@ class GoogleDriveDocumentIndex:
                 asdict(chunk)
                 for chunk in document.chunks
             ],
+            "policy": self._document_policy(
+                document.item,
+                str(getattr(document.item, "name", "")),
+            ),
         }
 
     def _is_excluded_folder(self, item: DriveItem) -> bool:
@@ -451,6 +459,56 @@ class GoogleDriveDocumentIndex:
             return entry.get(name, default)
         return getattr(entry, name, default)
 
+    @classmethod
+    def _document_policy(cls, item: DriveItem, relative_path: str) -> dict[str, Any]:
+        """Clasifica vigencia, autoridad y sensibilidad sin depender del contenido."""
+        combined = cls._normalize(f"{relative_path} {item.name}")
+        path_parts = [part for part in re.split(r"[\\/]", combined) if part]
+        is_backup = any(token in combined for token in ("backup", "backups", "copia de seguridad", "releases"))
+        is_historical = any(token in combined for token in ("historico", "historial", "antiguo", "archive", "archivado", "legacy"))
+        is_patch = any(token in combined for token in ("patch", "parche", "fix", "correccion", "tmp", "final"))
+        is_official = any(token in combined for token in ("documentacion oficial", "00 documentacion", "documentacion", "roadmap", "changelog", "manual"))
+        is_release = any(token in combined for token in ("release", "version", "v0 ", "v1 "))
+        if is_backup:
+            document_class = "backup"
+            authority = 0.35
+        elif is_historical:
+            document_class = "historical"
+            authority = 0.45
+        elif is_patch:
+            document_class = "patch"
+            authority = 0.60
+        elif is_release:
+            document_class = "release"
+            authority = 0.85
+        elif is_official:
+            document_class = "official_active"
+            authority = 1.00
+        else:
+            document_class = "personal_current"
+            authority = 0.75
+        return {
+            "document_class": document_class,
+            "authority_score": authority,
+            "is_current_candidate": document_class in {"official_active", "release", "personal_current"},
+            "is_backup": is_backup,
+            "is_historical": is_historical,
+            "path_parts": path_parts,
+        }
+
+    @staticmethod
+    def _priority_bonus(document: dict[str, Any]) -> float:
+        policy = document.get("policy", {})
+        authority = float(policy.get("authority_score", 0.5) or 0.5)
+        bonus = authority * 4.0
+        if policy.get("is_current_candidate"):
+            bonus += 2.0
+        if policy.get("is_backup"):
+            bonus -= 3.0
+        if policy.get("is_historical"):
+            bonus -= 2.0
+        return bonus
+
     def _provenance(
         self,
         item: DriveItem,
@@ -462,6 +520,10 @@ class GoogleDriveDocumentIndex:
         structure_entries: dict[str, Any] | None,
     ) -> dict[str, Any]:
         entry = (structure_entries or {}).get(item.item_id)
+        relative_path = self._entry_value(entry, "relative_path", item.name)
+        access_user_ids = list(self._entry_value(entry, "access_user_ids", ()))
+        if owner_user_id and owner_user_id not in access_user_ids:
+            access_user_ids.append(owner_user_id)
         return {
             "drive_account_id": drive_account_id,
             "owner_user_id": owner_user_id,
@@ -469,13 +531,15 @@ class GoogleDriveDocumentIndex:
             "file_id": item.item_id,
             "file_name": item.name,
             "parent_folder_id": item.parent_id,
-            "relative_path": self._entry_value(entry, "relative_path", item.name),
+            "relative_path": relative_path,
             "ancestor_ids": list(self._entry_value(entry, "ancestor_ids", ())),
             "ancestor_names": list(self._entry_value(entry, "ancestor_names", ())),
             "scope_folder_id": scope_folder_id,
             "modified_time": item.modified_time,
             "content_hash": None,
             "chunker_version": CHUNKER_VERSION,
+            "access_user_ids": access_user_ids,
+            "visibility": self._entry_value(entry, "visibility", "owner_only" if owner_user_id else "root_scoped"),
         }
 
     @staticmethod
@@ -605,6 +669,7 @@ class GoogleDriveDocumentIndex:
                     "content_hash": old.get("content_hash"),
                 }
                 retained["chunker_version"] = CHUNKER_VERSION
+                retained["policy"] = self._document_policy(item, str(provenance.get("relative_path", item.name)))
                 current[item.item_id] = retained
                 current_states.pop(item.item_id, None)
                 stats["unchanged"] += 1
@@ -690,6 +755,10 @@ class GoogleDriveDocumentIndex:
                 **provenance,
                 "content_hash": content_hash,
             }
+            current[item.item_id]["policy"] = self._document_policy(
+                item,
+                str(provenance.get("relative_path", item.name)),
+            )
             current[item.item_id]["chunker_version"] = CHUNKER_VERSION
             current_states.pop(item.item_id, None)
 
@@ -882,6 +951,7 @@ class GoogleDriveDocumentIndex:
                     + min(sum(counts), 24) * 0.3
                     + min(sum(name_counts), 8) * 0.4
                     + (6.0 if phrase_count else 0.0)
+                    + self._priority_bonus(document)
                 )
 
                 candidates.append(
@@ -933,8 +1003,13 @@ class GoogleDriveDocumentIndex:
         root_id = scope.get("root_folder_id")
         if account_id and provenance.get("drive_account_id") not in {None, account_id}:
             return False
-        if owner_user_id and provenance.get("owner_user_id") not in {None, owner_user_id}:
-            return False
+        if owner_user_id:
+            document_owner = provenance.get("owner_user_id")
+            access_user_ids = {str(value).casefold() for value in provenance.get("access_user_ids", [])}
+            if document_owner is None:
+                return False
+            if str(document_owner).casefold() != str(owner_user_id).casefold() and str(owner_user_id).casefold() not in access_user_ids:
+                return False
         if root_id and provenance.get("root_folder_id") not in {None, root_id}:
             return False
         if scope.get("type", "global") == "global":
@@ -1000,6 +1075,7 @@ class GoogleDriveDocumentIndex:
                     coverage * 10.0
                     + min(sum(counts), 20) * 0.25
                     + (5.0 if phrase_count else 0.0)
+                    + self._priority_bonus(document)
                 )
 
                 first_positions = [

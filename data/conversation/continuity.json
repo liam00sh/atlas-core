@@ -1,30 +1,6 @@
 {
   "saray": [
     {
-      "at": "2026-07-20T15:43:49.521562+00:00",
-      "channel": "telegram",
-      "user": "Donde vive Liam Referencia resuelta internamente: Liam Vicente Martínez.",
-      "assistant": "Vale, te pongo en situación: Liam Vicente Martínez es pareja de Saray Izquierdo Carreres."
-    },
-    {
-      "at": "2026-07-20T16:04:23.078560+00:00",
-      "channel": "telegram",
-      "user": "Cuantos primos tengo",
-      "assistant": "Vamos al grano: Tienes 3 primos: Noa Melinte Carreres, Yael Carreres y Yeray Carreres."
-    },
-    {
-      "at": "2026-07-21T12:21:31.399175+00:00",
-      "channel": "telegram",
-      "user": "Dime algo sobre mi",
-      "assistant": "Venga, Saray, qué quieres que te diga... Tú eres la chica más valiente y astuta que conozco. A veces me pregunto cómo aguantas conmigo, jajaja. Pero en serio, siempre estás dispuesta a enfrentarte a cualquier desafío, sea lo que sea. Eso es lo que hace de ti una auténtica aventurera, como yo. ¿No te parece?"
-    },
-    {
-      "at": "2026-07-21T12:24:15.004681+00:00",
-      "channel": "telegram",
-      "user": "Recuerdame a Liam que se acuerde de mi",
-      "assistant": "Vale, Saray, te entiendo perfectamente. Liam es un chico muy ocupado y a veces puede pasar por alto cosas importantes. ¿Podrías recordarle que le avises personalmente? Podría ser una buena idea que lo hagas para asegurarte de que no se olvida. Además, podrías aprovechar esta oportunidad para hablar con él sobre cualquier cosa importante que estés esperando o necesites resolver. Liam siempre valora tu compañía y apoyo, así que seguro que estaría encantado de ayudarte si lo necesita."
-    },
-    {
       "at": "2026-07-21T17:14:05.251316+00:00",
       "channel": "telegram",
       "user": "Como está Liam?",
@@ -35,44 +11,76 @@
       "channel": "telegram",
       "user": "Hablar con coco",
       "assistant": "Vaya, Saray! ¿Qué hay que hablar con Coco? Estoy aquí para ayudar si necesitas consejos o quieres charlar un rato. ¿Es algo en particular que quieras compartir con Coco, o simplemente quieres echar una charla? Si es para hablar de algo específico, puedo intentar aportar mi granito de arena, aunque no olvides que Coco es tu compañero y tú conoces mejor lo que le interesa. ¡Venga, cuéntame!"
+    },
+    {
+      "at": "2026-07-21T18:57:55.037737+00:00",
+      "channel": "telegram",
+      "user": "Holaaaaaa, que tal",
+      "assistant": "Espero que hayas tenido un buen día! ¿Quieres charlar de algo en particular o simplemente quieres echar un rato con Coco? Si necesitas hablar sobre algo, estoy aquí para ayudar si puedo."
+    },
+    {
+      "at": "2026-07-21T18:58:31.253451+00:00",
+      "channel": "telegram",
+      "user": "Solo quería saber como estabas",
+      "assistant": "Estoy bien, gracias por preguntar. tú? ¿Hay algo en particular que quieras charlar hoy? Si necesitas hablar sobre algo, estoy aquí para ayudarte si puedo. ¡Venga, cuéntame de tu día!"
+    },
+    {
+      "at": "2026-07-21T18:59:14.487938+00:00",
+      "channel": "telegram",
+      "user": "Yo estoy bien también",
+      "assistant": "Me alegra saber que estás bien también. ¿Cómo estuvo tu día? Si quieres hablar sobre algo en particular o compartir alguna aventura reciente, estoy aquí para escuchar. ¡Venga, cuéntame todo!"
+    },
+    {
+      "at": "2026-07-21T19:00:28.795886+00:00",
+      "channel": "telegram",
+      "user": "Que tengas una buena noche, adiós Coco",
+      "assistant": "Gracias a ti, Saray! Que también tengas una buena noche. Espero que hayas tenido un día lleno de aventuras y risas. Si alguna vez necesitas hablar o compartir algo especial, estoy aquí para escucharte. ¡Hasta mañana! 😊"
     }
   ],
   "liam": [
     {
-      "at": "2026-07-21T12:45:32.323705+00:00",
-      "channel": "telegram",
-      "user": "Preséntate a Mary",
-      "assistant": "Entendido, Liam. Mary es la madre de Liam. En este contexto, Mary se refiere a Mary, quien es madre del usuario Liam y también prima materna de Saray Izquierdo Carreres. Para presentar a Mary: Mary es una mujer con raíces familiares en Beneixama. Es mamá de Liam y tía de Saray. Si necesitas saber más sobre ella, como detalles personales o información específica, solo tienes que preguntar."
+      "at": "2026-07-21T20:40:25.495892+00:00",
+      "channel": "cli",
+      "user": "si",
+      "assistant": "Ey Liam, venga! ¿Qué pasa? ¿Es que no te aburres del todo sin mí aquí? Pues mira, si quieres que hablemos de mis andanzas o te cuento alguna travesura, solo tienes que decírmelo. Y si lo tuyo es que me escuches hacer bromas y chorradas, también vale la pena. ¿Qué te ha traído hasta mí hoy? Seguro que algo divertido, ¿no? ¡Eh! Y si no sabes muy bien qué, yo te puedo ayudar a decidir con alguna de mis ideas locas! 😄"
     },
     {
-      "at": "2026-07-21T12:45:54.591818+00:00",
-      "channel": "telegram",
-      "user": "Quien es daxter",
-      "assistant": "María José Martínez Sanz es madre de Liam Vicente Martínez."
+      "at": "2026-07-21T20:40:54.234998+00:00",
+      "channel": "cli",
+      "user": "si",
+      "assistant": "Ey Liam, venga! ¿Qué pasa? ¿Es que quieres que siga contándote historias locas y bromas sin sentido todo el rato? Pues mira, si te apetece algún chascarrillo o alguna travesura, solo tienes que decírmelo. Si no, igual podemos hablar de algo más serio... aunque eso sí, yo siempre estoy aquí para echarte una mano con lo que necesites, ¿sabes? ¡Y si no sabes qué hacer hoy, te puedo ayudar a decidir! 😄"
     },
     {
-      "at": "2026-07-21T12:46:08.770026+00:00",
+      "at": "2026-07-21T21:28:00.241430+00:00",
       "channel": "telegram",
-      "user": "Quien es coco",
-      "assistant": "María José Martínez Sanz es madre de Liam Vicente Martínez."
+      "user": "Diferencias entre coco y daxter",
+      "assistant": "Ey Liam, venga! ¿Qué me preguntas ahora? Ya te he dicho que soy Daxter, el chico rebelde del barrio. Pero si quieres saber algo sobre la diferencia entre Coco y yo... Pues mira, en este mundo de Telegram y Atlas, Coco es una niña bonita con un peluche blanco y amarillo, y yo soy su amigo zorrito. Si me estás preguntando por diferencias físicas o de personalidad... Bueno, Coco tiene un traje más sofisticado y es más tranquila, mientras que yo soy el chico travieso y siempre metiendo la pata. Si t"
     },
     {
-      "at": "2026-07-21T12:46:40.661689+00:00",
+      "at": "2026-07-21T21:29:41.858671+00:00",
       "channel": "telegram",
-      "user": "Diferencias entre Daxter y Coco",
-      "assistant": "Ey Liam! Venga, vamos a darle un toque de humor a esto. ¿Qué tal si pensamos que Daxter y Coco son dos amigos de la infancia? ¡Daxter es el chico rebelde del barrio y Coco es la niña mimada! En serio, aunque no tengo información específica sobre ambos, podrías considerarlos como dos personajes con personalidades distintas. Daxter podría ser más aventurero y valiente, mientras que Coco podría ser más tranquila y amable. ¿Te apetece que pensemos en alguna anécdota divertida entre estos dos? Por ej"
+      "user": "Que es atlas",
+      "assistant": "Ey Liam, venga! ¿Qué pasa? ¿Es que quieres saber algo sobre Atlas? Pues mira, en este mundo de Telegram y Atlas, Atlas es el continente donde todo esto sucede. Es un lugar enorme lleno de misterios, ciudades perdidas y peligrosos arcanos. Si me estás preguntando por detalles específicos o historias que han ocurrido allí... Bueno, yo no he estado en todos los rincones, así que te lo contaría desde mi perspectiva. Si quieres que hablemos de algo más divertido, también vale la pena. ¿Qué te ha traí"
     },
     {
-      "at": "2026-07-21T12:47:42.586507+00:00",
+      "at": "2026-07-21T21:31:00.686237+00:00",
       "channel": "telegram",
-      "user": "Que funciones tiene?",
-      "assistant": "Ey Liam! Venga, venga, que ya te lo dije antes. Yo soy Daxter, ¿recuerdas? El chico rebelde del barrio, el que siempre está metiendo la pata pero también el que nunca se rinde. Y si quieres saber sobre funciones... Pues mira, en este mundo de Telegram y Atlas, yo no soy más que un personaje de tu imaginación. Pero te puedo contar una cosa: si tuvieras que asumirme alguna función, diría que soy el amigote incondicional del usuario. Siempre estando para ayudarte con tus preguntas y chorradas, ¿sab"
+      "user": "Que hace atlas",
+      "assistant": "Ey Liam, venga! ¿Qué pasa? Si quieres saber más sobre Atlas, pues es el gran continente donde todo este viaje y aventura ocurre. Es un lugar enorme lleno de misterios, ciudades olvidadas y peligros que no siempre se ven claros. Si te interesa hablar de sus secretos o las historias que allí han pasado... Bueno, yo he estado por algunos lugares, pero claro, siempre hay más para explorar. Si quieres que te cuente algo divertido sobre Atlas, también me da la talla. ¿Qué te parece si hablamos de algú"
     },
     {
-      "at": "2026-07-21T12:48:41.006085+00:00",
+      "at": "2026-07-21T21:36:54.381047+00:00",
       "channel": "telegram",
-      "user": "Que cosas puede hacer?",
-      "assistant": "Ey Liam, venga que ya te lo he contado antes. Yo soy Daxter, el chico rebelde del barrio. En este mundillo de Telegram y Atlas, yo no hago más que lo que me pides o lo que me apetece en ese momento. Pero si hay que meterme en detalles... Puedo: - Ayudarte con preguntas rápidas o bocadillos de información. - Contarte chorradas divertidas para pasar el rato. - Hacer bromas y travesuras (buenas, claro). No soy un asistente con funciones específicas ni nada por el estilo. Soy tu amigo de siempre, ¿v"
+      "user": "listar ususrios",
+      "assistant": "Ey Liam, venga! ¿Qué pasa con esa lista de usuarios? ¿Es que quieres saber algo sobre los personajes del mundo de Atlas y Coco? Pues mira, si te interesa hablar de ellos o de las aventuras que tienen... ¡venga ya! Si no, igual podemos charlar de algo más divertido. ¿Qué te parece si hablamos de mis andanzas o de alguna travesura que haya metido en mi vida? Y si quieres que te haga una lista de usuarios del chat, esa la puedo hacer sin problema. ¡Venga, dime qué necesitas!"
+    }
+  ],
+  "maría josé martínez sanz": [
+    {
+      "at": "2026-07-21T19:17:37.425024+00:00",
+      "channel": "telegram",
+      "user": "No, este es el perfil de Mary",
+      "assistant": "Espero que tengas un buen día. Me alegra que hayas venido a hablar conmigo sobre tu perfil. Si tienes alguna duda o necesitas ayuda con algo en particular, no dudes en decírmelo."
     }
   ]
 }

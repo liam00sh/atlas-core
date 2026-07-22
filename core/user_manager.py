@@ -52,6 +52,8 @@ Importante:
 # Así, una consulta escrita como "Ruben" puede encontrar
 # correctamente un perfil llamado "Rubén".
 import unicodedata
+from pathlib import Path
+import re
 
 
 class UserManager:
@@ -204,7 +206,89 @@ class UserManager:
                     ],
                 },
             },
-        }
+
+
+            # -----------------------------------------------------------------
+            # PERFIL DE MARÍA JOSÉ MARTÍNEZ SANZ (MARY)
+            # -----------------------------------------------------------------
+            "mary": {
+                "name": "Mary",
+
+                "aliases": [
+                    "Mary",
+                    "María José",
+                    "Maria Jose",
+                    "Maria Jose Martinez Sanz",
+                    "María José Martínez Sanz",
+                ],
+
+                "grammatical_gender": "feminine",
+
+                "pronouns": {
+                    "subject": "ella",
+                    "object": "la",
+                    "indirect_object": "le",
+                    "possessive": "su",
+                },
+
+                "roles": [
+                    "family",
+                    "known",
+                ],
+
+                "relationships": {
+                    "partner_of": [],
+                    "family_of": [
+                        "Liam",
+                    ],
+                    "known_of": [
+                        "Liam",
+                    ],
+                },
+            },        }
+
+        # Cada perfil dispone de un espacio privado propio. Esto se crea
+        # también para los perfiles legacy al arrancar Atlas.
+        self.ensure_all_profile_storage()
+
+
+    def _profile_storage_key(self, user: str) -> str:
+        """Devuelve una clave de carpeta segura y estable para un perfil."""
+        resolved = self.resolve_user_name(str(user).strip()) or str(user).strip()
+        normalized = self._normalize_identity_name(resolved)
+        key = re.sub(r"[^a-z0-9]+", "_", normalized).strip("_")
+        if not key:
+            raise ValueError("No se puede crear almacenamiento para un perfil sin nombre.")
+        return key
+
+    def get_profile_data_dir(self, user: str) -> Path:
+        """Ruta privada del perfil dentro de data/users/<perfil>."""
+        project_root = Path(__file__).resolve().parent.parent
+        return project_root / "data" / "users" / self._profile_storage_key(user)
+
+    def get_internet_history_path(self, user: str) -> Path:
+        """Ruta canónica del historial web privado de un perfil."""
+        return self.get_profile_data_dir(user) / "internet_history.jsonl"
+
+    def ensure_profile_storage(self, user: str) -> Path:
+        """Crea de forma idempotente el espacio privado mínimo del perfil."""
+        profile_dir = self.get_profile_data_dir(user)
+        profile_dir.mkdir(parents=True, exist_ok=True)
+        history_path = profile_dir / "internet_history.jsonl"
+        history_path.touch(exist_ok=True)
+        return profile_dir
+
+    def ensure_all_profile_storage(self) -> int:
+        """Asegura el almacenamiento de todos los perfiles ya registrados."""
+        created = 0
+        for key, profile in self.profiles.items():
+            name = str(profile.get("name") or key) if isinstance(profile, dict) else str(key)
+            directory = self.get_profile_data_dir(name)
+            existed = directory.exists() and (directory / "internet_history.jsonl").exists()
+            self.ensure_profile_storage(name)
+            if not existed:
+                created += 1
+        return created
 
     def _normalize_name(
         self,
@@ -279,66 +363,38 @@ class UserManager:
         self,
         requested_name: str,
     ) -> str | None:
-        """
-        Busca un usuario conocido por su nombre.
+        """Resuelve un perfil por clave, nombre visible o alias.
 
-        Parámetros:
-            requested_name:
-                Nombre escrito por el usuario.
-
-        Devuelve:
-            str:
-                Nombre correcto del perfil encontrado.
-
-            None:
-                No existe ningún perfil coincidente.
-
-        La comparación ignora:
-
-        - Mayúsculas.
-        - Minúsculas.
-        - Acentos.
-
-        Pero no corrige nombres distintos.
-
-        Ejemplos:
-
-            "ruben" puede encontrar "Rubén".
-
-            "sary" no se convierte automáticamente en "Saray".
+        La comparación ignora mayúsculas, minúsculas y acentos, pero nunca
+        convierte un nombre desconocido en el usuario activo.
         """
 
-        # Normalizamos el nombre solicitado.
-        normalized_requested_name = (
-            self._normalize_identity_name(
-                requested_name
-            )
+        normalized_requested_name = self._normalize_identity_name(
+            requested_name
         )
 
-        # Recorremos todos los perfiles conocidos.
-        for profile in self.profiles.values():
+        for profile_key, profile in self.profiles.items():
+            if not isinstance(profile, dict):
+                continue
 
-            # Obtenemos el nombre visible del perfil.
-            profile_name = profile["name"]
+            candidates = {
+                str(profile_key),
+                str(profile.get("name", "")),
+            }
 
-            # Normalizamos también el nombre guardado.
-            normalized_profile_name = (
-                self._normalize_identity_name(
-                    profile_name
-                )
-            )
+            for field in ("alias", "aliases", "nickname", "preferred_name"):
+                value = profile.get(field)
+                if isinstance(value, str):
+                    candidates.add(value)
+                elif isinstance(value, (list, tuple, set)):
+                    candidates.update(str(item) for item in value)
 
-            # Comparamos las dos formas normalizadas.
-            if (
-                normalized_profile_name
-                == normalized_requested_name
-            ):
+            for candidate in candidates:
+                if not candidate.strip():
+                    continue
+                if self._normalize_identity_name(candidate) == normalized_requested_name:
+                    return str(profile.get("name") or profile_key)
 
-                # Devolvemos el nombre real guardado,
-                # conservando sus mayúsculas y acentos.
-                return profile_name
-
-        # No existe coincidencia.
         return None
 
 
@@ -396,6 +452,61 @@ class UserManager:
             },
         }
 
+
+    def register_profile(
+        self,
+        user: str,
+        *,
+        aliases: list[str] | None = None,
+        grammatical_gender: str = "neutral",
+        roles: list[str] | None = None,
+    ) -> dict:
+        """Registra un perfil Atlas real sin crear personas implícitamente.
+
+        La existencia de la persona debe validarse en una capa superior. Este
+        método solo mantiene el catálogo de perfiles de UserManager.
+        """
+
+        clean_user = str(user).strip()
+        if not clean_user:
+            raise ValueError("El nombre del perfil no puede estar vacío.")
+        self._ensure_profile_allowed(clean_user)
+
+        existing = self.resolve_user_name(clean_user)
+        if existing is not None:
+            self.ensure_profile_storage(existing)
+            return self.get_profile(existing)
+
+        valid_genders = {"masculine", "feminine", "neutral"}
+        clean_gender = str(grammatical_gender).strip().casefold()
+        if clean_gender not in valid_genders:
+            clean_gender = "neutral"
+
+        profile = {
+            "name": clean_user,
+            "aliases": [
+                str(alias).strip()
+                for alias in (aliases or [])
+                if str(alias).strip() and str(alias).strip().casefold() != clean_user.casefold()
+            ],
+            "grammatical_gender": clean_gender,
+            "pronouns": {
+                "subject": "él" if clean_gender == "masculine" else ("ella" if clean_gender == "feminine" else "esa persona"),
+                "object": "lo" if clean_gender == "masculine" else ("la" if clean_gender == "feminine" else "le"),
+                "indirect_object": "le",
+                "possessive": "su",
+            },
+            "roles": list(dict.fromkeys(roles or ["known"])),
+            "relationships": {
+                "partner_of": [],
+                "family_of": [],
+                "known_of": [self.main_user],
+            },
+        }
+        self.profiles[self._normalize_name(clean_user)] = profile
+        self.ensure_profile_storage(clean_user)
+        return profile
+
     def get_current_user(self):
         """
         Devuelve el usuario activo.
@@ -446,6 +557,14 @@ class UserManager:
             user
             or self.current_user
         )
+
+        # Los perfiles conocidos pueden solicitarse por nombre completo o alias.
+        # Se convierten siempre a su identificador canónico antes de buscar.
+        resolved_user = self.resolve_user_name(
+            selected_user
+        )
+        if resolved_user is not None:
+            selected_user = resolved_user
 
         # Validamos antes de buscar o crear el perfil.
         self._ensure_profile_allowed(
@@ -617,13 +736,20 @@ class UserManager:
         como invitado.
         """
 
+        # Resolvemos nombres completos y alias al identificador canónico.
+        # Así «Mary» y «María José Martínez Sanz» activan el mismo perfil.
+        resolved_user = self.resolve_user_name(
+            str(user)
+        )
+        selected_user = resolved_user or str(user).strip()
+
         # Validamos y obtenemos el perfil antes de cambiar el usuario.
         # Así una entidad rechazada nunca queda activa parcialmente.
         self.get_profile(
-            user
+            selected_user
         )
 
-        self.current_user = user
+        self.current_user = selected_user
 
     def return_to_main(self):
         """

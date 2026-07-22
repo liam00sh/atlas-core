@@ -175,7 +175,11 @@ def execute():
         # Cerramos el perfil temporal sin simular una nueva bienvenida.
         # Atlas restaura internamente al usuario principal, pero no inicia
         # una conversación nueva ni anuncia a Liam si nadie ha hablado.
-        print(f"Adiós, {current_user}. Perfil temporal cerrado.")
+        print(
+            f"Adiós, {current_user}. Perfil temporal cerrado. "
+            f"Has vuelto al perfil de {main_user}. "
+            "Escribe «salir» otra vez solo si quieres cerrar Atlas por completo."
+        )
 
         context.atlas.return_to_main_user()
 

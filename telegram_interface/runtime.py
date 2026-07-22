@@ -31,6 +31,12 @@ TELEGRAM_CHANNEL_ALLOWED_PERMISSIONS = frozenset(
         "memory.update",
         "memory.delete",
         "memory.audit.read",
+        # Solo llegan hasta aquí si el usuario autenticado ya posee estos
+        # permisos en Atlas (propietario o administrador). Esto permite que
+        # Liam confirme o revoque vinculaciones desde su propio Telegram sin
+        # conceder administración al resto de cuentas.
+        "telegram.admin_link",
+        "telegram.admin_revoke",
     }
 )
 

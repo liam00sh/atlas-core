@@ -156,9 +156,8 @@ class TelegramGateway:
             )
             return response
 
-    @staticmethod
-    def _handle_media_message(message: TelegramMessage) -> GatewayResponse:
-        """Gestiona medios y pies sin convertir el pie en una consulta visual ficticia."""
+    def _handle_media_message(self, message: TelegramMessage) -> GatewayResponse:
+        """Gestiona medios en cuarentena y usa analizadores opcionales sin inventar."""
         media_names = {
             "photo": "una foto", "voice": "un audio de voz",
             "audio": "un archivo de audio", "video": "un vídeo",
@@ -166,9 +165,29 @@ class TelegramGateway:
         }
         received = media_names.get(message.media_type, "un archivo")
         caption = " ".join(message.text.split()).strip()
+        if message.media_status == "rejected_too_large":
+            return GatewayResponse("El archivo supera el límite seguro configurado y no se ha descargado.")
+        if message.media_status == "rejected_type":
+            return GatewayResponse("Ese formato no está permitido por la política multimedia segura de Atlas.")
+        if message.media_status and message.media_status != "quarantined":
+            return GatewayResponse("He recibido el archivo, pero no he podido descargarlo de forma segura. No se ha guardado permanentemente.")
+        analyzer = getattr(self.core, "analyze_media", None)
+        if callable(analyzer) and message.local_path:
+            try:
+                result = analyzer(
+                    local_path=message.local_path,
+                    media_type=message.media_type,
+                    mime_type=message.mime_type,
+                    caption=caption,
+                    user_id=message.user.telegram_user_id,
+                )
+                if result:
+                    return GatewayResponse(str(result).strip())
+            except Exception:
+                pass
         if not caption:
             return GatewayResponse(
-                f"He recibido {received}. Todavía no tengo conectado el análisis "
+                f"He recibido {received} y lo he guardado temporalmente en cuarentena. Todavía no tengo conectado el análisis "
                 "del contenido. Dime qué necesitas hacer con él y te guiaré sin inventar lo que contiene."
             )
         if message.media_type == "photo":
@@ -176,22 +195,22 @@ class TelegramGateway:
             # pero no demuestra visualmente identidad, propietario ni relaciones.
             if len(caption.split()) <= 12 and not caption.endswith("?"):
                 return GatewayResponse(
-                    f"He recibido la foto y el pie: «{caption}». Entiendo que me estás "
+                    f"He recibido la foto temporalmente y el pie: «{caption}». Entiendo que me estás "
                     "presentando lo que aparece en ella, pero todavía no puedo ver la imagen. "
                     "¿Quieres que recuerde esa descripción o necesitas ayuda con la foto?"
                 )
             return GatewayResponse(
-                f"He recibido la foto con este pie: «{caption}». Todavía no puedo analizar "
+                f"He recibido la foto temporalmente con este pie: «{caption}». Todavía no puedo analizar "
                 "visualmente la imagen, así que no voy a adivinar su contenido. "
                 "Descríbeme el detalle que quieres revisar o dime qué necesitas hacer con ella."
             )
         if message.media_type in {"voice", "audio"}:
             return GatewayResponse(
-                f"He recibido {received} con el texto «{caption}», pero todavía no tengo "
+                f"He recibido {received} temporalmente con el texto «{caption}», pero todavía no tengo "
                 "conectada la transcripción. Puedes escribir lo esencial y te ayudo con ello."
             )
         return GatewayResponse(
-            f"He recibido {received} con el texto «{caption}». Todavía no puedo analizar "
+            f"He recibido {received} temporalmente con el texto «{caption}». Todavía no puedo analizar "
             "automáticamente su contenido. Dime qué parte necesitas revisar."
         )
 

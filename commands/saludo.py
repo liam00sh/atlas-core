@@ -1,4 +1,4 @@
-﻿"""Comando de saludo dinámico del Proyecto Atlas."""
+"""Comando de saludo dinámico del Proyecto Atlas."""
 
 
 from assistant_identity.phrase_bank import GREETINGS
@@ -10,8 +10,8 @@ COMMAND = {
     "category": "General",
     "author": "Liam",
     "version": "1.1",
-    "aliases": ["hola", "saludar"],
-    "examples": ["saludo", "hola"],
+    "aliases": ["hola", "saludar", "buenas", "hey"],
+    "examples": ["saludo", "hola", "buenas"],
 }
 
 
