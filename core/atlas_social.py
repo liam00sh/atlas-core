@@ -7,6 +7,42 @@ import unicodedata
 
 
 class AtlasSocialMixin:
+    def register_known_person(
+        self,
+        display_name: str,
+        told_by: str,
+        relation_owner: str | None = None,
+        friendship_level: int = 0,
+    ):
+        return self.remember_known_person(
+            display_name=display_name,
+            told_by=told_by,
+            relation_owner=relation_owner,
+            friendship_level=friendship_level,
+        )
+
+    def register_person_fact(
+        self,
+        person_name: str,
+        fact_type: str,
+        value,
+        told_by: str,
+        visibility: str = "related_profiles",
+        sensitivity: str = "normal",
+        confidence: float = 1.0,
+        source: str = "conversation",
+    ) -> None:
+        self.remember_person_fact(
+            person_name=person_name,
+            fact_type=fact_type,
+            value=value,
+            told_by=told_by,
+            visibility=visibility,
+            sensitivity=sensitivity,
+            confidence=confidence,
+            source=source,
+        )
+
     """Respuestas naturales y juegos ligeros, sin fingir vida propia."""
 
     _HUMAN_JOKES = (
@@ -135,10 +171,32 @@ class AtlasSocialMixin:
     }
 
     @staticmethod
+
+    @staticmethod
+    def _looks_like_family_question(text: str) -> bool:
+        normalized = text.casefold().strip(" .,:;!?¡¿")
+        normalized = (
+            normalized.replace("á", "a")
+            .replace("é", "e")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+            .replace("ü", "u")
+        )
+        patterns = (
+            r"^quien(?:es)?\s+son\s+mis?\s+",
+            r"^quien(?:es)?\s+es\s+mi\s+",
+            r"^dime\s+quien(?:es)?\s+son\s+mis?\s+",
+            r"^cuales\s+son\s+mis?\s+",
+        )
+        return any(re.search(pattern, normalized) for pattern in patterns)
+
+    @staticmethod
     def _social_normalize(text: str) -> str:
         value = unicodedata.normalize("NFKD", str(text).casefold())
         value = "".join(ch for ch in value if not unicodedata.combining(ch))
-        return re.sub(r"[^a-z0-9ñ ]+", " ", value).strip()
+        value = re.sub(r"[^a-z0-9ñ ]+", " ", value)
+        return re.sub(r"\s+", " ", value).strip()
 
     @staticmethod
     def _social_emojis(text: str) -> list[str]:
@@ -537,17 +595,154 @@ class AtlasSocialMixin:
         if not normalized:
             return False
 
-        # Presenta a una persona que está junto al interlocutor actual.
-        companion = re.search(
-            r"(?:estoy|estamos|aqui estoy)\s+(?:aqui\s+)?con\s+(?:mi\s+\w+\s+)?([a-záéíóúüñ][a-záéíóúüñ -]{1,50})[, ]+(?:saluda(?:la|lo)?|saludale|dile hola)",
+        greeting_markers = {
+            "hola", "buenas", "buenos dias", "buenas tardes",
+            "buenas noches", "hola que tal", "hola como estas",
+            "buenas que tal", "hi", "hey", "ey", "holi",
+        }
+        if normalized in greeting_markers:
+            user = self._social_user()
+            print()
+            print(random.choice((
+                f"¡Hola, {user}! 👋",
+                f"¡Buenas, {user}!",
+                f"¡Muy buenas, {user}! ¿Qué tal?",
+            )))
+            return True
+
+        # Saludos y presentaciones de una persona presente.
+        relation_match = re.search(
+            r"(?:estoy|estamos|aqui estoy)\s+(?:aqui\s+)?con\s+mi\s+"
+            r"(?P<relation>padre|madre|hermano|hermana|pareja|abuelo|abuela|"
+            r"tio|tia|primo|prima)\s*[, ]*\s*"
+            r"(?P<action>saluda(?:la|lo)?|saludale|dile hola|presentate)",
             original_text.casefold(),
         )
-        if companion:
-            raw_name = companion.group(1).strip(" ,.!?¡¿")
-            person = self.people_manager.find_person_by_name(raw_name)
-            display = person.name if person is not None else raw_name.title()
-            print(); print(f"¡Hola, {display}! Encantado de saludarte 👋")
+        companion_match = re.search(
+            r"(?:estoy|estamos|aqui estoy)\s+(?:aqui\s+)?con\s+"
+            r"(?P<name>[a-záéíóúüñ][a-záéíóúüñ -]{1,50})\s*[, ]*\s*"
+            r"(?P<action>saluda(?:la|lo)?|saludale|dile hola|presentate)",
+            original_text.casefold(),
+        )
+        direct_match = re.search(
+            r"^(?:saluda(?:la|lo)?|saludale|dile hola|presentate a)\s+"
+            r"(?P<name>[a-záéíóúüñ][a-záéíóúüñ -]{1,50})$",
+            original_text.casefold().strip(),
+        )
+
+        resolved_name = None
+        action = "saluda"
+        if relation_match:
+            relation = relation_match.group("relation")
+            action = relation_match.group("action")
+            try:
+                candidates = self.relationship_engine.get_related_people(
+                    self.get_user(),
+                    relation,
+                )
+            except Exception:
+                candidates = []
+            living = [
+                person for person in candidates
+                if "fallecid" not in str(getattr(person, "summary", "")).casefold()
+            ]
+            if len(living) == 1:
+                resolved_name = living[0].name
+            elif len(living) > 1:
+                names = ", ".join(person.name for person in living)
+                print()
+                print(
+                    f"Conozco a varias personas vivas que encajan con «mi {relation}»: "
+                    f"{names}. ¿Con cuál estás?"
+                )
+                return True
+            else:
+                print()
+                print(f"No he podido identificar a tu {relation}. ¿Cómo se llama?")
+                return True
+        elif companion_match or direct_match:
+            match = companion_match or direct_match
+            raw_name = match.group("name").strip(" ,.!?¡¿")
+            action = match.group("action")
+            try:
+                matches = self.people_manager.find_people_by_name(raw_name)
+            except Exception:
+                found = self.people_manager.find_person_by_name(raw_name)
+                matches = [found] if found is not None else []
+            living = [
+                person for person in matches
+                if "fallecid" not in str(getattr(person, "summary", "")).casefold()
+            ]
+            if len(living) == 1:
+                resolved_name = living[0].name
+            elif len(living) > 1:
+                names = ", ".join(person.name for person in living)
+                print()
+                print(
+                    f"Conozco a varias personas vivas llamadas {raw_name.title()}: "
+                    f"{names}. ¿Es alguna de ellas o es una persona diferente?"
+                )
+                return True
+            elif matches and not living:
+                print()
+                print(
+                    f"Las personas que conozco con ese nombre constan como fallecidas, "
+                    "así que debe de ser otra persona. ¿Cómo se llama exactamente?"
+                )
+                return True
+            else:
+                resolved_name = raw_name.title()
+
+        if resolved_name:
+            if "presentate" in action:
+                print()
+                print(
+                    f"Hola, {resolved_name}. Soy {self.get_name()}, una de las "
+                    "identidades del asistente Atlas. Encantado de conocerte."
+                )
+            else:
+                print()
+                print(f"¡Hola, {resolved_name}! Encantado de saludarte 👋")
+            self.guest_sessions.set_pending_guest(resolved_name)
+            print()
+            print(
+                f"¿Quieres que hable con {resolved_name} desde un perfil temporal "
+                "de invitado para esta conversación?"
+            )
             return True
+
+        if self._looks_like_family_question(original_text):
+            return None
+
+        identity_text = original_text.casefold().strip()
+        identity_match = re.match(
+            r"^(?:(?:si|sí)[, ]+)?soy\s+"
+            r"(?!mi\b|mis\b|el\b|la\b|los\b|las\b)"
+            r"(?P<name>[a-záéíóúüñ][a-záéíóúüñ '-]{1,60})\s*$",
+            identity_text,
+        )
+        if identity_match:
+            guest_name = identity_match.group('name').strip(" .,:;!?¡¿").title()
+            print()
+            print(f"¡Hola, {guest_name}! Encantado de saludarte 👋")
+            self.guest_sessions.set_pending_guest(guest_name)
+            print()
+            print(
+                f"¿Quieres que cambie a un perfil temporal de invitado para hablar "
+                f"con {guest_name}?"
+            )
+            return True
+
+        pending_guest = self.guest_sessions.get_pending_guest()
+        if pending_guest is not None:
+            if normalized in {"si", "sí", "vale", "de acuerdo", "correcto", "hazlo"}:
+                self.start_guest_session(pending_guest)
+                return True
+            if normalized in {"no", "ahora no", "cancelar", "dejalo"}:
+                self.guest_sessions.clear_pending_guest()
+                print()
+                print("De acuerdo. Mantengo el perfil actual del bot.")
+                return True
 
         if self._handle_active_game(normalized):
             return True

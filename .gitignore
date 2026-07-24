@@ -165,3 +165,6 @@ reports/local/
 # -----------------------------------------------------------------------------
 *.exe
 *.msi
+
+# Pytest runtime local
+.pytest_runtime/

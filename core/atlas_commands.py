@@ -48,7 +48,7 @@ from conversation.personality import identity as identity_response
 from console.command_manager import COMMANDS
 from console.command_manager import execute
 from console.command_manager import resolve_command
-from console.command_help import handle_command_help_request
+from console.command_help import render_help_for_user, handle_command_help_request
 
 from core.log_manager import info
 
@@ -93,6 +93,22 @@ class AtlasCommandsMixin:
                 Atlas debe finalizar.
         """
 
+        # Conserva la entrada original para comandos con confirmación reforzada.
+        self.last_original_text = original_text
+
+        # ---------------------------------------------------------------------
+        # 0. CONFIRMACIONES REFORZADAS DE REINICIO
+        # ---------------------------------------------------------------------
+
+        restart_confirmation_result = (
+            self._handle_restart_confirmation(
+                normalized_text=normalized_text,
+            )
+        )
+
+        if restart_confirmation_result is not None:
+            return restart_confirmation_result
+
         # ---------------------------------------------------------------------
         # 1. ÓRDENES DE IDENTIDAD Y PERSONALIDAD
         # ---------------------------------------------------------------------
@@ -135,6 +151,46 @@ class AtlasCommandsMixin:
         return execute(
             resolved_command
         )
+
+    def _handle_restart_confirmation(
+        self,
+        normalized_text: str,
+    ) -> bool | None:
+        """
+        Intercepta confirmaciones reforzadas antes de resolve_command().
+
+        Así las frases de confirmación no se interpretan como comandos
+        nuevos ni se envían al sistema de ayuda por similitud.
+        """
+
+        telegram_confirmations = {
+            "confirmo reiniciar telegram",
+            "confirmar reinicio telegram",
+            "si reinicia telegram",
+            "sí reinicia telegram",
+        }
+
+        atlas_confirmations = {
+            "confirmo reiniciar atlas",
+            "confirmar reinicio atlas",
+            "si reinicia atlas",
+            "sí reinicia atlas",
+        }
+
+        if normalized_text in telegram_confirmations:
+            self.last_original_text = "confirmo reiniciar telegram"
+            return execute("reinicia telegram")
+
+        if normalized_text in atlas_confirmations:
+            self.last_original_text = "confirmo reiniciar atlas"
+            return execute("reinicia atlas")
+
+        if normalized_text in {"cancelar", "cancela", "cancelar reinicio"}:
+            print()
+            print("No hay ningún reinicio en curso.")
+            return True
+
+        return None
 
     # =========================================================================
     # IDENTIDAD DEL ASISTENTE

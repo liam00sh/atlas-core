@@ -11,28 +11,41 @@ class TelegramInstanceLockedError(RuntimeError):
     pass
 
 
-def _pid_is_alive(pid: int) -> bool:
+def _pid_is_matching_bot(pid: int) -> bool:
+    """Comprueba que el PID vivo pertenece realmente al bot de Telegram."""
     if pid <= 0:
         return False
+
     if os.name == "nt":
         try:
-            import ctypes
-            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
-            STILL_ACTIVE = 259
-            handle = ctypes.windll.kernel32.OpenProcess(
-                PROCESS_QUERY_LIMITED_INFORMATION, False, pid
+            import subprocess
+
+            creation_flags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+            completed = subprocess.run(
+                [
+                    "powershell.exe",
+                    "-NoProfile",
+                    "-Command",
+                    (
+                        "$p = Get-CimInstance Win32_Process "
+                        f"-Filter \"ProcessId={pid}\"; "
+                        "if ($p) { $p.CommandLine }"
+                    ),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                creationflags=creation_flags,
             )
-            if not handle:
-                return False
-            try:
-                exit_code = ctypes.c_ulong()
-                if not ctypes.windll.kernel32.GetExitCodeProcess(handle, ctypes.byref(exit_code)):
-                    return False
-                return exit_code.value == STILL_ACTIVE
-            finally:
-                ctypes.windll.kernel32.CloseHandle(handle)
         except Exception:
             return False
+
+        command_line = completed.stdout.strip().casefold()
+        return (
+            "python" in command_line
+            and "run_telegram_bot.py" in command_line
+        )
+
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -74,7 +87,10 @@ class TelegramInstanceLock:
             return False
         if pid == os.getpid():
             return False
-        if not _pid_is_alive(pid):
+
+        # Un PID reutilizado por Windows no debe mantener el bloqueo. Solo se
+        # conserva si el proceso activo es realmente run_telegram_bot.py.
+        if not _pid_is_matching_bot(pid):
             self.path.unlink(missing_ok=True)
             return True
         return False

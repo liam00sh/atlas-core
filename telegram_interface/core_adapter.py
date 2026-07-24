@@ -211,10 +211,6 @@ class AtlasCoreAdapter:
         if context.atlas_user_id is None or context.authentication_state != "linked":
             raise PermissionError("La cuenta Telegram no está vinculada.")
 
-        quick = self.quick_response(text, context.active_personality or "Daxter")
-        if quick is not None:
-            return quick
-
         with self._lock:
             corrected_text = self._correct_typing(text)
             plain_text = self._plain(corrected_text)
@@ -368,7 +364,7 @@ class CallableCoreAdapter:
 
     def __init__(self, handler, personality_getter=None, personality_setter=None) -> None:
         self.handler = handler
-        self.personality_getter = personality_getter or (lambda _user: "daxter")
+        self.personality_getter = personality_getter or (lambda _user: "Daxter")
         self.personality_setter = personality_setter or (lambda _user, _value: True)
 
     def process(self, text: str, context: TelegramRequestContext) -> str:

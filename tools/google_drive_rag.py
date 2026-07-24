@@ -317,10 +317,12 @@ class GoogleDriveRagTool(BaseTool):
             )
 
         try:
-            requested_scope = dict(arguments.get("scope") or {"type": "global"})
-            requested_scope.setdefault("user_id", context.requested_by)
-            requested_scope.setdefault("drive_account_id", str(context.metadata.get("drive_account_id") or "default"))
-            requested_scope.setdefault("root_folder_id", self.service.index.load().get("root_folder_id"))
+            explicit_scope = arguments.get("scope")
+            requested_scope = dict(explicit_scope) if explicit_scope else None
+            if requested_scope is not None:
+                requested_scope.setdefault("user_id", context.requested_by)
+                requested_scope.setdefault("drive_account_id", str(context.metadata.get("drive_account_id") or "default"))
+                requested_scope.setdefault("root_folder_id", self.service.index.load().get("root_folder_id"))
             answer, sources = self.service.answer(
                 arguments["question"],
                 max_chunks=arguments.get(

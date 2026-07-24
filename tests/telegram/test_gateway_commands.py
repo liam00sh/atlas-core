@@ -133,7 +133,10 @@ def test_core_exception_returns_safe_error(config, storage, linker, tmp_path):
     )
     try:
         response = gateway.handle(make_message("mensaje secreto"))
-        assert response.text == "Atlas no pudo procesar el mensaje de forma segura."
+        assert response.text == (
+        "No he podido procesar ese mensaje por un error interno. "
+        "El detalle se ha registrado para poder corregirlo."
+    )
         assert "private prompt" not in response.text
     finally:
         gateway.close()
@@ -201,7 +204,9 @@ def test_repeated_core_errors_create_short_per_session_cooldown(config, storage,
     )
     try:
         for index in range(3):
-            assert "no pudo procesar" in gateway.handle(make_message("x", update_id=index)).text
+            assert "no he podido procesar" in gateway.handle(
+            make_message("x", update_id=index)
+        ).text.casefold()
         assert "varios errores" in gateway.handle(make_message("x", update_id=4)).text
         assert len(calls) == 3
     finally:

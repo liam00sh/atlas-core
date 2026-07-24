@@ -473,14 +473,28 @@ class AtlasAIMixin:
         *,
         response_kind: str = "fact",
     ) -> str:
-        """Conserva las respuestas verificadas directas, claras y naturales.
+        """Aplica una entrada breve según identidad y modo sin alterar hechos."""
 
-        Los datos breves no necesitan una coletilla repetitiva delante. La voz
-        del asistente se expresa en la conversación social, no deformando cada
-        fecha, parentesco o lugar confirmado.
-        """
+        response = str(factual_response or "").strip()
+        if not response:
+            return response
 
-        return str(factual_response or "").strip()
+        identity = getattr(self, "identity_manager", None)
+        get_name = getattr(identity, "get_active_display_name", None)
+        get_mode = getattr(identity, "get_active_mode_name", None)
+        name = str(get_name() if callable(get_name) else "Daxter").casefold()
+        mode = str(get_mode() if callable(get_mode) else "classic").casefold()
+
+        if mode in {"work", "trabajo"}:
+            prefix = "Vamos con los datos verificados:"
+        elif name == "coco":
+            prefix = "Claro, te cuento:"
+        elif response_kind in {"biography", "relationship"}:
+            prefix = "Vale, te pongo en situación:"
+        else:
+            return response
+
+        return f"{prefix} {response}"
 
 
     @classmethod

@@ -6,3 +6,10 @@
 # Datos IANA de zonas horarias. Necesario en Windows para ZoneInfo
 # (Europe/Madrid, UTC, cambios de horario de verano, etc.).
 tzdata==2026.3
+
+# Información de CPU, memoria, discos, procesos y sensores del sistema.
+# Requerido por core/system_info.py y por los tests que importan Atlas/IA/tools.
+psutil>=7.0,<8.0
+
+# Framework de pruebas utilizado por run_tests_safe.ps1.
+pytest>=9.0,<10.0

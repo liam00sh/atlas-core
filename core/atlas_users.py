@@ -20,6 +20,23 @@ class AtlasUsersMixin:
     """
 
 
+
+    def _current_interlocutor_name(self) -> str:
+        guest_manager = getattr(self, "guest_sessions", None)
+        if guest_manager is not None:
+            guest = guest_manager.get()
+            if guest is not None:
+                return guest.guest_name
+        conversation_identity = getattr(self, "conversation_identity", None)
+        if conversation_identity is not None:
+            try:
+                person = conversation_identity.get_current_person()
+            except Exception:
+                person = None
+            if person is not None and getattr(person, "name", None):
+                return str(person.name)
+        return str(self.get_user())
+
     def _handle_user_management_request(self, original_text: str) -> bool:
         """Resuelve consultas simples de usuarios antes de la conversación IA."""
 

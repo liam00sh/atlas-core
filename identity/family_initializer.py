@@ -74,6 +74,13 @@ class FamilyInitializer:
         self._remove_obsolete_people()
         created_people = self._initialize_people()
         created_animals = self._initialize_animals()
+
+        # Revalida el registro persistente antes de crear relaciones.
+        # Google Drive puede sincronizar people.json y relationships.json en
+        # instantes distintos; una segunda pasada idempotente garantiza que
+        # todas las entidades declarativas existan antes de resolver vínculos.
+        created_people += self._initialize_people()
+
         self._remove_obsolete_relationships()
         created_relationships = self._initialize_relationships()
 

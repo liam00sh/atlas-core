@@ -55,6 +55,8 @@ class TelegramPoller:
         self._stop = threading.Event()
         self._recent_updates: set[int] = set()
         self._send_lock = threading.RLock()
+        self._pending_condition = threading.Condition()
+        self._pending_jobs = 0
         # Worker auxiliar únicamente para medir el umbral de progreso dentro de
         # cada trabajo. El orden global lo decide ConversationScheduler.
         self._message_executor = ThreadPoolExecutor(max_workers=4, thread_name_prefix="atlas-progress")
@@ -117,6 +119,12 @@ class TelegramPoller:
                     delay += self.random_source() * min(1.0, delay / 4)
                     self.sleeper(delay)
         finally:
+            if max_cycles is not None:
+                with self._pending_condition:
+                    self._pending_condition.wait_for(
+                        lambda: self._pending_jobs == 0,
+                        timeout=max(5.0, float(self.poll_timeout) + 5.0),
+                    )
             if self.lifecycle_notifier is not None:
                 self.lifecycle_notifier.notify_stop()
     def _prepare_media(self, message: TelegramMessage) -> TelegramMessage:
@@ -150,23 +158,38 @@ class TelegramPoller:
             return replace(message, media_status=exc.code)
 
     def _submit_message(self, message: TelegramMessage) -> None:
-        account = self.gateway.linker.get_account(message.user.telegram_user_id)
-        atlas_user_id = str(account.get("atlas_user_id") or message.user.telegram_user_id)
+        linker = getattr(self.gateway, "linker", None)
+        account = linker.get_account(message.user.telegram_user_id) if linker is not None else {}
+        atlas_user_id = str((account or {}).get("atlas_user_id") or message.user.telegram_user_id)
         session_id = f"telegram:{message.user.telegram_user_id}:{message.user.chat_id}"
 
         def run():
             return self._handle_with_ordered_progress(message)
 
+        def finish_pending() -> None:
+            with self._pending_condition:
+                self._pending_jobs = max(0, self._pending_jobs - 1)
+                self._pending_condition.notify_all()
+
         def done(response) -> None:
-            if response is not None:
-                self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
+            try:
+                if response is not None:
+                    self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
+            finally:
+                finish_pending()
 
         def failed(_exc: BaseException) -> None:
-            self._send_chunks(
-                message.user.chat_id,
-                "Atlas no pudo procesar el mensaje de forma segura. Inténtalo de nuevo.",
-                None,
-            )
+            try:
+                self._send_chunks(
+                    message.user.chat_id,
+                    "Atlas no pudo procesar el mensaje de forma segura. Inténtalo de nuevo.",
+                    None,
+                )
+            finally:
+                finish_pending()
+
+        with self._pending_condition:
+            self._pending_jobs += 1
 
         self.scheduler.submit(
             user_id=atlas_user_id,

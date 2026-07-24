@@ -342,6 +342,40 @@ class AtlasToolsMixin:
             "action_type"
         )
 
+        if action_type == "home_automation":
+            automation_id = confirmation.get("arguments", {}).get(
+                "automation_id"
+            )
+            channel = confirmation.get("arguments", {}).get(
+                "channel",
+                "cli",
+            )
+            if not automation_id:
+                print()
+                print("La automatización pendiente no es válida.")
+                return True
+            result = self.stage_e_environment.manager.execute(
+                automation_id,
+                requested_by_user_id=self.get_user().casefold(),
+                channel=channel,
+                confirmed=True,
+            )
+            print()
+            if result.success:
+                action_id = getattr(result, "action_id", "") or ""
+                if "switch.turn_on" in action_id:
+                    print("He encendido el enchufe virtual.")
+                elif "switch.turn_off" in action_id:
+                    print("He apagado el enchufe virtual.")
+                else:
+                    print("Acción doméstica completada.")
+            else:
+                print(
+                    result.error_message
+                    or "No he podido completar la acción doméstica."
+                )
+            return True
+
         if action_type != "tool":
 
             print()

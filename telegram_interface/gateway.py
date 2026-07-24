@@ -19,6 +19,7 @@ from telegram_interface.models import (
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.progress import append_response_time
+import traceback
 
 
 PUBLIC_COMMANDS = frozenset({"start", "help", "status", "whoami", "cancel"})
@@ -128,11 +129,15 @@ class TelegramGateway:
                             audit_result = "timeout"
                             audit_error = "core_timeout"
                             response = GatewayResponse("Atlas ha tardado demasiado en responder. Intentalo de nuevo.")
-                        except Exception:
+                        except Exception as exc:
                             self._record_processing_error(error_key, error_count)
                             audit_result = "error"
-                            audit_error = "core_error"
-                            response = GatewayResponse("Atlas no pudo procesar el mensaje de forma segura.")
+                            audit_error = f"core_error:{type(exc).__name__}"
+                            traceback.print_exc()
+                            response = GatewayResponse(
+                                "No he podido procesar ese mensaje por un error interno. "
+                                "El detalle se ha registrado para poder corregirlo."
+                            )
             elapsed_seconds = perf_counter() - started
             if command is None and response.text and elapsed_seconds >= 2.5:
                 current_personality = (
@@ -156,8 +161,13 @@ class TelegramGateway:
             )
             return response
 
-    def _handle_media_message(self, message: TelegramMessage) -> GatewayResponse:
-        """Gestiona medios en cuarentena y usa analizadores opcionales sin inventar."""
+    def _handle_media_message(self, message: TelegramMessage | None = None) -> GatewayResponse:
+        """Gestiona medios en cuarentena y mantiene compatibilidad histórica."""
+        if message is None:
+            message = self
+            gateway = None
+        else:
+            gateway = self
         media_names = {
             "photo": "una foto", "voice": "un audio de voz",
             "audio": "un archivo de audio", "video": "un vídeo",
@@ -171,7 +181,7 @@ class TelegramGateway:
             return GatewayResponse("Ese formato no está permitido por la política multimedia segura de Atlas.")
         if message.media_status and message.media_status != "quarantined":
             return GatewayResponse("He recibido el archivo, pero no he podido descargarlo de forma segura. No se ha guardado permanentemente.")
-        analyzer = getattr(self.core, "analyze_media", None)
+        analyzer = getattr(getattr(gateway, "core", None), "analyze_media", None)
         if callable(analyzer) and message.local_path:
             try:
                 result = analyzer(

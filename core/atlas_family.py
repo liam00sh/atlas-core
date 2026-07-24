@@ -25,6 +25,92 @@ def _plain(value: str) -> str:
 
 
 class FamilyReadinessStorage:
+
+    def _handle_family_relation_question(
+        self,
+        original_text: str,
+        normalized_text: str,
+    ) -> bool | None:
+        """Responde consultas familiares sin activar el cambio de identidad."""
+        normalized = (
+            normalized_text.replace("á", "a")
+            .replace("é", "e")
+            .replace("í", "i")
+            .replace("ó", "o")
+            .replace("ú", "u")
+            .replace("ü", "u")
+        )
+        match = re.search(
+            r"^(?:quien(?:es)?|cuales)\s+(?:son|es)\s+mis?\s+"
+            r"(?P<relation>primos?|primas?|tios?|tias?|abuelos?|abuelas?|"
+            r"hermanos?|hermanas?|sobrinos?|sobrinas?|padres?|madres?)$",
+            normalized,
+        )
+        if match is None:
+            return None
+
+        relation = match.group("relation")
+        singular_to_plural = {
+            "primo": "primos",
+            "prima": "primas",
+            "tio": "tios",
+            "tia": "tias",
+            "abuelo": "abuelos",
+            "abuela": "abuelas",
+            "hermano": "hermanos",
+            "hermana": "hermanas",
+            "sobrino": "sobrinos",
+            "sobrina": "sobrinas",
+            "padre": "padres",
+            "madre": "madres",
+        }
+        relation = singular_to_plural.get(relation, relation)
+
+        guest_manager = getattr(self, "guest_sessions", None)
+        current_person = None
+        if guest_manager is not None:
+            guest = guest_manager.get()
+            if guest is not None:
+                current_person = guest.guest_name
+
+        if current_person is None:
+            try:
+                current_person = self._current_interlocutor_name()
+            except Exception:
+                current_person = self.get_user()
+
+        try:
+            people = self.relationship_engine.get_related_people(
+                current_person,
+                relation,
+            )
+        except Exception:
+            people = []
+
+        living_people = [
+            person
+            for person in people
+            if "fallecid" not in str(
+                getattr(person, "summary", "")
+            ).casefold()
+        ]
+
+        if not living_people:
+            print()
+            print(
+                f"No tengo registradas relaciones vivas de tipo «{relation}» "
+                f"para {current_person}."
+            )
+            return True
+
+        names = ", ".join(
+            str(getattr(person, "name", person))
+            for person in living_people
+        )
+        print()
+        print(f"Los {relation} de {current_person} que tengo registrados son: {names}.")
+        return True
+
     def __init__(self, path: Path) -> None:
         self.path = path
         self._lock = threading.RLock()

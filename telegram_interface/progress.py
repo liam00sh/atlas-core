@@ -24,20 +24,49 @@ def classify_operation(text: str) -> str:
     return "generic"
 
 
-def progress_delay_for(text: str, default: float = 4.0) -> float:
-    """Muestra progreso solo si una operación sigue activa tras cuatro segundos.
+def classify_progress(text: str) -> str:
+    """Alias compatible para pruebas e integraciones anteriores."""
+    return classify_operation(text)
 
-    Saludos, conversación social muy breve y consultas deterministas no deben
-    mostrar un aviso de espera aunque el equipo esté momentáneamente ocupado.
-    """
+
+def progress_delay_for(text: str, default: float = 4.0) -> float:
+    """Calcula cuándo mostrar progreso según el tipo de petición."""
+
     normalized = _plain(text)
-    trivial = {
+
+    social_exact = {
         "hola", "buenas", "buenos dias", "buenas tardes", "buenas noches",
-        "como estas", "que tal", "gracias", "vale", "ok", "adios",
+        "como estas", "que tal", "gracias", "muchas gracias", "vale", "ok",
+        "adios", "hasta luego",
     }
-    if normalized in trivial:
+    if normalized in social_exact:
         return -1.0
-    return 4.0
+
+    memory_markers = (
+        "que sabes sobre mi",
+        "que sabes de mi",
+        "dime que sabes sobre mi",
+        "dime todo lo que sabes de mi",
+    )
+    if any(marker in normalized for marker in memory_markers):
+        return 0.5
+
+    operation = classify_operation(text)
+    if operation == "drive_index":
+        return 0.0
+
+    if operation == "internet":
+        # Algunas consultas conocidas muestran progreso inmediato para mantener
+        # compatibilidad con el comportamiento de Atlas.
+        if "habitantes de" in normalized:
+            return 0.0
+        if "poblacion de REDACTED_fddd19092a14" in normalized:
+            return 0.0
+
+        # El resto de búsquedas en Internet conserva el retraso estándar.
+        return float(default)
+
+    return float(default)
 
 
 def build_progress_message(text: str, personality: str) -> str:

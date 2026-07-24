@@ -16,6 +16,13 @@ from telegram_interface.progress import build_progress_message
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.storage import TelegramStorage
+
+
+def _display_assistant_name(name: str) -> str:
+    normalized = str(name).strip().casefold()
+    if normalized == "coco":
+        return "Coco"
+    return "Daxter"
 from telegram_interface.lifecycle import TelegramLifecycleNotifier
 
 
@@ -93,14 +100,14 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
     def progress_message(message) -> str:
         account = linker.get_account(message.user.telegram_user_id)
         atlas_user_id = account.get("atlas_user_id") if isinstance(account, dict) else None
-        personality = gateway.core.active_personality(atlas_user_id) if atlas_user_id else "Daxter"
+        personality = _display_assistant_name(gateway.core.active_personality(atlas_user_id) if atlas_user_id else "Daxter")
         return build_progress_message(message.text, personality)
 
     client = TelegramBotClient(config.token)
     lifecycle = TelegramLifecycleNotifier(
         storage,
         client,
-        personality_resolver=lambda user_id: gateway.core.active_personality(user_id) if user_id else "Daxter",
+        personality_resolver=lambda user_id: _display_assistant_name(gateway.core.active_personality(user_id) if user_id else "Daxter"),
     )
     lifecycle.notify_started()
     delivery_dispatcher = TelegramDeliveryDispatcher(

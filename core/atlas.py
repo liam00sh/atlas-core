@@ -100,6 +100,7 @@ from core.atlas_tools import AtlasToolsMixin
 from core.atlas_telegram import AtlasTelegramMixin
 from core.atlas_users import AtlasUsersMixin
 from core.atlas_utils import AtlasUtilsMixin
+from core.atlas_windows import AtlasWindowsMixin
 
 from core.confirmation_manager import ConfirmationManager
 from core.log_manager import info
@@ -117,6 +118,7 @@ from identity.conversation_identity import ConversationIdentity
 from identity.identity_storage import IdentityStorage
 from identity.people_manager import PeopleManager
 from identity.visitor_manager import VisitorManager
+from core.guest_session import GuestSessionManager
 
 
 # =============================================================================
@@ -184,6 +186,9 @@ from tools.memory_write import MemoryWorkflowTool
 from tools.manager import ToolManager
 from tools.registry import ToolRegistry as FrameworkToolRegistry
 from tools.system_status import SystemStatusTool
+from automation.stage_d_runtime import build_stage_d_windows_intent_service
+from automation.home_intent_service import HomeIntentService
+from automation.stage_e_runtime import build_stage_e_environment
 from tools.telegram_accounts import TelegramAccountTool
 from telegram_interface.identity_linker import TelegramIdentityLinker
 from telegram_interface.storage import TelegramStorage
@@ -199,8 +204,9 @@ from identity.relationship_engine import RelationshipEngine
 # CLASE PRINCIPAL
 # =============================================================================
 
-class Atlas(
-    AtlasAIMixin,
+from core.atlas_friends_integration import AtlasFriendsMixin
+
+class Atlas(AtlasAIMixin,
     AtlasCapabilitiesMixin,
     AtlasCommandsMixin,
     AtlasMemoryMixin,
@@ -215,9 +221,14 @@ class Atlas(
     AtlasHumorMixin,
     AtlasToolsMixin,
     AtlasTelegramMixin,
+    AtlasWindowsMixin,
     AtlasUsersMixin,
     AtlasUtilsMixin,
-):
+    AtlasFriendsMixin):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._init_friends()
+
     """
     Clase principal del Proyecto Atlas.
 
@@ -271,6 +282,8 @@ class Atlas(
 
         # Gestiona la evolución de visitantes,
         # conocidos, habituales y usuarios.
+        self.guest_sessions = GuestSessionManager()
+
         self.visitor_manager = VisitorManager(
             self.people_manager
         )
@@ -358,6 +371,21 @@ class Atlas(
 
         self.confirmations = ConfirmationManager(
             expiration_minutes=5
+        )
+
+        project_root = Path(__file__).resolve().parent.parent
+        self.stage_e_environment = build_stage_e_environment(
+            storage_path=(
+                project_root
+                / "data"
+                / "stage_e_automations.json"
+            ),
+            env_file=project_root / ".env",
+            owner_user_id=self.get_user().casefold(),
+        )
+        self.home_intent_service = HomeIntentService(
+            self.stage_e_environment,
+            assistant_name_provider=lambda: self.identity_manager.get_active_identity_name(),
         )
 
         # ---------------------------------------------------------------------
@@ -636,6 +664,18 @@ class Atlas(
             self.tool_manager
         )
 
+        # Etapa D: resolución determinista y segura de acciones Windows.
+        self.configure_windows_intents(
+            build_stage_d_windows_intent_service(
+                data_dir=(
+                    Path(__file__).resolve().parent.parent
+                    / "data"
+                    / "automation"
+                    / "stage_d"
+                )
+            )
+        )
+
         # ---------------------------------------------------------------------
         # CACHÉ DE IA
         # ---------------------------------------------------------------------
@@ -669,6 +709,107 @@ class Atlas(
         info(
             "Atlas Core inicializado."
         )
+
+
+    def _guest_capability_for_text(self, normalized_text: str) -> str | None:
+        checks = (
+            ("home_assistant", ("luz", "oxigeno", "acuario", "home assistant", "enchufe")),
+            ("memory_read", ("que sabes de mi", "mis recuerdos", "recuerdos")),
+            ("memory_write", ("recuerda que", "guarda en memoria", "olvida")),
+            ("files", ("archivo", "drive", "documento", "carpeta")),
+            ("atlas_admin", ("estado de atlas", "reinicia atlas", "apaga atlas")),
+            ("reminders", ("recordatorio", "recuerdame", "avisame")),
+            ("user_management", ("crear usuario", "crear perfil", "listar usuarios")),
+            ("backups", ("copia de seguridad", "backup")),
+        )
+        for capability, markers in checks:
+            if any(marker in normalized_text for marker in markers):
+                return capability
+        return None
+
+    def _handle_guest_security(
+        self,
+        original_text: str,
+        normalized_text: str,
+    ) -> bool | None:
+        session = self.guest_sessions.get()
+        if session is None:
+            return None
+
+        if normalized_text in {
+            "adios", "hasta luego", "hasta pronto", "nos vemos",
+            "me voy", "chao", "ciao", "bye", "salir",
+        }:
+            guest_name = session.guest_name
+            host_user = session.host_user
+            self.guest_sessions.close()
+            try:
+                self.conversation_identity.restore_authenticated_user()
+            except Exception:
+                pass
+            print()
+            print(
+                f"¡Hasta luego, {guest_name}! He cerrado el perfil temporal "
+                f"y vuelvo al perfil del bot de {host_user}."
+            )
+            return True
+
+        capability = self._guest_capability_for_text(normalized_text)
+        if capability is not None and not session.can(capability):
+            print()
+            print(
+                "Ese perfil temporal de invitado no tiene permiso para esa "
+                "función. Puedes conversar, consultar Internet o el tiempo, "
+                "jugar, pedir chistes, consultar relaciones familiares públicas "
+                "y cambiar de asistente o de modo."
+            )
+            return True
+
+        return None
+
+    def start_guest_session(self, guest_name: str) -> None:
+        current_assistant = self.get_name()
+        session = self.guest_sessions.start(
+            host_user=self.get_user(),
+            guest_name=guest_name,
+            assistant_name=current_assistant,
+        )
+        try:
+            self.conversation_identity.identify_person(guest_name)
+        except Exception:
+            pass
+        print()
+        print(
+            f"Perfecto. Hablaré con {session.guest_name} desde un perfil "
+            "temporal de invitado. La cuenta del bot sigue vinculada a "
+            f"{session.host_user}, pero los permisos activos son los de invitado. "
+            "El modo temporal empieza en Clásico."
+        )
+
+
+
+    def get_effective_help_user(self) -> dict:
+        current_user = self.get_user()
+        profile = None
+        try:
+            profile = self.user_manager.get_profile(current_user)
+        except Exception:
+            pass
+
+        role = str(getattr(profile, "role", "")).casefold() if profile else ""
+        permissions = (
+            getattr(profile, "permissions", None)
+            or getattr(profile, "allowed_capabilities", None)
+            or ()
+        )
+        return {
+            "name": current_user,
+            "role": role,
+            "profile_exists": profile is not None,
+            "permissions": permissions,
+            "is_admin": role in {"admin", "administrator", "owner", "propietario"},
+            "own_bot": getattr(self, "current_telegram_own_bot", True),
+        }
 
     def process(
         self,
@@ -736,6 +877,13 @@ class Atlas(
                     print(f"Hola, {self.get_user()}. He cambiado a tu perfil.")
                 return True
 
+
+        guest_session = self.guest_sessions.get()
+        if guest_session is not None:
+            blocked = self._handle_guest_security(original_text, normalized_text)
+            if blocked is not None:
+                return blocked
+
         # Conocimiento determinista sobre Atlas, identidades, modos, memoria y vinculación.
         # Debe resolverse antes de la IA para impedir invenciones sobre el propio sistema.
         if self._handle_self_knowledge(original_text):
@@ -754,6 +902,17 @@ class Atlas(
 
         # Consultas deterministas de perfiles disponibles y usuario autenticado.
         if self._handle_user_management_request(original_text):
+            return True
+
+        # Etapa D: acciones Windows deterministas.
+        request_context = getattr(self, "channel_request_context", None)
+        request_channel = getattr(request_context, "channel", None) or "cli"
+        request_user_id = self.get_user()
+        if self._handle_windows_intent(
+            original_text,
+            user_id=request_user_id,
+            channel=request_channel,
+        ):
             return True
 
         # Preparación para beta familiar: incorporación guiada, cancelación
@@ -798,6 +957,46 @@ class Atlas(
         # Sprint 18.1: mensajes y recordatorios entre usuarios vinculados.
         # Se resuelven de forma determinista y funcionan igual desde CLI y Telegram.
         if self._handle_interuser_request(original_text):
+            return True
+
+        # Etapa E: órdenes domésticas deterministas. Deben resolverse antes
+        # que humor, clima o IA para impedir interpretaciones inventadas.
+        request_context = getattr(self, "channel_request_context", None)
+        request_channel = getattr(request_context, "channel", None) or "cli"
+        request_user_id = self.get_user().casefold()
+        home_response = self.home_intent_service.handle(
+            original_text,
+            user_id=request_user_id,
+            channel=request_channel,
+        )
+        if home_response.handled:
+            if home_response.requires_confirmation:
+                self.confirmations.create_confirmation(
+                    user=self.get_user(),
+                    action_type="home_automation",
+                    action_name="stage_e_home_automation",
+                    arguments={
+                        "automation_id": home_response.automation_id,
+                        "channel": request_channel,
+                    },
+                )
+            print()
+            print(home_response.message)
+            return True
+
+        # Las órdenes dirigidas a dispositivos domésticos no registrados no
+        # deben pasar a la IA, que podría fingir que ha ejecutado la acción.
+        normalized_home_text = normalize_text(original_text)
+        home_keywords = (
+            "luz", "enchufe", "sensor", "cerradura", "puerta principal",
+            "alarma", "home assistant", "dispositivo virtual",
+        )
+        if any(keyword in normalized_home_text for keyword in home_keywords):
+            print()
+            print(
+                "No existe una entidad doméstica autorizada para esa acción "
+                "o esa función no está disponible."
+            )
             return True
 
         # Humor cotidiano clasificado. Se resuelve antes que la IA para que

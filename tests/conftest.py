@@ -10,7 +10,10 @@ if str(ROOT) not in sys.path:
 # utilizan los módulos completos del proyecto.
 if "core.log_manager" not in sys.modules:
     module = types.ModuleType("core.log_manager")
+    module.write = lambda *args, **kwargs: None
     module.info = lambda *args, **kwargs: None
+    module.warning = lambda *args, **kwargs: None
+    module.error = lambda *args, **kwargs: None
     sys.modules["core.log_manager"] = module
 if "memory.classifier" not in sys.modules:
     module = types.ModuleType("memory.classifier")
@@ -18,6 +21,54 @@ if "memory.classifier" not in sys.modules:
     sys.modules["memory.classifier"] = module
 if "memory.visibility" not in sys.modules:
     module = types.ModuleType("memory.visibility")
-    module.normalize_visibility = lambda value: value
-    module.VISIBILITY_LABELS = {"private": "Solo tú"}
+
+    module.PRIVATE = "private"
+    module.ADMIN_MANAGED = "admin_managed"
+    module.PARTNER = "partner"
+    module.FAMILY = "family"
+    module.KNOWN = "known"
+    module.PUBLIC = "public"
+
+    module.VISIBILITY_LABELS = {
+        module.PRIVATE: "Solo el propietario",
+        module.ADMIN_MANAGED: "Propietario y administrador",
+        module.PARTNER: "Pareja autorizada",
+        module.FAMILY: "Familia autorizada",
+        module.KNOWN: "Personas de confianza",
+        module.PUBLIC: "Cualquier persona",
+    }
+
+    module.VISIBILITY_OPTIONS = {
+        "1": module.PRIVATE,
+        "privado": module.PRIVATE,
+        "privada": module.PRIVATE,
+        "solo yo": module.PRIVATE,
+        "2": module.ADMIN_MANAGED,
+        "administrador": module.ADMIN_MANAGED,
+        "gestion administrativa": module.ADMIN_MANAGED,
+        "gestión administrativa": module.ADMIN_MANAGED,
+        "3": module.PARTNER,
+        "pareja": module.PARTNER,
+        "4": module.FAMILY,
+        "familia": module.FAMILY,
+        "5": module.KNOWN,
+        "confianza": module.KNOWN,
+        "conocidos": module.KNOWN,
+        "6": module.PUBLIC,
+        "publico": module.PUBLIC,
+        "público": module.PUBLIC,
+        "cualquiera": module.PUBLIC,
+    }
+
+    def _normalize_visibility(value):
+        if value is None:
+            return None
+        normalized = str(value).strip().casefold()
+        if normalized in module.VISIBILITY_OPTIONS:
+            return module.VISIBILITY_OPTIONS[normalized]
+        if normalized in module.VISIBILITY_LABELS:
+            return normalized
+        return None
+
+    module.normalize_visibility = _normalize_visibility
     sys.modules["memory.visibility"] = module

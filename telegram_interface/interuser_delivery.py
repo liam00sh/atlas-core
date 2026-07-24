@@ -177,7 +177,7 @@ class NaturalInteruserMessageFormatter:
     """
 
     _AFFECTION_RE = re.compile(
-        r"^(?:(?:que\s+)?(?:la|lo|le|te)\s+)?quiero(?P<rest>\s+.*)?$",
+        r"^(?:(?:que\s+)?(?:(?P<pronoun>la|lo|le|las|los|les|te|os)\s+))?quiero(?P<rest>\s+.*)?$",
         re.IGNORECASE,
     )
 
@@ -255,13 +255,35 @@ class NaturalInteruserMessageFormatter:
         affection = cls._AFFECTION_RE.match(plain)
         if affection:
             rest = (affection.group("rest") or "").strip()
-            # El emisor habla en primera persona ("le echo de menos"), pero el
-            # destinatario debe recibir una frase natural en tercera persona.
-            rest = re.sub(r"\b(?:le|te)\s+echo\b", "te echa", rest, flags=re.IGNORECASE)
-            rest = re.sub(r"\b(?:le|te)\s+extrano\b", "te extraña", rest, flags=re.IGNORECASE)
+            pronoun = (affection.group("pronoun") or "").casefold()
+            plural = pronoun in {"las", "los", "les", "os"}
+            recipient_pronoun = "os" if plural else "te"
+
+            # El remitente puede usar cualquier pronombre de objeto directo o
+            # indirecto. El destinatario debe recibirlo en segunda persona.
+            transformations = (
+                (r"\b(?:le|la|lo|te)\s+echo\b", "te echa"),
+                (r"\b(?:les|las|los|os)\s+echo\b", "os echa"),
+                (r"\b(?:le|la|lo|te)\s+extrano\b", "te extraña"),
+                (r"\b(?:les|las|los|os)\s+extrano\b", "os extraña"),
+            )
+            for pattern, replacement in transformations:
+                rest = re.sub(pattern, replacement, rest, flags=re.IGNORECASE)
+
             suffix = f" {rest}" if rest else ""
+            if recipient_pronoun == "te" and suffix:
+                if suffix.strip().casefold() == "mucho":
+                    return cls._finish(
+                        f"{clean_sender} quiere que sepas que te quiere{suffix}"
+                    )
+                return cls._finish(
+                    f"{clean_sender} quiere decirte que te quiere{suffix}"
+                )
             return cls._finish(
                 f"{clean_sender} quiere decirte que te quiere{suffix}"
+            )
+            return cls._finish(
+                f"{clean_sender} quiere que sepas que {recipient_pronoun} quiere{suffix}"
             )
 
         is_reminder = scheduled or any(plain.startswith(item) for item in cls._REMINDER_STARTS)
@@ -289,6 +311,10 @@ class NaturalInteruserMessageFormatter:
             return cls._finish(f"{clean_sender} quiere decirte que {clean_body}")
 
         return cls._finish(f"{clean_sender} quiere decirte: {clean_body}")
+
+
+# Alias de compatibilidad para integraciones y pruebas anteriores.
+InteruserMessageFormatter = NaturalInteruserMessageFormatter
 
 
 class TelegramDeliveryQueue:

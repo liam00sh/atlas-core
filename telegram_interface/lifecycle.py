@@ -12,35 +12,55 @@ from typing import Callable
 
 from telegram_interface.client import TelegramClientError
 
+def _display_assistant_name(name: str) -> str:
+    """Devuelve el nombre visible del asistente con capitalización correcta."""
+
+    normalized = str(name).strip().casefold()
+    if normalized == "coco":
+        return "Coco"
+    return "Daxter"
+
+
 
 START_DAXTER = (
     "¡Ya estoy operativo otra vez! ⚡",
-    "Daxter vuelve a estar por aquí. ¿Qué hacemos? 😄",
-    "Todo listo de nuevo. Atlas está en marcha 🚀",
+    "{assistant} vuelve a estar por aquí. ¿Qué hacemos? 😄",
+    "Todo listo de nuevo. {assistant} está en marcha 🚀",
 )
 
 START_COCO = (
     "Ya estoy disponible de nuevo 🌿",
-    "Atlas vuelve a estar operativo. Aquí estoy para ayudarte 😊",
+    "{assistant} vuelve a estar operativo. Aquí estoy para ayudarte 😊",
     "Todo preparado otra vez. Podemos continuar cuando quieras.",
 )
 
 START_NEW_DAY = (
-    "¡Preparado para un nuevo día! Atlas vuelve a estar operativo ☀️",
+    "¡Preparado para un nuevo día! {assistant} vuelve a estar operativo ☀️",
     "Nuevo día, todo listo. Ya puedes contar conmigo 😊",
 )
 
 STOP_DAXTER = (
     "Voy a desconectarme un rato. Volveré pronto con las pilas cargadas ⚡",
-    "Atlas se apaga por ahora. Nos vemos en un rato 👋",
+    "{assistant} se apaga por ahora. Nos vemos en un rato 👋",
     "Me retiro un momento. En cuanto vuelva el equipo, estaré por aquí.",
 )
 
 STOP_COCO = (
     "Voy a estar desconectada un rato. Volveré pronto 🌙",
-    "Atlas se apaga de forma segura. Hablamos luego 😊",
+    "{assistant} se apaga de forma segura. Hablamos luego 😊",
     "Me despido por ahora. Cuando el equipo vuelva, continuaré aquí.",
 )
+
+
+def _key(value: str) -> str:
+    """Devuelve la clave pública de personalidad."""
+
+    normalized = " ".join(str(value or "").strip().casefold().split())
+    if normalized == "coco":
+        return "coco"
+    if normalized == "daxter":
+        return "daxter"
+    return "atlas"
 
 
 class TelegramLifecycleNotifier:
@@ -114,7 +134,8 @@ class TelegramLifecycleNotifier:
 
         for account in self._accounts():
             user_id = str(account.get("atlas_user_id", ""))
-            personality = self.personality_resolver(user_id).casefold()
+            assistant_name = _display_assistant_name(self.personality_resolver(user_id))
+            personality = assistant_name.casefold()
 
             choices = (
                 START_NEW_DAY
@@ -123,7 +144,7 @@ class TelegramLifecycleNotifier:
                 if "coco" in personality
                 else START_DAXTER
             )
-            message = self._choose(choices)
+            message = self._choose(choices).format(assistant=assistant_name)
 
             try:
                 self.client.send_message(
@@ -152,7 +173,7 @@ class TelegramLifecycleNotifier:
                 if "coco" in personality
                 else STOP_DAXTER
             )
-            message = self._choose(choices)
+            message = self._choose(choices).format(assistant=assistant_name)
 
             try:
                 self.client.send_message(

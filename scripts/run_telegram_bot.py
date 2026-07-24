@@ -59,7 +59,13 @@ def main() -> int:
     except KeyboardInterrupt:
         return 0
     except Exception as exc:
-        print(f"Telegram se detuvo de forma segura: {type(exc).__name__}.")
+        import traceback
+
+        print(
+            "Telegram se detuvo de forma segura: "
+            f"{type(exc).__name__}: {exc}"
+        )
+        traceback.print_exc()
         return 4
     finally:
         if runtime is not None:

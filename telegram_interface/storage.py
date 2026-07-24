@@ -6,6 +6,8 @@ from copy import deepcopy
 from datetime import UTC, datetime
 import json
 import os
+import time
+import uuid
 from pathlib import Path
 import threading
 from typing import Any, Callable
@@ -59,7 +61,11 @@ class TelegramStorage:
 
     def get_offset(self) -> int:
         with self._lock:
-            self._refresh_locked()
+            # Recargamos siempre desde disco para que varias instancias que
+            # comparten el mismo archivo observen inmediatamente los cambios,
+            # incluso cuando el sistema de archivos conserva la misma mtime_ns.
+            self._data = self._load()
+            self._mtime_ns = self._current_mtime()
             return int(self._data.get("offset", 0))
 
     def set_offset(self, offset: int) -> None:
@@ -69,13 +75,32 @@ class TelegramStorage:
 
     def _save_locked(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.path.with_name(f".{self.path.name}.{os.getpid()}.tmp")
+        # Cada escritura usa un temporal único para evitar colisiones entre
+        # instancias/hilos que comparten el mismo archivo.
+        temporary = self.path.with_name(
+            f".{self.path.name}.{os.getpid()}.{threading.get_ident()}.{uuid.uuid4().hex}.tmp"
+        )
         payload = json.dumps(self._data, ensure_ascii=False, indent=2, sort_keys=True)
         with temporary.open("w", encoding="utf-8", newline="\n") as stream:
             stream.write(payload)
             stream.flush()
             os.fsync(stream.fileno())
-        os.replace(temporary, self.path)
+        last_error: PermissionError | None = None
+        for attempt in range(10):
+            try:
+                os.replace(temporary, self.path)
+                last_error = None
+                break
+            except PermissionError as exc:
+                last_error = exc
+                # Google Drive/antivirus/indexadores pueden mantener el destino
+                # abierto durante unos milisegundos en Windows.
+                time.sleep(0.02 * (attempt + 1))
+        if last_error is not None:
+            try:
+                temporary.unlink(missing_ok=True)
+            finally:
+                raise last_error
         self._mtime_ns = self._current_mtime()
 
     def _current_mtime(self) -> int | None:
