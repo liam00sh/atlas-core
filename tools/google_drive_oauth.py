@@ -17,7 +17,7 @@ Descripción:
 from dataclasses import dataclass
 from pathlib import Path
 import re
-from typing import Any, Callable
+from typing import Any
 
 from tools.google_drive import (
     DriveContentMatch,

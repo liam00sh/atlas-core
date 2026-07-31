@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
-import os
 import socket
 import subprocess
-from typing import Any, Callable
+from typing import Callable
 
 from monitoring.models import HealthCheckResult, HealthState
 

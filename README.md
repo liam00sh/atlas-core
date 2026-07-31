@@ -2,7 +2,7 @@
 
 ## Versión
 
-**0.3.1 — Fase 3.1: estabilización conversacional y validación.**
+**0.5.0 — Fase 6: voz y personalidad en desarrollo.**
 
 Atlas Core es el núcleo local en Python del Proyecto Atlas. Coordina usuarios, identidad conversacional, memoria, capacidades, herramientas, inteligencia artificial local y las identidades del asistente **Daxter** y **Coco**.
 
@@ -14,7 +14,7 @@ El proyecto está diseñado para crecer por fases sin mezclar responsabilidades 
 - Git y Visual Studio Code, recomendados para desarrollo.
 - Windows, Linux o Raspberry Pi OS de 64 bits.
 - Ollama es opcional y solo es necesario para utilizar la IA local.
-- La base actual del proyecto utiliza la biblioteca estándar de Python; las herramientas de sistema pueden incorporar dependencias opcionales en fases posteriores.
+- Las dependencias de ejecución y pruebas están declaradas en `requirements.txt`; la integración opcional de Google Drive utiliza `requirements-google-drive.txt`.
 
 ## Instalación
 
@@ -57,13 +57,18 @@ Una vez iniciado, escribe `ayuda` para consultar los comandos disponibles o `est
 atlas_core/
 ├── ai/                  Proveedores, modelos, prompts, contexto, caché y herramientas
 ├── assistant_identity/  Identidades Daxter/Coco, modos y bancos de frases
+├── automation/          Automatizaciones seguras y adaptadores domésticos
 ├── capabilities/        Capacidades realmente disponibles
 ├── commands/            Comandos cargados por Atlas
 ├── console/             Consola interactiva y resolución de comandos
 ├── conversation/        Conversación básica y respuestas heredadas
 ├── core/                Coordinación principal y mixins de Atlas
+├── daily_life/          Servicios cotidianos, agenda y meteorología
 ├── identity/            Personas, animales, relaciones e identidad conversacional
+├── knowledge/           Recuperación semántica y conocimiento documental
 ├── memory/              Memoria persistente, visibilidad y recuperación
+├── monitoring/          Salud, incidencias y supervisión local
+├── telegram_interface/  Canal Telegram desacoplado del núcleo
 ├── tests/               Pruebas automatizadas
 ├── tools/               Nuevo framework modular de herramientas
 ├── utils/               Normalización y utilidades compartidas
@@ -83,22 +88,20 @@ atlas_core/
 
 ## Estado actual
 
-La versión **0.3.1** de la **Fase 3.1** queda cerrada y validada como base estable para iniciar la Fase 4.
-
-El Sprint 1 de la Fase 4 ha añadido el núcleo independiente del nuevo Tools Framework, todavía sin conectarlo al flujo principal de Atlas.
+La versión oficial activa es **0.5.0**. Las fases 0 a 5 están cerradas y la Fase 6 —voz y personalidad— permanece en desarrollo. El núcleo integra ya herramientas, memoria documental, Telegram, automatización segura y monitorización, manteniendo proveedores externos opcionales y desacoplados.
 
 ## Pruebas
 
 Batería principal:
 
 ```bash
-python -m unittest discover -s tests -p "test_*.py" -v
+python -m pytest -q
 ```
 
-Pruebas del nuevo framework:
+Colección sin ejecución:
 
 ```bash
-python -m pytest tests/tools -q
+python -m pytest --collect-only -q
 ```
 
 Comprobación previa de sintaxis:

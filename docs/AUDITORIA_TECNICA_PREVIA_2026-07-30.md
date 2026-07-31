@@ -1,8 +1,138 @@
 # Auditoría técnica previa de Atlas Core
 
 Fecha: 30 de julio de 2026  
-Estado: informe previo a cualquier saneamiento o corrección  
+Estado: revisión final completada; rama preparada para integración
 Alcance: `04 - Python/atlas_core`, documentación local y documentación oficial de Google Drive
+
+## Revisión final de calidad y preparación para integración
+
+Estado del bloque: **completado y validado**. No se añadieron funcionalidades ni
+se modificaron APIs estables. Los únicos cambios de código son la eliminación de
+imports demostrablemente no usados y la corrección del número de versión
+publicado, que estaba desfasado respecto a la versión oficial 0.5.0.
+
+### Artefactos revisados
+
+| Archivo o grupo | Decisión | Evidencia y motivo |
+| --- | --- | --- |
+| 49 archivos `desktop.ini` | Eliminar | Metadatos binarios de Windows, idénticos entre sí, sin consumidores y ya cubiertos por `.gitignore`. |
+| `pytest_temp/`, `pytest_temp_stage_c/`, `pytest_temp_stage_c_real/` | Eliminar | Once salidas persistidas por tests; regenerables y sin consumidores. |
+| `pytest_resultado.txt`, `errores_pytest.txt`, `resultado_tests_completo.txt`, `resultado_tests_detallado.txt` | Eliminar | Salidas históricas en UTF-16 con cifras superadas; el resultado vigente queda registrado en esta auditoría. |
+| `docs/auditoria/pytest_collect_final_2026-07-31.txt` | Eliminar | Volcado de colección obsoleto de 856 tests; no era referenciado y el resultado vigente es 875. |
+| `console/command_manager_patched.py` | Eliminar | Copia byte a byte de `console/command_manager.py`, sin imports. |
+| `automation/automation_permissions (1).py` | Eliminar | Copia anterior del módulo activo, sin imports y sin validaciones actuales. |
+| `automation/home_intent_service_backup.py` | Eliminar | Copia reducida y anterior del servicio activo, sin consumidores. |
+| `conversation/TEMP_intent_refined.py` | Eliminar | Experimento antiguo divergente de `conversation/intent.py`, sin consumidores. |
+| `core/atlas_backup_before_stage_e.py` | Eliminar | Copia manual anterior del núcleo, sin imports; su historia permanece recuperable en Git. |
+| `utils/text_normalizer_fixed.py` | Eliminar | Copia anterior del normalizador activo, sin consumidores. |
+| `tests/__tmp_conftest_pytest_temp_fixed.py` | Eliminar | Fixture histórico no cargado por pytest y sustituido por `tests/conftest.py`. |
+| `daily_life/__init__.txt` | Eliminar | Duplicado accidental de `daily_life/__init__.py`. |
+| `aplicar_correcciones.py`, `validar_correccion.ps1`, `clean_and_test.ps1` | Eliminar | Scripts puntuales ya aplicados; los dos últimos ejecutaban la batería antigua con `unittest`. |
+| `scripts/install_atlas_launcher_task.ps1`, `install_atlas_startup_tasks.ps1`, `status_atlas_launcher.ps1`, `stop_atlas_launcher.ps1` | Eliminar | Flujo legado de una o cuatro tareas, con ruta absoluta a H:. Está sustituido por los dos launchers y scripts portables `*_split_tasks.ps1`. |
+| `.pytest_cache/`, `.pytest_runtime/`, `__pycache__/` | Conservar fuera de versión | Cachés locales ignoradas, regenerables y no incluidas en Git. |
+| `run_tests_safe.ps1` | Conservar | Herramienta activa y portable para ejecutar pytest con directorio temporal aislado. |
+| `automation/backup_adapter.py` | Conservar | Adaptador activo consumido por Stage C, catálogo, integraciones y tests. |
+| `ai/cache/response_cache.py` | Conservar | Caché activa importada por `core/atlas.py`. |
+| `validar_monitorizacion_raspberry.py` | Conservar y documentar | Diagnóstico manual vigente; puede contactar la Raspberry y por ello no se ejecutó durante esta revisión. |
+| `docs/sprints/TEST_RESULTS_*.md`, `CORRECCION_TZDATA_WINDOWS.md` | Conservar | Evidencia histórica fechada, no confundida con el resultado vigente. |
+
+No se trasladaron backups al árbol de producción. Las copias manuales eliminadas
+no contenían información única y siguen disponibles en el historial Git; los
+backups operativos externos quedan fuera del repositorio y de esta intervención.
+
+### Revisión arquitectónica y código legado
+
+- Se analizaron estáticamente 271 archivos Python de producción y herramientas.
+  Tras la limpieza, los únicos imports que el análisis marca como no usados son
+  reexportaciones deliberadas en `logger.py` y `core/version.py`.
+- Se retiraron 16 imports sin uso en launchers, identidad, ayuda, relaciones,
+  monitorización, Telegram y herramientas de Drive. `compileall` finalizó con
+  código 0.
+- Los comandos sin importador estático se conservan porque
+  `console.command_manager` los descubre dinámicamente.
+- `monitoring.desktop_widgets` y `monitoring.run_supervisor` se conservan
+  como puntos de entrada ejecutados por los launchers.
+- `automation/device_agent.py`, `device_policy.py`,
+  `device_registry.py`, `pc_access_policy.py` y
+  `monitoring/startup_checks.py` no tienen consumidor estático actual, pero
+  definen contratos de la arquitectura de automatización y supervisión. No hay
+  evidencia suficiente para eliminarlos en una revisión pre-merge.
+- `conversation/personalities.py`, `personality_manger.py` y
+  `logger.py` son capas de compatibilidad explícitas. Se conservan para no
+  romper imports externos o instalaciones anteriores.
+- `conversation/personality_profile.py` y `responses.py` son datos
+  estructurados/legado documentado sin consumidor actual. Se conservan hasta
+  decidir su migración en una intervención funcional con regresiones propias.
+- Los dos dominios de relaciones —familia e integración de amigos— siguen
+  separados intencionadamente. Unificarlos excedería una limpieza segura.
+- `requirements.txt` incorpora `python-dotenv` por un consumidor real y
+  mantiene pytest para `run_tests_safe.ps1`; las dependencias opcionales de
+  Google Drive continúan separadas en `requirements-google-drive.txt`.
+
+Riesgos no bloqueantes: revisar en una fase futura los contratos de dispositivos
+aún no integrados, decidir la retirada formal de las capas de compatibilidad y
+separar dependencias de runtime y desarrollo. Ninguno justifica cambios
+adicionales antes de integrar esta rama.
+
+### Documentación revisada
+
+- `README.md`: versión 0.5.0, estado de Fase 6, estructura real y comandos
+  oficiales de pytest.
+- `core/version.py` y los ejemplos de `commands/version.py`: alineados con
+  la versión oficial 0.5.0.
+- `tests/evidencias/README.md`: referencia al runner vigente
+  `run_tests_safe.ps1`.
+- Este informe y su equivalente oficial de Google Drive: cierre de limpieza,
+  arquitectura, Git, validación y riesgos.
+- Changelog y Roadmap oficiales: nota final de auditoría añadida sin reescribir
+  su historial.
+
+Se revisaron además el manual técnico, decisiones técnicas, índice maestro,
+manual de instalación, manual de pruebas, Telegram, Home Assistant,
+automatizaciones y monitorización. Sus secciones históricas conservan su versión
+original; los documentos especializados vigentes ya describen 0.5.0, los dos
+launchers, permisos, auditoría y ejecución degradada. El manual técnico de Fase
+3 sigue siendo deliberadamente histórico y no se renombra como manual global.
+
+### Revisión Git frente a `main`
+
+- La rama parte del mismo `main` remoto y estaba cinco commits por delante
+  antes de este cierre; no se realizó merge ni rebase.
+- Se revisaron archivos añadidos, eliminados y modificados, cambios grandes,
+  extensiones binarias, dependencias y rutas locales.
+- El cambio grande de `identity/data/relationships.json` corresponde a la
+  eliminación demostrada de relaciones huérfanas. El estado final contiene 44
+  personas, 4 animales, 254 relaciones, cero extremos inválidos, cero
+  autorrelaciones y cero duplicados exactos.
+- No se añadieron binarios. Los únicos binarios del diff de limpieza son
+  eliminaciones de `desktop.ini`.
+- El escaneo de todo el árbol versionado no encontró claves de AWS, GitHub,
+  OpenAI o Google ni bloques de clave privada. `.env.example` mantiene el
+  token vacío y `.env` no está versionado.
+- No existen secretos, credenciales ni tokens reales añadidos. Los datasets de
+  identidad familiar pertenecen al dominio ya versionado y sus cambios son las
+  correcciones documentadas de integridad y alias, no inclusiones accidentales.
+- No quedan rutas absolutas al repositorio en código o scripts activos. Las
+  menciones a C: y H: se limitan a documentación histórica/operativa.
+
+### Validación final
+
+- `python -m pytest --collect-only -q`: **875 tests recopilados** en 0,48 s,
+  sin errores.
+- `python -m pytest -q`: **875 superados**, **2.324 subtests superados**,
+  0 fallos y 0 errores en 169,22 s.
+- Los SHA-256 de `people.json`, `animals.json` y `relationships.json`
+  fueron idénticos antes y después de la suite.
+- El conjunto de `git status --porcelain` fue idéntico antes y después de
+  pytest: la suite no creó ni modificó datos reales y no se restauró ningún
+  archivo.
+- No se contactaron Raspberry, Home Assistant, Telegram, Ollama, dispositivos
+  domésticos ni otros servicios externos durante la validación.
+
+Conclusión: **la rama está lista para fusionarse con `main`** una vez publicado
+este commit final. La suite está completamente verde, pytest permanece aislado,
+los artefactos demostrablemente obsoletos han salido del árbol, la documentación
+vigente está alineada y la revisión no detecta secretos ni archivos accidentales.
 
 ## Intervención: ayuda, meteorología y saludos deterministas — 31 de julio de 2026
 

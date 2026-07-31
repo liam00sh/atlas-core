@@ -11,7 +11,6 @@ import subprocess
 import threading
 import time
 import tkinter as tk
-from datetime import timedelta
 
 
 try:

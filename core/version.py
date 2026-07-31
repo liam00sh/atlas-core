@@ -3,8 +3,8 @@
 from config import ASSISTANT_NAME
 from config import PROJECT_NAME
 
-# Versión estable correspondiente al cierre de la Fase 3.1.
-VERSION = "0.3.1"
+# Versión oficial activa del proyecto.
+VERSION = "0.5.0"
 
 __all__ = [
     "ASSISTANT_NAME",

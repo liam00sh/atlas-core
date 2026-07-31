@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from time import monotonic, perf_counter
-from typing import Any
-
 from telegram_interface.audit import TelegramAuditLogger
 from telegram_interface.config import TelegramConfig
 from telegram_interface.core_adapter import AtlasCoreAdapter

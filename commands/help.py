@@ -6,15 +6,8 @@ Archivo: commands/help.py
 Descripción:
     Implementa el comando "ayuda".
 
-    Su función es mostrar un listado con todos los comandos disponibles
-    registrados en Atlas junto con una breve descripción.
-
-    El listado se genera automáticamente a partir del registro de comandos
-    creado por command_manager.py.
-
-    Esto significa que, al crear un nuevo comando dentro de la carpeta
-    commands/, aparecerá automáticamente en la ayuda sin modificar este
-    archivo.
+    Su función es mostrar la ayuda contextual construida por
+    console.command_help según el usuario y sus permisos efectivos.
 
 Ejemplo:
 
@@ -32,10 +25,10 @@ Flujo:
       ayuda
         │
         ▼
-command_manager.py
+command_help.py
         │
         ▼
-Diccionario COMMANDS
+Catálogo contextual y permisos
         │
         ▼
 Recorrer comandos
@@ -44,24 +37,6 @@ Recorrer comandos
 Mostrar listado
 ===============================================================================
 """
-
-
-# =============================================================================
-# IMPORTACIONES
-# =============================================================================
-
-# Importamos el diccionario global donde command_manager registra
-# automáticamente todos los comandos disponibles.
-#
-# Ejemplo:
-#
-# COMMANDS = {
-#     "fecha": commands.fecha,
-#     "hora": commands.fecha,
-#     "salir": commands.exit,
-#     "help": commands.help,
-# }
-from console.command_manager import COMMANDS
 
 
 # =============================================================================

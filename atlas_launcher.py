@@ -27,8 +27,6 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Callable
-
 from monitoring.env_loader import load_monitoring_env
 
 
