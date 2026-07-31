@@ -18,6 +18,7 @@ class HealthState(StrEnum):
     ERROR = "error"
     CRITICAL = "critical"
     UNKNOWN = "unknown"
+    RECOVERED = "recovered"
 
 
 class IncidentSeverity(StrEnum):
@@ -25,6 +26,7 @@ class IncidentSeverity(StrEnum):
     WARNING = "warning"
     ERROR = "error"
     CRITICAL = "critical"
+    RECOVERY = "recovery"
 
 
 @dataclass(slots=True, frozen=True)
@@ -37,6 +39,29 @@ class HealthCheckResult:
     details: dict[str, Any] = field(default_factory=dict)
     error_code: str | None = None
     message: str | None = None
+    severity: IncidentSeverity | None = None
+    recoverable: bool = False
+    requires_intervention: bool = False
+    recovery_action_id: str | None = None
+
+    @property
+    def identifier(self) -> str:
+        return self.check_id
+
+    @property
+    def status(self) -> str:
+        return {
+            HealthState.OK: "healthy",
+            HealthState.WARNING: "degraded",
+            HealthState.ERROR: "unavailable",
+            HealthState.CRITICAL: "unavailable",
+            HealthState.UNKNOWN: "unknown",
+            HealthState.RECOVERED: "recovered",
+        }[self.state]
+
+    @property
+    def additional_data(self) -> dict[str, Any]:
+        return self.details
 
 
 @dataclass(slots=True)

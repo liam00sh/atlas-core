@@ -11,7 +11,9 @@ from dataclasses import asdict, dataclass, replace
 import json
 import logging
 import os
+import platform
 from pathlib import Path
+import shutil
 import socket
 from threading import Event
 import time
@@ -20,9 +22,11 @@ from urllib import error, request
 
 from monitoring.desktop_state import DesktopStateWriter
 from monitoring.incident_manager import IncidentManager
+from monitoring.history import HealthHistoryStore
 from monitoring.models import HealthCheckResult, HealthState
 from monitoring.notification_router import NotificationRouter
 from monitoring.raspberry_probe import RaspberryMonitor, RaspberryMonitorConfig
+from monitoring.recovery import RecoveryCoordinator
 
 
 LOGGER = logging.getLogger(__name__)
@@ -86,6 +90,13 @@ def _launcher_process_result(
             else "Proceso detenido o sin estado."
         ),
         details={"managed": managed, "pid": pid},
+        recoverable=bool(managed and process_name in {"atlas_core", "telegram"}),
+        requires_intervention=not running,
+        recovery_action_id=(
+            f"service.{process_name}.restart"
+            if managed and process_name in {"atlas_core", "telegram"}
+            else None
+        ),
     )
 
 
@@ -115,6 +126,7 @@ def _http_health_result(
         state=HealthState.OK if available else HealthState.ERROR,
         available=available,
         message=message,
+        requires_intervention=not available,
     )
 
 
@@ -144,6 +156,7 @@ def _tcp_health_result(
         state=HealthState.OK if available else HealthState.ERROR,
         available=available,
         message=message,
+        requires_intervention=not available,
     )
 
 
@@ -176,6 +189,76 @@ def _finite_float(
     return max(minimum, parsed)
 
 
+def _local_pc_result() -> HealthCheckResult:
+    return HealthCheckResult(
+        check_id="pc",
+        display_name="PC Atlas",
+        state=HealthState.OK,
+        available=True,
+        message="Sistema local accesible.",
+        details={"hostname": platform.node(), "platform": platform.system()},
+    )
+
+
+def _local_disk_result() -> HealthCheckResult:
+    try:
+        usage = shutil.disk_usage(PROJECT_ROOT)
+        used_percent = round((usage.used / usage.total) * 100, 2) if usage.total else 100.0
+        state = HealthState.CRITICAL if used_percent >= 95 else HealthState.WARNING if used_percent >= 85 else HealthState.OK
+        return HealthCheckResult(
+            check_id="disk",
+            display_name="Disco local",
+            state=state,
+            available=True,
+            message=f"Uso del disco: {used_percent}%.",
+            details={"total_bytes": usage.total, "free_bytes": usage.free, "used_percent": used_percent},
+            requires_intervention=state is not HealthState.OK,
+        )
+    except OSError as exc:
+        return HealthCheckResult(
+            check_id="disk",
+            display_name="Disco local",
+            state=HealthState.UNKNOWN,
+            available=False,
+            message=f"No se pudo consultar el disco ({type(exc).__name__}).",
+            requires_intervention=True,
+        )
+
+
+def _raspberry_resource_results(result: HealthCheckResult) -> list[HealthCheckResult]:
+    details = result.details or {}
+    derived: list[HealthCheckResult] = []
+    docker = details.get("docker")
+    if isinstance(docker, dict):
+        available = bool(docker.get("service_active"))
+        derived.append(HealthCheckResult(
+            check_id="docker",
+            display_name="Docker",
+            state=HealthState.OK if available else HealthState.ERROR,
+            available=available,
+            checked_at=result.checked_at,
+            message="Servicio activo." if available else "Servicio no disponible.",
+            details=docker,
+            recoverable=True,
+            requires_intervention=not available,
+            recovery_action_id="service.docker.restart",
+        ))
+    temperature = details.get("temperature_c")
+    if isinstance(temperature, (int, float)):
+        state = HealthState.CRITICAL if temperature >= 85 else HealthState.WARNING if temperature >= 75 else HealthState.OK
+        derived.append(HealthCheckResult(
+            check_id="temperature",
+            display_name="Temperatura Raspberry",
+            state=state,
+            available=True,
+            checked_at=result.checked_at,
+            message=f"Temperatura: {temperature} °C.",
+            details={"celsius": temperature},
+            requires_intervention=state is not HealthState.OK,
+        ))
+    return derived
+
+
 class AtlasSupervisor:
     """Coordina sondas, incidencias, avisos y estado persistente."""
 
@@ -186,6 +269,8 @@ class AtlasSupervisor:
         incident_manager: IncidentManager | None = None,
         notification_router: NotificationRouter | None = None,
         state_writer: DesktopStateWriter | None = None,
+        history_store: HealthHistoryStore | None = None,
+        recovery_coordinator: RecoveryCoordinator | None = None,
         interval_seconds: float = 10.0,
     ) -> None:
         self.interval_seconds = _finite_float(
@@ -219,9 +304,19 @@ class AtlasSupervisor:
         self.notification_router = notification_router or NotificationRouter(
             send_private=lambda *_args: False,
         )
+        supplied_incident_manager = incident_manager
         self.incident_manager = incident_manager or IncidentManager(
             STATE_DIR / "incidents.json",
         )
+        history_directory = (
+            supplied_incident_manager.storage_path.parent
+            if supplied_incident_manager is not None
+            else STATE_DIR
+        )
+        self.history_store = history_store or HealthHistoryStore(
+            history_directory / "health_history.json",
+        )
+        self.recovery_coordinator = recovery_coordinator
         if self.incident_manager.on_opened is None:
             self.incident_manager.on_opened = (
                 self.notification_router.notify_opened
@@ -246,6 +341,8 @@ class AtlasSupervisor:
             minimum=0.1,
         )
         return [
+            SupervisorProbe("pc", _local_pc_result),
+            SupervisorProbe("disk", _local_disk_result),
             SupervisorProbe(
                 "atlas_core",
                 lambda: _launcher_process_result(
@@ -331,6 +428,8 @@ class AtlasSupervisor:
             except Exception as exc:
                 result = self._probe_failure(probe, exc)
             results.append(result)
+            if result.check_id == "raspberry":
+                results.extend(_raspberry_resource_results(result))
         return results
 
     def run_once(self) -> list[HealthCheckResult]:
@@ -338,6 +437,8 @@ class AtlasSupervisor:
             raise RuntimeError("El supervisor está cerrado.")
 
         results = self.collect()
+        self.history_store.append_many(results)
+        recommendations = []
         for result in results:
             affected_users = self.notification_router.affected_users_for(
                 result.check_id
@@ -346,6 +447,10 @@ class AtlasSupervisor:
                 result,
                 affected_users=affected_users,
             )
+            if self.recovery_coordinator is not None:
+                recommendation = self.recovery_coordinator.recommend(result)
+                if recommendation is not None:
+                    recommendations.append(asdict(recommendation))
 
         raspberry = next(
             (result for result in results if result.check_id == "raspberry"),
@@ -362,6 +467,12 @@ class AtlasSupervisor:
                     result.check_id: asdict(result)
                     for result in results
                 },
+                "recovery_recommendations": recommendations,
+                "recent_recoveries": (
+                    self.recovery_coordinator.history()[-20:]
+                    if self.recovery_coordinator is not None
+                    else []
+                ),
             },
         )
         return results
