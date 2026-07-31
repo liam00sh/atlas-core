@@ -696,3 +696,88 @@ presencia doméstica y memoria.
 
 Ninguno cuenta todavía con la demostración completa exigida para una eliminación
 segura.
+
+## 6. Mejora de comandos, Telegram y monitorización (2026-07-31)
+
+### Alcance y causas raíz
+
+La revisión confirmó que la ayuda mezclaba un catálogo manual parcial con
+entradas registradas, y que las búsquedas por alias, tema o aproximación no
+recibían siempre el mismo contexto efectivo que la comprobación de ejecución.
+Esto podía omitir capacidades reales o recomendar acciones ocultas por canal,
+permiso o presencia. También se perdía la petición original al volver a
+renderizar ciertas respuestas conversacionales.
+
+En Telegram, la recepción existente admitía texto y transporte de medios, pero
+faltaban límites y validación por MIME confiable, limpieza uniforme, separación
+de errores permanentes, transitorios y de cuota, y división robusta de mensajes
+largos. Varias respuestas de infraestructura usaban además el nombre del
+sistema en lugar de la identidad conversacional vinculada.
+
+En monitorización ya existían supervisor, sondas, incidencias y panel. Faltaba
+un contrato de resultado completamente uniforme, historial acotado y tolerante
+a corrupción, recomendaciones separadas de la ejecución, y una vía de
+recuperación inyectable que registrase autorización y resultado sin actuar de
+forma automática.
+
+### Solución aplicada
+
+- El catálogo de ayuda agrega metadatos de registros clásicos, capacidades
+  conversacionales y servicios reales sin duplicar la resolución efectiva de
+  permisos. Expone un inventario verificable de 69 capacidades: 68
+  implementadas y una recuperación preparada, no publicitada como ejecutable.
+- Visibilidad, búsqueda exacta, alias, categorías, aproximación y recomendación
+  usan primero el mismo filtro de usuario, rol propietario, permiso, canal y
+  presencia. Las consultas explicativas nunca recorren la ruta imperativa.
+- Telegram valida tamaño, ruta y MIME antes de conservar un medio temporal,
+  limpia temporales, divide mensajes dentro del límite, respeta `retry_after`,
+  mantiene reintentos acotados y conserva identidad y permisos del vínculo.
+- Las sondas devuelven estado, mensaje, instante, severidad, datos adicionales,
+  recuperabilidad e intervención. Observar, avisar, recomendar y actuar quedan
+  separados; ninguna sonda reinicia servicios. La recuperación requiere
+  política explícita, confirmación y propietario cuando la acción lo exige.
+- El historial y los registros de recuperación son atómicos, acotados,
+  tolerantes a corrupción y configurables con rutas temporales en pruebas.
+- Se eliminó de `pytest.ini` el `--basetemp` fijo que dependía de un directorio
+  local con ACL obsoleta; pytest vuelve a usar su aislamiento temporal normal.
+
+### Archivos y pruebas
+
+Los cambios de producción se concentran en `console/command_help.py`,
+`core/atlas.py`, `core/atlas_commands.py`, `telegram_interface/`, y
+`monitoring/`. Se añadieron `monitoring/history.py` y
+`monitoring/recovery.py`. La documentación afectada se actualizó en `README`,
+ayuda contextual, inventario, Telegram y monitorización.
+
+Se añadieron o ampliaron regresiones para propietario, administrador no
+propietario, familiar, invitado, canal, presencia conocida/desconocida,
+búsquedas seguras y explicación frente a ejecución; medios, Unicode, límites,
+cuota, identidad y ayuda Telegram; contrato de sondas, deduplicación,
+recomendación, autorización, cierre, rotación y corrupción del historial.
+
+### Resultados de validación
+
+- Suite inicial funcional: 875 tests y 2.324 subtests superados.
+- Tests focalizados: 138 superados en dos ejecuciones consecutivas.
+- Grupo relacionado ampliado: 438 superados y 460 deseleccionados.
+- `python -m pytest --collect-only -q`: 898 tests recopilados.
+- `python -m pytest -q`: 898 tests y 2.324 subtests superados, cero fallos y
+  cero errores, en 282,19 segundos.
+- `python -m compileall .`: finalizó con código 0.
+- `git diff --check`: finalizó sin errores.
+
+No se contactó Telegram, Raspberry, Home Assistant, Ollama, dispositivos ni
+servicios externos desde las pruebas. Los hashes SHA-256 de
+`identity/data/people.json`, `animals.json` y `relationships.json` fueron
+idénticos antes y después de pytest. El conjunto de `git status --porcelain`
+tampoco cambió como consecuencia de la suite.
+
+### Estado y riesgos pendientes
+
+La ayuda, Telegram y monitorización descritos como implementados quedaron
+validados. La recuperación real de servicios permanece deliberadamente
+**preparada** mediante ejecutores inyectados: cada despliegue todavía debe
+definir su política explícita y adaptador autorizado. El análisis avanzado de
+contenido multimedia y la persistencia durable de una cola de salida siguen
+**pendientes** y no se presentan como funciones disponibles. No se añadió voz,
+no se cambió la arquitectura general y no se ejecutaron recuperaciones reales.

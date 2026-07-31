@@ -163,6 +163,10 @@ para registrar contenido.
 - fallback de Markdown a texto plano;
 - respuestas divididas por debajo del límite de Telegram;
 - bloques de código cerrados y reabiertos cuando cruzan fragmentos.
+- límite comprobado después de añadir numeración y cierres de Markdown;
+- Unicode preservado sin fragmentos vacíos ni contenido duplicado;
+- rate limit diferenciado de fallos transitorios, permanentes y contenido
+  inválido, respetando `retry_after` cuando Telegram lo aporta;
 - enfriamiento temporal de 15 segundos después de tres errores consecutivos
   del núcleo en la misma sesión;
 
@@ -194,7 +198,14 @@ La comprobación `--live` es manual y nunca forma parte de pytest.
   timeout; se ignora su respuesta tardía y el adaptador restaura el contexto.
 - Los contextos de IA y confirmaciones del canal sobreviven mientras vive el
   proceso, pero no se serializan porque pueden contener conversación sensible.
-- No se implementan mensajes que no sean texto ni chats no privados.
+- Los chats no privados siguen fuera de alcance.
+- Fotos, voz, audio y documentos admitidos se reciben en cuarentena temporal,
+  con límite de tamaño, MIME validado sin confiar en la extensión, nombre
+  local derivado de hash y limpieza tras el procesamiento. El análisis de
+  contenido solo se ejecuta si existe un analizador inyectado; de lo contrario
+  se informa de la limitación sin inventar contenido.
+- Vídeo y animación se validan por la misma política de transporte, pero el
+  análisis avanzado continúa pendiente.
 
 ## Validación automática
 
@@ -205,3 +216,9 @@ sesiones, cambio de usuario bloqueado, contextos de IA, confirmaciones,
 fragmentación, Markdown, rate limit, cooldown, concurrencia, offsets, reinicio,
 webhook, backoff, reintento de respuestas, bloqueo de instancia y herramienta
 administrativa. No abre conexiones reales.
+
+La ayuda vinculada usa la identidad Atlas de la cuenta, sus permisos efectivos,
+presencia y canal. El analizador multimedia recibe el identificador Atlas
+vinculado, nunca un nombre escrito por el remitente. Los mensajes
+conversacionales de error y espera usan la personalidad asignada (Daxter, Coco
+u otra) cuando hay perfil vinculado; «Atlas» queda reservado al sistema.
