@@ -4,6 +4,108 @@ Fecha: 30 de julio de 2026
 Estado: informe previo a cualquier saneamiento o corrección  
 Alcance: `04 - Python/atlas_core`, documentación local y documentación oficial de Google Drive
 
+## Intervención: ayuda, meteorología y saludos deterministas — 31 de julio de 2026
+
+Estado del bloque: **completado y validado**. Los cinco fallos pendientes de la
+suite anterior quedan corregidos. Esto no declara cerrada toda la auditoría:
+continúan pendientes la limpieza histórica, la revisión documental global y la
+revisión final de la rama antes de cualquier integración.
+
+### Causas raíz y clasificación
+
+1. `test_help_without_context_hides_owner_commands` — **error de producción**.
+   `handle_command_help_request()` seguía llamando a
+   `build_help_access_context()` con la firma anterior. Además, una búsqueda
+   temática podía recuperar entradas ya filtradas y los comandos de reinicio no
+   declaraban en sus metadatos que eran exclusivos del propietario.
+2. `test_REDACTED_f73137d930c3_owner_sees_admin_commands` — **test desactualizado y refuerzo de
+   producción**. Los comandos administrativos sí aparecían para el perfil
+   propietario; el test comparaba una cabecera con capitalización distinta de la
+   salida canónica en mayúsculas. La distinción entre administrador y propietario
+   no estaba representada explícitamente en `HelpAccessContext`.
+3. `test_weather_without_location_uses_home_location` — **error de producción**.
+   La extracción tomaba todo lo situado tras el primer `en` y convertía una
+   referencia temporal como `en agosto ... en mi localidad` en un topónimo.
+4. `test_august_request_does_not_fake_current_forecast` — **error de producción**.
+   La decisión usaba la distancia hasta el primer día del mes; si ese día entraba
+   en el horizonte, se intentaba responder como si todo el mes tuviera previsión.
+5. `test_common_greetings_are_deterministic` — **combinación de error de fixture
+   y test desactualizado**. El doble de prueba no proporcionaba
+   `GuestSessionManager` y enviaba directamente `buenos días` y `buenas noches`
+   al mixin social, aunque en el flujo real pertenecen al resumen diario.
+
+### Solución aplicada
+
+- La ayuda sin contexto construye un contexto invitado completo y no revela
+  entradas administrativas ni mediante búsqueda aproximada.
+- `HelpAccessContext` separa `is_admin` de `is_owner`; las entradas
+  `owner_only` requieren un propietario verificado. Los metadatos de reinicio
+  declaran categoría, capacidad y visibilidad. La ejecución administrativa
+  compara el identificador activo con el propietario principal configurado, sin
+  coincidencias parciales ni alias textuales.
+- La ubicación se extrae desde la última preposición válida y descarta meses,
+  fechas relativas y expresiones como `mi localidad`, usando después el
+  domicilio configurado.
+- Las consultas de un mes completo y las fechas fuera de los 16 días reciben
+  una explicación explícita de falta de previsión fiable. Una fecha concreta
+  dentro del rango usa el pronóstico simulado disponible. El reloj puede
+  inyectarse en las funciones de interpretación.
+- Los saludos sociales admiten una selección de frase inyectable para tests;
+  producción conserva variedad. Los tests modelan por separado saludo social,
+  resumen de mañana/noche, usuario identificado, invitado y estados de sesión.
+
+### Archivos modificados
+
+- Producción: `console/command_help.py`, `commands/admin_policy.py`,
+  `commands/restart_atlas.py`, `commands/restart_telegram.py`,
+  `core/atlas_daily_brief.py` y `core/atlas_social.py`.
+- Tests: `tests/test_greetings_help_biography.py`,
+  `tests/test_help_owner_permissions.py`,
+  `tests/test_help_permissions_contexts.py`,
+  `tests/test_identity_and_help_permissions.py`,
+  `tests/test_REDACTED_6915771be1c5_conversation_fixes.py` y
+  `tests/test_sprint_18_7_reliability.py`.
+- Documentación: este archivo y su equivalente oficial en Google Drive.
+
+### Tests añadidos o corregidos
+
+- Ayuda y permisos: propietario, administrador no propietario, familiar con
+  capacidad autorizada, invitado, ausencia de contexto, nombre parecido no
+  verificado, búsqueda temática filtrada y política exacta de ejecución.
+- Meteorología: domicilio, ubicación explícita, hoy, mañana, fecha dentro del
+  rango, fecha y mes fuera del rango, climatología y mención no meteorológica de
+  un mes. Todos los datos meteorológicos son simulados.
+- Saludos: `buenos días`, `buenas tardes`, `buenas noches`, `hola`, usuario
+  identificado, invitado, sesión nueva, pendiente y existente, y selección de
+  frase explícitamente inyectada.
+
+### Resultados de validación
+
+- Cinco tests originales, repetición 1: 5 superados en 0,17 s.
+- Cinco tests originales, repetición 2: 5 superados en 0,33 s.
+- Validación focal final adicional: 5 superados en 1,24 s.
+- Regresiones focalizadas, dos repeticiones: 37 superados en 0,39 s y 37
+  superados en 0,36 s; validación final adicional: 37 superados en 0,39 s.
+- Grupos de comandos, ayuda, permisos, usuarios, perfiles, conversación,
+  identidad, saludos, meteorología e interpretación: 190 superados y 21
+  subtests superados en 3,76 s.
+- `python -m pytest --collect-only -q`: 875 tests recopilados en 0,52 s, sin
+  errores.
+- `python -m pytest -q`: 875 superados, 2.324 subtests superados, 0 fallos y 0
+  errores en 173,63 s.
+
+### Confirmación de aislamiento y riesgos pendientes
+
+El conjunto de `git status --porcelain` fue idéntico antes y después de la
+suite completa: solo aparecieron los 12 archivos de código y tests modificados
+intencionadamente en esta intervención. Pytest no añadió ni modificó datos
+reales y no se restauró ningún archivo después de ejecutarlo.
+
+No se contactaron Raspberry, Home Assistant, Telegram real, Ollama, servicios
+externos ni dispositivos domésticos. Permanecen fuera de este bloque los
+artefactos históricos ya inventariados, la limpieza general, la actualización
+del resto de documentación técnica y la revisión final de la rama.
+
 ## Intervención: aislamiento de pytest e integridad de relaciones — 31 de julio de 2026
 
 Estado del bloque: **completado**. Los fallos restantes de la suite completa no

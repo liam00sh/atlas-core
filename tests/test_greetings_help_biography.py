@@ -28,3 +28,5 @@ def test_help_without_context_hides_owner_commands():
     assert "crear perfil de usuario" not in output.casefold()
     assert "estado de atlas" not in output.casefold()
     assert "estado de telegram" not in output.casefold()
+    assert "reinicia atlas" not in output.casefold()
+    assert "reinicia telegram" not in output.casefold()

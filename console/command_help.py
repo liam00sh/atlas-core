@@ -24,6 +24,7 @@ class HelpAccessContext:
     authenticated_user: str | None
     profile_exists: bool
     is_admin: bool
+    is_owner: bool
     is_guest_session: bool
     permissions: frozenset[str]
 
@@ -64,6 +65,7 @@ def build_help_access_context(
     authenticated_user: str | None,
     profile_exists: bool,
     is_admin: bool,
+    is_owner: bool = False,
     guest_session=None,
     permissions=None,
 ) -> HelpAccessContext:
@@ -78,6 +80,7 @@ def build_help_access_context(
         authenticated_user=authenticated_user,
         profile_exists=profile_exists,
         is_admin=is_admin,
+        is_owner=is_owner,
         is_guest_session=is_guest,
         permissions=frozenset(effective_permissions),
     )
@@ -108,11 +111,11 @@ def _entry_visible_for_context(
 ) -> bool:
     capability = _entry_capability(entry)
 
+    if entry.owner_only:
+        return context.effective_role != "guest" and context.is_owner
+
     if context.effective_role == "admin":
         return True
-
-    if entry.owner_only:
-        return False
 
     if context.effective_role == "guest":
         return capability is None or capability in GUEST_HELP_CAPABILITIES
@@ -120,8 +123,6 @@ def _entry_visible_for_context(
     if capability in ADMIN_ONLY_HELP_CAPABILITIES:
         return False
 
-    if entry.owner_only and not context.is_owner:
-        return False
     if capability is None:
         return True
     return capability in context.permissions
@@ -364,6 +365,8 @@ def _registered_entries() -> list[HelpEntry]:
             keywords=tuple(str(x) for x in meta.get("keywords", ()) if str(x).strip()),
             aliases=tuple(str(x) for x in meta.get("aliases", ()) if str(x).strip()),
             detail=str(meta.get("detail", "")).strip(),
+            owner_only=bool(meta.get("owner_only", False)),
+            capability=(str(meta.get("capability", "")).strip() or None),
         ))
     return entries
 
@@ -496,7 +499,11 @@ def render_help(
             exact = next((e for e in entries if _norm(e.name) == normalized or normalized in {_norm(a) for a in e.aliases}), None)
             if exact:
                 return _entry_detail(exact)
-            matches = search_entries(topic)
+            visible_names = {_norm(entry.name) for entry in entries}
+            matches = [
+                entry for entry in search_entries(topic)
+                if _norm(entry.name) in visible_names
+            ]
         if not matches:
             return f"No he encontrado comandos relacionados con «{topic}». Prueba con «ayuda» o «buscar comandos <tema>»."
         if len(matches) == 1:
@@ -557,11 +564,17 @@ def render_help_for_user(
                 {"admin", "administrator", "owner", "propietario"}
             )
         )
+        is_owner = bool(
+            user.get("is_owner")
+            or roles.intersection({"owner", "propietario"})
+        )
         own_bot = bool(user.get("own_bot", own_bot))
     else:
         name = getattr(user, "name", None) or getattr(user, "username", None)
         role = str(getattr(user, "role", "")).casefold()
-        profile_exists = bool(getattr(user, "profile_exists", True))
+        profile_exists = bool(
+            user is not None and getattr(user, "profile_exists", True)
+        )
         permissions = (
             getattr(user, "permissions", None)
             or getattr(user, "allowed_capabilities", None)
@@ -571,6 +584,10 @@ def render_help_for_user(
         is_admin = bool(
             getattr(user, "is_admin", False)
             or role in {"admin", "administrator", "owner", "propietario"}
+        )
+        is_owner = bool(
+            getattr(user, "is_owner", False)
+            or role in {"owner", "propietario"}
         )
         own_bot = bool(getattr(user, "own_bot", own_bot))
 
@@ -583,6 +600,7 @@ def render_help_for_user(
         authenticated_user=name,
         profile_exists=profile_exists,
         is_admin=is_admin,
+        is_owner=is_owner,
         guest_session=effective_guest,
         permissions=permissions,
     )
@@ -621,9 +639,12 @@ def handle_command_help_request(text: str) -> str | None:
     }:
         return render_help(
             context=build_help_access_context(
-                role="guest",
+                channel="unknown",
+                authenticated_user=None,
+                profile_exists=False,
                 is_admin=False,
                 is_owner=False,
+                guest_session=None,
                 permissions=frozenset(),
             )
         )

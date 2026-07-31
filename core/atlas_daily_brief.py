@@ -6,7 +6,7 @@ actual del dispositivo, REDACTED_a77d7bb7adbf (REDACTED_4cde1bf18b9c) como resid
 """
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import json
 import os
 import re
@@ -38,29 +38,38 @@ def _home_location() -> str:
 def _requested_location(text: str) -> str:
     """Extrae una ubicación explícita; si no existe, usa el domicilio configurado."""
     normalized = _norm(text).strip(" .!¡?¿")
-    patterns = (
-        r"\ben\s+([a-z0-9áéíóúüñ][a-z0-9áéíóúüñ .,'’-]{1,80})$",
-        r"\bpara\s+([a-z0-9áéíóúüñ][a-z0-9áéíóúüñ .,'’-]{1,80})$",
-        r"\bde\s+([a-z0-9áéíóúüñ][a-z0-9áéíóúüñ .,'’-]{1,80})$",
-    )
     stop_words = {
         "hoy", "mañana", "manana", "esta tarde", "esta noche",
         "la semana que viene", "la proxima semana", "próxima semana",
-        "luego", "ahora", "ahora mismo",
+        "luego", "ahora", "ahora mismo", "mi localidad", "mi pueblo",
+        "mi ciudad", "aqui", "aquí",
     }
-    for pattern in patterns:
-        match = re.search(pattern, normalized, re.IGNORECASE)
-        if not match:
-            continue
-        candidate = " ".join(match.group(1).strip(" .,!¡?¿").split())
+    temporal_starts = tuple(MONTHS_ES) + (
+        "hoy", "mañana", "manana", "esta", "la semana", "la proxima",
+        "próxima", "ahora", "luego",
+    )
+    # Se prueban las preposiciones de derecha a izquierda. Así, en
+    # «en agosto en Madrid» prevalece el topónimo final, mientras que una
+    # referencia como «en agosto ... en mi localidad» cae al domicilio.
+    starts = [
+        match.end()
+        for match in re.finditer(r"\b(?:en|para|de)\s+", normalized)
+    ]
+    for start in reversed(starts):
+        candidate = " ".join(normalized[start:].strip(" .,!¡?¿").split())
         candidate_norm = _norm(candidate)
-        if candidate_norm in stop_words:
+        if candidate_norm in stop_words or candidate_norm.startswith(temporal_starts):
             continue
         candidate = re.sub(
             r"\s+(?:hoy|mañana|manana|esta tarde|esta noche|luego|ahora(?: mismo)?|la semana que viene|la proxima semana)$",
             "", candidate, flags=re.IGNORECASE,
         ).strip()
-        if candidate:
+        candidate_norm = _norm(candidate)
+        if (
+            candidate
+            and candidate_norm not in stop_words
+            and not candidate_norm.startswith(temporal_starts)
+        ):
             return candidate
     return _home_location()
 
@@ -238,29 +247,70 @@ def _requested_month(text: str) -> int | None:
     return None
 
 
-def _seasonal_month_answer(text: str, location: str) -> str | None:
+def _requested_calendar_date(text: str, now: datetime) -> date | None:
+    normalized = _norm(text)
+    names = "|".join(sorted(MONTHS_ES, key=len, reverse=True))
+    match = re.search(
+        rf"\b(?P<day>[0-3]?\d)\s+de\s+(?P<month>{names})"
+        rf"(?:\s+de\s+(?P<year>\d{{4}}))?\b",
+        normalized,
+    )
+    if match is None:
+        return None
+    year = int(match.group("year") or now.year)
+    month = MONTHS_ES[match.group("month")]
+    try:
+        target = datetime(year, month, int(match.group("day"))).date()
+    except ValueError:
+        return None
+    if match.group("year") is None and target < now.date():
+        target = datetime(year + 1, month, target.day).date()
+    return target
+
+
+def _seasonal_month_answer(
+    text: str,
+    location: str,
+    *,
+    now: datetime | None = None,
+    forecast_days: int = 16,
+) -> str | None:
     month = _requested_month(text)
     if month is None:
         return None
     normalized = _norm(text)
     if not any(term in normalized for term in ("tiempo", "temperatura", "clima", "calor", "frio", "lluvia", "prevision", "pronostico")):
         return None
-    now = datetime.now()
-    year = now.year
+    now = now or datetime.now()
+    target_date = _requested_calendar_date(text, now)
+    if target_date is not None:
+        days_until = (target_date - now.date()).days
+        if 0 <= days_until < forecast_days:
+            return None
     # Open-Meteo solo ofrece previsión diaria a corto plazo. Para meses fuera de
     # ese horizonte, Atlas debe explicarlo claramente y no fingir una búsqueda.
+    # Una petición de un mes completo tampoco cabe en el horizonte aunque su
+    # primer día esté cerca.
     month_name = next(name for name, number in MONTHS_ES.items() if number == month and name != "setiembre")
-    days_until = (datetime(year if month >= now.month else year + 1, month, 1).date() - now.date()).days
-    if 0 <= days_until <= 15:
-        return None
+    target_label = (
+        f"el {target_date.day} de {month_name}"
+        if target_date is not None
+        else f"todo {month_name}"
+    )
+    horizon_target = "esa fecha" if target_date is not None else "el periodo solicitado"
     return (
-        f"Todavía no existe una previsión diaria fiable para todo {month_name} en {location}. "
-        "Puedo consultar el pronóstico real cuando falten unos 16 días o menos. "
+        f"Todavía no existe una previsión diaria fiable para {target_label} en {location}. "
+        f"Puedo consultar el pronóstico real cuando {horizon_target} entre en el horizonte de {forecast_days} días. "
         "Ahora mismo solo puedo darte la tendencia climática habitual, no una previsión exacta de este año."
     )
 
 
-def _weather_answer(text: str, location: str) -> str | None:
+def _weather_answer(
+    text: str,
+    location: str,
+    *,
+    now: datetime | None = None,
+) -> str | None:
     normalized = _norm(text).strip(" .!¡?¿")
     weather_terms = (
         "tiempo", "temperatura", "llover", "lluvia", "viento", "aire", "humedad",
@@ -268,11 +318,11 @@ def _weather_answer(text: str, location: str) -> str | None:
     )
     if not any(term in normalized for term in weather_terms + ("clima", "calor", "frio")):
         return None
-    seasonal = _seasonal_month_answer(text, location)
+    now = now or datetime.now()
+    seasonal = _seasonal_month_answer(text, location, now=now)
     if seasonal is not None:
         return seasonal
     forecast, label = _forecast(location)
-    now = datetime.now()
     today = now.date()
     tomorrow = today + timedelta(days=1)
     daily = forecast.get("daily") or {}
@@ -307,6 +357,15 @@ def _weather_answer(text: str, location: str) -> str | None:
         if "noche" in normalized:
             return _describe_period(forecast, label, tomorrow, 21, 24, "Mañana por la noche")
         return _describe_day(forecast, label, tomorrow, "Mañana")
+
+    requested_date = _requested_calendar_date(text, now)
+    if requested_date is not None:
+        return _describe_day(
+            forecast,
+            label,
+            requested_date,
+            f"El {requested_date:%d/%m/%Y}",
+        )
 
     if "esta tarde" in normalized or normalized.endswith(" tarde"):
         return _describe_period(forecast, label, today, 15, 21, "Esta tarde")

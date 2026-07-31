@@ -11,6 +11,10 @@ from commands.admin_policy import require_admin_user
 
 COMMAND = {
     "name": "reinicia telegram",
+    "description": "Reinicia el bot de Telegram tras una confirmación administrativa reforzada.",
+    "category": "Sistema y administración",
+    "owner_only": True,
+    "capability": "atlas_admin",
     "aliases": [
         "reiniciar telegram",
         "reinicia el bot de telegram",

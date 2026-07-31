@@ -247,6 +247,13 @@ class AtlasSocialMixin:
         context = getattr(self, "channel_request_context", None)
         return str(getattr(context, "channel", "cli") or "cli").casefold()
 
+    def _social_choice(self, replies):
+        """Permite inyectar una selección estable sin quitar variedad en producción."""
+        chooser = getattr(self, "social_reply_choice", None)
+        if callable(chooser):
+            return chooser(tuple(replies))
+        return random.choice(tuple(replies))
+
     def _handle_channel_social_precommand(self, original_text: str) -> bool:
         if self._social_channel() != "telegram":
             return False
@@ -675,7 +682,7 @@ class AtlasSocialMixin:
         if normalized in greeting_markers:
             user = self._social_user()
             print()
-            print(random.choice((
+            print(self._social_choice((
                 f"¡Hola, {user}! 👋",
                 f"¡Buenas, {user}!",
                 f"¡Muy buenas, {user}! ¿Qué tal?",

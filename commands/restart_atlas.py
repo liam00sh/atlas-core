@@ -11,6 +11,10 @@ from commands.admin_policy import require_admin_user
 
 COMMAND = {
     "name": "reinicia atlas",
+    "description": "Reinicia Atlas tras una confirmación administrativa reforzada.",
+    "category": "Sistema y administración",
+    "owner_only": True,
+    "capability": "atlas_admin",
     "aliases": [
         "reiniciar atlas",
         "reinicia",
