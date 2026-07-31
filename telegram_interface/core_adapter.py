@@ -6,6 +6,7 @@ from contextlib import redirect_stdout
 from difflib import SequenceMatcher
 from io import StringIO
 import re
+import random
 import threading
 import unicodedata
 from typing import Protocol
@@ -195,8 +196,15 @@ class AtlasCoreAdapter:
         """Respuestas deterministas que no necesitan bloquear Atlas Core."""
         normalized = cls._plain(text).strip(" ?!¡¿.,;:")
         name = str(personality or "Daxter")
-        if normalized in {"hola", "buenas", "buenas tardes"}:
-            return "¡Hola! 😊 ¿En qué te ayudo?"
+        if normalized in {"hola", "buenas", "buenas tardes", "hey", "ey", "holi"}:
+            return random.choice((
+                "¡Hola! 😊 ¿En qué te ayudo?",
+                "¡Muy buenas! ¿Qué hacemos?",
+                "¡Hola de nuevo! ¿Qué necesitas?",
+                "¡Ey! Aquí estoy 🙂",
+                "¡Buenas! Dime, ¿en qué te ayudo?",
+                "¡Hola! Todo listo por aquí.",
+            ))
         if normalized in {"como estas", "que tal"}:
             return "Estoy bien y operativo 🙂 ¿Cómo estás tú?"
         if normalized in {"gracias", "muchas gracias"}:

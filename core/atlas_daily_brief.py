@@ -223,14 +223,54 @@ def _describe_period(forecast: dict, label: str, target_date, start_hour: int, e
     )
 
 
+MONTHS_ES = {
+    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
+    "julio": 7, "agosto": 8, "septiembre": 9, "setiembre": 9, "octubre": 10,
+    "noviembre": 11, "diciembre": 12,
+}
+
+
+def _requested_month(text: str) -> int | None:
+    normalized = _norm(text)
+    for name, number in MONTHS_ES.items():
+        if re.search(rf"\b{name}\b", normalized):
+            return number
+    return None
+
+
+def _seasonal_month_answer(text: str, location: str) -> str | None:
+    month = _requested_month(text)
+    if month is None:
+        return None
+    normalized = _norm(text)
+    if not any(term in normalized for term in ("tiempo", "temperatura", "clima", "calor", "frio", "lluvia", "prevision", "pronostico")):
+        return None
+    now = datetime.now()
+    year = now.year
+    # Open-Meteo solo ofrece previsión diaria a corto plazo. Para meses fuera de
+    # ese horizonte, Atlas debe explicarlo claramente y no fingir una búsqueda.
+    month_name = next(name for name, number in MONTHS_ES.items() if number == month and name != "setiembre")
+    days_until = (datetime(year if month >= now.month else year + 1, month, 1).date() - now.date()).days
+    if 0 <= days_until <= 15:
+        return None
+    return (
+        f"Todavía no existe una previsión diaria fiable para todo {month_name} en {location}. "
+        "Puedo consultar el pronóstico real cuando falten unos 16 días o menos. "
+        "Ahora mismo solo puedo darte la tendencia climática habitual, no una previsión exacta de este año."
+    )
+
+
 def _weather_answer(text: str, location: str) -> str | None:
     normalized = _norm(text).strip(" .!¡?¿")
     weather_terms = (
         "tiempo", "temperatura", "llover", "lluvia", "viento", "aire", "humedad",
         "amanecer", "atardecer", "calidad del aire", "pronostico", "prevision",
     )
-    if not any(term in normalized for term in weather_terms):
+    if not any(term in normalized for term in weather_terms + ("clima", "calor", "frio")):
         return None
+    seasonal = _seasonal_month_answer(text, location)
+    if seasonal is not None:
+        return seasonal
     forecast, label = _forecast(location)
     now = datetime.now()
     today = now.date()
@@ -323,9 +363,22 @@ class AtlasDailyBriefMixin:
             return []
         return [str(item) for item in (result or []) if str(item).strip()]
 
+    def _weather_profile_location(self) -> str:
+        user = getattr(self, "get_user", lambda: "")()
+        try:
+            profile = self.users.get_profile(user)
+        except Exception:
+            profile = {}
+        for key in ("location", "home_location", "locality", "city"):
+            value = str(profile.get(key, "") or "").strip() if isinstance(profile, dict) else ""
+            if value:
+                return value
+        return _home_location()
+
     def _handle_weather(self, text: str) -> bool:
         try:
-            location = _requested_location(text)
+            explicit = _requested_location(text)
+            location = explicit if explicit != _home_location() else self._weather_profile_location()
             answer = _weather_answer(text, location)
         except (HTTPError, URLError, TimeoutError, ValueError, KeyError, json.JSONDecodeError) as exc:
             error(f"Tiempo: consulta fallida: {type(exc).__name__}: {exc}")

@@ -129,7 +129,30 @@ class AtlasCommandsMixin:
 
         help_response = handle_command_help_request(original_text)
         if help_response is not None:
-            print(help_response)
+            topic = None
+            normalized_help = str(original_text).strip().casefold()
+            for prefix in ("ayuda ", "help "):
+                if normalized_help.startswith(prefix):
+                    topic = original_text.strip()[len(prefix):].strip() or None
+                    break
+
+            request_context = getattr(self, "channel_request_context", None)
+            channel = getattr(request_context, "channel", None) or "pc"
+
+            # En Telegram, el contexto de la petición ya contiene la identidad
+            # autenticada. El núcleo ha activado ese perfil antes de procesar la
+            # orden, por lo que get_effective_help_user() debe reflejar a REDACTED_2c7b6821719d
+            # como propietario y administrador.
+            help_user = self.get_effective_help_user()
+            print(
+                render_help_for_user(
+                    help_user,
+                    topic=topic,
+                    channel=channel,
+                    guest_session=self.guest_sessions.get(),
+                    own_bot=bool(help_user.get("own_bot", True)),
+                )
+            )
             return True
 
         # ---------------------------------------------------------------------

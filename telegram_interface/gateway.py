@@ -87,7 +87,15 @@ class TelegramGateway:
                     # usuario, contexto ni Ollama. Así pueden salir por el lane
                     # rápido aunque el Core esté ocupado con una tarea pesada.
                     quick_handler = getattr(self.core, "quick_response", None)
-                    quick = quick_handler(message.text, "Atlas") if callable(quick_handler) else None
+                    normalized_message = " ".join(message.text.casefold().strip(" ?!¡¿.,;:").split())
+                    # Buenos días y buenas noches son órdenes especiales del
+                    # núcleo. Nunca deben resolverse por el carril social rápido.
+                    special_greetings = {"buenos dias", "muy buenos dias", "buen dia", "buenas noches", "hasta manana", "me voy a dormir"}
+                    quick = (
+                        quick_handler(message.text, "Atlas")
+                        if callable(quick_handler) and normalized_message not in special_greetings
+                        else None
+                    )
                     if quick is not None:
                         response = GatewayResponse(quick)
                     else:

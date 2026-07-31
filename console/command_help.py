@@ -120,7 +120,11 @@ def _entry_visible_for_context(
     if capability in ADMIN_ONLY_HELP_CAPABILITIES:
         return False
 
-    return capability is None or capability in context.permissions
+    if entry.owner_only and not context.is_owner:
+        return False
+    if capability is None:
+        return True
+    return capability in context.permissions
 
 @dataclass(frozen=True, slots=True)
 class HelpEntry:
@@ -536,12 +540,22 @@ def render_help_for_user(
     if isinstance(user, dict):
         name = user.get("name") or user.get("username")
         role = str(user.get("role", "")).casefold()
+        roles = {
+            str(item).strip().casefold()
+            for item in (user.get("roles") or ())
+            if str(item).strip()
+        }
+        if role:
+            roles.add(role)
         profile_exists = bool(user.get("profile_exists", True))
         permissions = user.get("permissions") or user.get("allowed_capabilities") or ()
         help_categories = user.get("help_categories")
         is_admin = bool(
             user.get("is_admin")
-            or role in {"admin", "administrator", "owner", "propietario"}
+            or user.get("is_owner")
+            or roles.intersection(
+                {"admin", "administrator", "owner", "propietario"}
+            )
         )
         own_bot = bool(user.get("own_bot", own_bot))
     else:
@@ -605,7 +619,14 @@ def handle_command_help_request(text: str) -> str | None:
         "ayuda", "help", "comandos", "lista de comandos", "listar comandos",
         "mostrar comandos", "ver comandos", "que comandos hay", "menu", "menú",
     }:
-        return render_help()
+        return render_help(
+            context=build_help_access_context(
+                role="guest",
+                is_admin=False,
+                is_owner=False,
+                permissions=frozenset(),
+            )
+        )
 
     # Una orden exacta registrada debe ejecutarse, no convertirse en una
     # sugerencia de ayuda. Antes, «salir» quedaba interceptado aquí porque la

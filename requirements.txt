@@ -11,5 +11,9 @@ tzdata==2026.3
 # Requerido por core/system_info.py y por los tests que importan Atlas/IA/tools.
 psutil>=7.0,<8.0
 
+# Carga de variables desde el archivo .env.
+# Requerido por la monitorización de Raspberry y el supervisor.
+python-dotenv>=1.0,<2.0
+
 # Framework de pruebas utilizado por run_tests_safe.ps1.
 pytest>=9.0,<10.0
