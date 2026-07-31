@@ -51,6 +51,11 @@ python main.py
 
 Una vez iniciado, escribe `ayuda` para consultar los comandos disponibles o `estado` para mostrar el resumen del sistema.
 
+La ayuda se genera desde el registro dinámico `COMMANDS` y el catálogo central
+de capacidades conversacionales. Búsqueda, recomendaciones, permisos, canal y
+presencia efectiva se evalúan sobre ese mismo inventario; una pregunta como
+`cómo enciendo la luz` explica y nunca ejecuta la acción.
+
 ## Estructura principal
 
 ```text
@@ -109,3 +114,15 @@ Comprobación previa de sintaxis:
 ```bash
 python -m compileall ai assistant_identity capabilities commands console conversation core identity memory tests tools utils
 ```
+
+Pytest utiliza el directorio temporal seguro del sistema. Los fixtures redirigen
+datos persistentes, Telegram, monitorización y servicios externos a dobles o a
+`tmp_path`; la suite no debe cambiar `people.json`, `animals.json` ni
+`relationships.json`.
+
+Documentación técnica afectada:
+
+- `docs/INVENTARIO_CAPACIDADES_ATLAS.md`;
+- `docs/HELP_PERMISSIONS_BY_CONTEXT.md`;
+- `docs/MONITORIZACION_Y_RECUPERACION.md`;
+- `docs/sprints/SPRINT_18_TELEGRAM_INTEGRATION.md`.

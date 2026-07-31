@@ -842,6 +842,35 @@ class Atlas(AtlasAIMixin,
             )
         )
 
+        effective_permissions = {
+            str(item).strip()
+            for item in permissions
+            if str(item).strip()
+        }
+        presence = "unknown"
+        environment = getattr(self, "stage_e_environment", None)
+        if environment is not None:
+            normalized_user = str(current_user).strip().casefold()
+            try:
+                home_access = environment.manager.permissions.get_user(
+                    normalized_user
+                )
+                if home_access.active:
+                    effective_permissions.update(home_access.permissions)
+                if environment.is_guest(normalized_user):
+                    presence = (
+                        "home_verified"
+                        if environment.is_guest_present(normalized_user)
+                        else "away_verified"
+                    )
+                elif normalized_user in environment.household_user_ids:
+                    # El motor vigente no exige presencia a miembros del hogar.
+                    presence = "home_verified"
+            except Exception:
+                # La ayuda aplica la política segura: presencia desconocida no
+                # habilita capacidades que la requieran.
+                presence = "unknown"
+
         return {
             "name": profile_name,
             "role": "owner" if is_main_user else (
@@ -849,7 +878,8 @@ class Atlas(AtlasAIMixin,
             ),
             "roles": sorted(roles),
             "profile_exists": profile is not None,
-            "permissions": permissions,
+            "permissions": sorted(effective_permissions),
+            "presence": presence,
             "is_admin": is_admin,
             "is_owner": is_main_user or "owner" in roles or "propietario" in roles,
             "own_bot": getattr(self, "current_telegram_own_bot", True),

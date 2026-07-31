@@ -27,6 +27,7 @@ class HelpAccessContext:
     is_owner: bool
     is_guest_session: bool
     permissions: frozenset[str]
+    presence: str = "unknown"
 
     @property
     def effective_role(self) -> str:
@@ -68,12 +69,16 @@ def build_help_access_context(
     is_owner: bool = False,
     guest_session=None,
     permissions=None,
+    presence: str = "unknown",
 ) -> HelpAccessContext:
     is_guest = guest_session is not None
+    supplied_permissions = frozenset(
+        str(item).strip() for item in (permissions or ()) if str(item).strip()
+    )
     effective_permissions = (
-        GUEST_HELP_CAPABILITIES
+        GUEST_HELP_CAPABILITIES | supplied_permissions
         if is_guest or not profile_exists
-        else frozenset(permissions or ())
+        else supplied_permissions
     )
     return HelpAccessContext(
         channel=channel,
@@ -83,6 +88,7 @@ def build_help_access_context(
         is_owner=is_owner,
         is_guest_session=is_guest,
         permissions=frozenset(effective_permissions),
+        presence=str(presence or "unknown").strip().casefold(),
     )
 
 
@@ -110,6 +116,18 @@ def _entry_visible_for_context(
     context: HelpAccessContext,
 ) -> bool:
     capability = _entry_capability(entry)
+    channel = str(context.channel or "unknown").strip().casefold()
+
+    if channel not in {"unknown", "all"} and channel not in entry.channels:
+        return False
+    if entry.implementation_status != "implemented":
+        return False
+    if (
+        entry.requires_home_presence
+        and not context.is_owner
+        and context.presence != "home_verified"
+    ):
+        return False
 
     if entry.owner_only:
         return context.effective_role != "guest" and context.is_owner
@@ -118,7 +136,13 @@ def _entry_visible_for_context(
         return True
 
     if context.effective_role == "guest":
-        return capability is None or capability in GUEST_HELP_CAPABILITIES
+        return (
+            capability is None
+            or (
+                capability in GUEST_HELP_CAPABILITIES
+                and capability in context.permissions
+            )
+        )
 
     if capability in ADMIN_ONLY_HELP_CAPABILITIES:
         return False
@@ -138,12 +162,18 @@ class HelpEntry:
     detail: str = ""
     owner_only: bool = False
     capability: str | None = None
+    channels: frozenset[str] = frozenset({"pc", "cli", "telegram"})
+    requires_home_presence: bool = False
+    informative: bool = False
+    executes_action: bool = False
+    implementation_status: str = "implemented"
 
 
 CATEGORY_ORDER = (
-    "General", "Usuarios", "Telegram", "Memoria", "Organización",
+    "General", "Usuarios", "Telegram", "Comunicación", "Memoria", "Organización",
     "Hogar y Home Assistant", "Identidad y modos",
-    "Internet y fuentes", "Redacción", "Sistema y administración",
+    "Clima", "Internet y fuentes", "Documentos y Drive", "Redacción",
+    "Windows", "Monitorización", "Sistema y administración",
 )
 
 # Operaciones que viven en mixins y servicios, no necesariamente como módulos
@@ -164,8 +194,10 @@ CONVERSATIONAL_ENTRIES = (
         "Usuarios",
         ("crear perfil de usuario para REDACTED_aebac53c46bb", "crear perfil Atlas para REDACTED_0392c3d1b4d3"),
         ("alta", "persona conocida", "perfil", "usuario"),
+        aliases=("crear usuario", "crear usuario para"),
         detail="La persona debe existir previamente en el registro de personas. No crea personas desconocidas.",
         owner_only=True,
+        capability="user_management",
     ),
     HelpEntry(
         "listar usuarios",
@@ -220,6 +252,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("enciende la luz del acuario pequeño",),
         ("acuario", "luz", "home assistant", "encender"),
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "apagar luz del acuario pequeño",
@@ -227,6 +260,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("apaga la luz del acuario pequeño",),
         ("acuario", "luz", "home assistant", "apagar"),
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "encender oxígeno del acuario pequeño",
@@ -234,6 +268,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("enciende el oxígeno del acuario pequeño",),
         ("acuario", "oxígeno", "aireador", "encender"),
+        capability="home.control.switch", requires_home_presence=True,
     ),
     HelpEntry(
         "apagar oxígeno del acuario pequeño",
@@ -241,6 +276,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("apaga el oxígeno del acuario pequeño",),
         ("acuario", "oxígeno", "aireador", "apagar"),
+        capability="home.control.switch", requires_home_presence=True,
     ),
     HelpEntry(
         "encender acuario pequeño",
@@ -248,6 +284,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("enciende el acuario pequeño",),
         ("grupo", "acuario", "luz", "oxígeno"),
+        capability="home.control.switch", requires_home_presence=True,
     ),
     HelpEntry(
         "apagar acuario pequeño",
@@ -255,6 +292,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("apaga el acuario pequeño",),
         ("grupo", "acuario", "luz", "oxígeno"),
+        capability="home.control.switch", requires_home_presence=True,
     ),
     HelpEntry(
         "encender luz del acuario grande",
@@ -262,6 +300,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("enciende la luz del acuario grande",),
         ("acuario", "luz", "salón", "encender"),
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "apagar luz del acuario grande",
@@ -269,6 +308,7 @@ CONVERSATIONAL_ENTRIES = (
         "Hogar y Home Assistant",
         ("apaga la luz del acuario grande",),
         ("acuario", "luz", "salón", "apagar"),
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "programar luz del acuario",
@@ -280,6 +320,7 @@ CONVERSATIONAL_ENTRIES = (
         ),
         ("horario", "programación", "acuario", "automatización"),
         detail="El horario queda guardado en Home Assistant y continúa funcionando aunque cierres Atlas o Telegram.",
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "activar horario del acuario",
@@ -290,6 +331,7 @@ CONVERSATIONAL_ENTRIES = (
             "activa el horario del acuario grande",
         ),
         ("horario", "activar", "automatización"),
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "desactivar horario del acuario",
@@ -300,6 +342,7 @@ CONVERSATIONAL_ENTRIES = (
             "desactiva la programación de la luz del acuario grande",
         ),
         ("horario", "desactivar", "automatización"),
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "temporizador de luz del acuario",
@@ -311,6 +354,7 @@ CONVERSATIONAL_ENTRIES = (
         ),
         ("temporizador", "durante", "minutos", "horas", "acuario"),
         detail="El temporizador se ejecuta en Home Assistant y no depende de mantener abierta la consola o Telegram.",
+        capability="home.control.light", requires_home_presence=True,
     ),
     HelpEntry(
         "buenos días",
@@ -347,6 +391,33 @@ CONVERSATIONAL_ENTRIES = (
 )
 
 
+# Capacidades con ruta conversacional comprobada fuera de commands/*.py. Este
+# catálogo, junto con el registro dinámico COMMANDS, es la fuente de verdad que
+# consumen ayuda, búsqueda y recomendaciones; no existe una segunda lista para
+# cada una de esas funciones.
+SERVICE_ENTRIES = (
+    HelpEntry("consultar el tiempo", "Consulta el tiempo para una ubicación y fecha válidas.", "Clima", ("qué tiempo hace", "qué tiempo hará mañana en REDACTED_4cde1bf18b9c"), ("clima", "lluvia", "temperatura", "mañana"), capability="weather", informative=True),
+    HelpEntry("resumen de agenda", "Resume citas, recordatorios y asuntos próximos.", "Organización", ("qué tengo hoy", "resume mi agenda"), ("agenda", "hoy", "citas"), capability="conversation", informative=True),
+    HelpEntry("localizar objetos", "Consulta o registra dónde se guardó un objeto.", "Organización", ("dónde están mis llaves", "guarda que el cargador está en el cajón"), ("objeto", "dónde", "ubicación"), capability="conversation"),
+    HelpEntry("enviar mensaje a otro usuario", "Entrega un mensaje a otro perfil vinculado respetando identidad y permisos.", "Comunicación", ("dile a REDACTED_aebac53c46bb que llegaré tarde",), ("mensaje", "avisar", "familia"), capability="conversation", executes_action=True),
+    HelpEntry("traducir texto", "Traduce un texto al idioma indicado.", "Redacción", ("traduce al inglés: buenos días",), ("idioma", "inglés", "traducción"), capability="conversation", informative=True),
+    HelpEntry("juegos conversacionales", "Inicia juegos de texto disponibles sin servicios externos.", "General", ("jugamos a adivinar el número",), ("jugar", "trivia", "adivinar"), capability="games"),
+    HelpEntry("consultar relaciones familiares", "Responde sobre relaciones familiares verificadas y visibles.", "General", ("qué relación hay entre REDACTED_2c7b6821719d y REDACTED_0392c3d1b4d3",), ("familia", "relación", "parentesco"), capability="public_family_relationships", informative=True),
+    HelpEntry("información del PC", "Consulta información básica del sistema Windows local.", "Windows", ("qué sistema Windows tengo",), ("pc", "windows", "sistema"), capability="windows.status.read", informative=True, channels=frozenset({"pc", "cli", "telegram"})),
+    HelpEntry("espacio de disco", "Consulta el espacio disponible del disco local.", "Windows", ("cuánto espacio queda en el disco",), ("disco", "espacio", "libre"), capability="windows.status.read", informative=True),
+    HelpEntry("estado de proceso Windows", "Comprueba si un proceso autorizado está en ejecución.", "Windows", ("está abierto Telegram",), ("proceso", "aplicación", "abierto"), capability="windows.process.read", informative=True),
+    HelpEntry("abrir aplicación Windows", "Abre una aplicación incluida en el catálogo seguro.", "Windows", ("abre el bloc de notas",), ("abrir", "aplicación", "programa"), capability="windows.application.open", executes_action=True, channels=frozenset({"pc", "cli"})),
+    HelpEntry("buscar documentos en Drive", "Busca documentos autorizados en Google Drive.", "Documentos y Drive", ("busca el manual de Telegram en Drive",), ("drive", "documento", "buscar"), capability="documents.search", informative=True),
+    HelpEntry("leer documento de Drive", "Lee un documento autorizado encontrado en Drive.", "Documentos y Drive", ("lee el documento Roadmap",), ("drive", "leer", "documento"), capability="documents.read", informative=True),
+    HelpEntry("buscar dentro de documentos", "Busca contenido en el índice documental local de Drive.", "Documentos y Drive", ("en qué documento hablamos de monitorización",), ("índice", "contenido", "drive"), capability="documents.search_content", informative=True),
+    HelpEntry("sincronizar índice de Drive", "Actualiza el índice local autorizado de documentos.", "Documentos y Drive", ("sincroniza el índice de Drive",), ("drive", "índice", "sincronizar"), capability="documents.index.sync", executes_action=True, owner_only=True),
+    HelpEntry("estado de servicios", "Muestra el estado uniforme de PC, Raspberry, Docker, disco, temperatura, Home Assistant, Telegram y Ollama.", "Monitorización", ("estado de Atlas", "cómo está la Raspberry"), ("salud", "servicios", "raspberry", "docker"), capability="system.status.read", informative=True, owner_only=True),
+    HelpEntry("incidencias técnicas", "Muestra incidencias abiertas y recuperadas sin ejecutar acciones.", "Monitorización", ("qué incidencias hay abiertas",), ("incidencia", "error", "recuperación"), capability="system.status.read", informative=True, owner_only=True),
+    HelpEntry("recuperación controlada", "Recomienda una recuperación; actuar exige política, confirmación y autorización del propietario.", "Monitorización", ("qué recuperación recomiendas",), ("reiniciar", "recuperar", "servicio"), capability="automation.execute.technical", owner_only=True, implementation_status="prepared"),
+    HelpEntry("enviar archivo por Telegram", "Recibe fotos, voz, audio y documentos admitidos en cuarentena temporal.", "Telegram", ("adjunta un documento o una foto en el chat",), ("archivo", "foto", "audio", "voz"), capability="telegram.use", channels=frozenset({"telegram"})),
+)
+
+
 
 def _registered_entries() -> list[HelpEntry]:
     from console.command_manager import COMMANDS
@@ -360,19 +431,28 @@ def _registered_entries() -> list[HelpEntry]:
         entries.append(HelpEntry(
             name=str(meta.get("name", "")).strip(),
             description=str(meta.get("description", "Sin descripción.")).strip(),
-            category=str(meta.get("category", "General")).strip().title(),
+            category=str(meta.get("category", "General")).strip(),
             examples=tuple(str(x) for x in meta.get("examples", ()) if str(x).strip()),
             keywords=tuple(str(x) for x in meta.get("keywords", ()) if str(x).strip()),
             aliases=tuple(str(x) for x in meta.get("aliases", ()) if str(x).strip()),
             detail=str(meta.get("detail", "")).strip(),
             owner_only=bool(meta.get("owner_only", False)),
             capability=(str(meta.get("capability", "")).strip() or None),
+            channels=frozenset(
+                str(item).strip().casefold()
+                for item in meta.get("channels", ("pc", "cli", "telegram"))
+                if str(item).strip()
+            ),
+            requires_home_presence=bool(meta.get("requires_home_presence", False)),
+            informative=bool(meta.get("informative", False)),
+            executes_action=bool(meta.get("executes_action", True)),
+            implementation_status=str(meta.get("implementation_status", "implemented")),
         ))
     return entries
 
 
 def all_entries() -> list[HelpEntry]:
-    combined = _registered_entries() + list(CONVERSATIONAL_ENTRIES)
+    combined = _registered_entries() + list(CONVERSATIONAL_ENTRIES) + list(SERVICE_ENTRIES)
     result: list[HelpEntry] = []
     seen: set[str] = set()
     for entry in combined:
@@ -384,19 +464,54 @@ def all_entries() -> list[HelpEntry]:
     return result
 
 
+def inventory_records() -> list[dict[str, object]]:
+    """Inventario estructurado consumible por documentación y verificaciones."""
+    return [
+        {
+            "name": entry.name,
+            "aliases": entry.aliases,
+            "category": entry.category,
+            "description": entry.description,
+            "examples": entry.examples,
+            "capability": _entry_capability(entry),
+            "owner_only": entry.owner_only,
+            "channels": tuple(sorted(entry.channels)),
+            "requires_home_presence": entry.requires_home_presence,
+            "informative": entry.informative,
+            "executes_action": entry.executes_action,
+            "implementation_status": entry.implementation_status,
+        }
+        for entry in all_entries()
+    ]
+
+
 def _search_blob(entry: HelpEntry) -> str:
     return _norm(" ".join((entry.name, entry.description, entry.category, *entry.examples, *entry.keywords, *entry.aliases)))
 
 
-def search_entries(query: str, limit: int = 8) -> list[HelpEntry]:
+def search_entries(
+    query: str,
+    limit: int = 8,
+    *,
+    context: HelpAccessContext | None = None,
+    entries: list[HelpEntry] | None = None,
+) -> list[HelpEntry]:
     needle = _norm(query)
     if not needle:
         return []
-    words = set(needle.split())
+    stopwords = {
+        "a", "al", "como", "con", "de", "del", "el", "en", "hacer",
+        "la", "las", "lo", "los", "para", "por", "que", "quiero", "un", "una",
+    }
+    words = {word for word in needle.split() if word not in stopwords}
     scored: list[tuple[float, HelpEntry]] = []
-    for entry in all_entries():
+    candidates = entries if entries is not None else (
+        visible_entries(context=context) if context is not None else all_entries()
+    )
+    for entry in candidates:
         blob = _search_blob(entry)
-        matched = sum(1 for word in words if word in blob)
+        blob_words = set(blob.split())
+        matched = len(words.intersection(blob_words))
         ratio = SequenceMatcher(None, needle, _norm(entry.name)).ratio()
         if matched or ratio >= 0.55:
             scored.append((matched * 2.0 + ratio, entry))
@@ -404,16 +519,30 @@ def search_entries(query: str, limit: int = 8) -> list[HelpEntry]:
     return [entry for _, entry in scored[:limit]]
 
 
-def suggest_entries(text: str, limit: int = 4) -> list[HelpEntry]:
-    entries = search_entries(text, limit=limit)
+def suggest_entries(
+    text: str,
+    limit: int = 4,
+    *,
+    context: HelpAccessContext | None = None,
+    entries: list[HelpEntry] | None = None,
+) -> list[HelpEntry]:
+    entries = search_entries(
+        text,
+        limit=limit,
+        context=context,
+        entries=entries,
+    )
     if _norm(text) == "crear usuario":
         legacy = HelpEntry(
             name="crear usuario",
             description="Alias compatible de «crear perfil de usuario».",
             category="Usuarios",
             aliases=("crear perfil de usuario",),
+            owner_only=True,
+            capability="user_management",
         )
-        entries = [legacy, *[entry for entry in entries if _norm(entry.name) != "crear usuario"]]
+        if context is None or _entry_visible_for_context(legacy, context):
+            entries = [legacy, *[entry for entry in entries if _norm(entry.name) != "crear usuario"]]
     return entries[:limit]
 
 
@@ -450,6 +579,14 @@ def visible_entries(
             entry
             for entry in all_entries()
             if _entry_visible_for_context(entry, context)
+            and (
+                allowed_categories is None
+                or entry.category in allowed_categories
+            )
+            and (
+                allowed_entry_names is None
+                or _norm(entry.name) in {_norm(name) for name in allowed_entry_names}
+            )
         ]
     return [
         entry
@@ -501,7 +638,7 @@ def render_help(
                 return _entry_detail(exact)
             visible_names = {_norm(entry.name) for entry in entries}
             matches = [
-                entry for entry in search_entries(topic)
+                entry for entry in search_entries(topic, entries=entries)
                 if _norm(entry.name) in visible_names
             ]
         if not matches:
@@ -542,6 +679,7 @@ def render_help_for_user(
     channel: str = "pc",
     guest_session=None,
     own_bot: bool = True,
+    request_text: str | None = None,
 ) -> str:
     """Genera ayuda según permisos efectivos de la sesión actual."""
     if isinstance(user, dict):
@@ -591,6 +729,11 @@ def render_help_for_user(
         )
         own_bot = bool(getattr(user, "own_bot", own_bot))
 
+    if isinstance(user, dict):
+        presence = str(user.get("presence", "unknown"))
+    else:
+        presence = str(getattr(user, "presence", "unknown"))
+
     effective_guest = guest_session
     if channel == "telegram" and not own_bot:
         effective_guest = guest_session or object()
@@ -603,12 +746,16 @@ def render_help_for_user(
         is_owner=is_owner,
         guest_session=effective_guest,
         permissions=permissions,
+        presence=presence,
     )
+    if request_text is not None:
+        response = handle_command_help_request(request_text, context=context)
+        if response is not None:
+            return response
     if help_categories is not None:
         return render_help(
             topic,
-            context=None,
-            is_owner=is_admin,
+            context=context,
             allowed_categories=set(help_categories),
         )
     return render_help(topic, context=context)
@@ -631,14 +778,36 @@ def _natural_intent(text: str) -> str | None:
     return None
 
 
-def handle_command_help_request(text: str) -> str | None:
+def _unavailable_reason(topic: str, context: HelpAccessContext | None) -> str:
+    raw_matches = search_entries(topic, limit=3)
+    if any(entry.implementation_status != "implemented" for entry in raw_matches):
+        return (
+            f"Atlas todavía no dispone de «{topic}» como función ejecutable. "
+            "Puedo mostrarte alternativas que ya estén implementadas."
+        )
+    if context is not None and raw_matches:
+        return (
+            f"La función relacionada con «{topic}» existe, pero no está "
+            "disponible para tu identidad, canal o contexto efectivo."
+        )
+    return (
+        f"Atlas todavía no dispone de una función implementada relacionada "
+        f"con «{topic}». No voy a inventar un comando."
+    )
+
+
+def handle_command_help_request(
+    text: str,
+    *,
+    context: HelpAccessContext | None = None,
+) -> str | None:
     n = _norm(text)
     if n in {
         "ayuda", "help", "comandos", "lista de comandos", "listar comandos",
         "mostrar comandos", "ver comandos", "que comandos hay", "menu", "menú",
     }:
         return render_help(
-            context=build_help_access_context(
+            context=context or build_help_access_context(
                 channel="unknown",
                 authenticated_user=None,
                 profile_exists=False,
@@ -660,23 +829,50 @@ def handle_command_help_request(text: str) -> str | None:
         pass
     for prefix in ("ayuda ", "help "):
         if n.startswith(prefix):
-            return render_help(n[len(prefix):])
+            return render_help(n[len(prefix):], context=context)
     for prefix in ("buscar comandos ", "buscar comando ", "buscar "):
         if n.startswith(prefix):
             topic = n[len(prefix):].strip()
-            matches = search_entries(topic)
+            normalized_topic = _norm(topic)
+            exact_raw = next(
+                (
+                    entry for entry in all_entries()
+                    if normalized_topic == _norm(entry.name)
+                    or normalized_topic in {_norm(alias) for alias in entry.aliases}
+                ),
+                None,
+            )
+            if (
+                exact_raw is not None
+                and context is not None
+                and not _entry_visible_for_context(exact_raw, context)
+            ):
+                return _unavailable_reason(topic, context)
+            matches = search_entries(topic, context=context)
             if not matches:
-                return f"No he encontrado comandos relacionados con «{topic}»."
+                return _unavailable_reason(topic, context)
             return "He encontrado estos comandos:\n\n" + "\n".join(f"• {e.name}: {e.description}" for e in matches)
     topic = _natural_intent(text)
     if topic:
-        matches = search_entries(topic, limit=3)
+        matches = search_entries(topic, limit=3, context=context)
         if matches:
             lead = "Para hacerlo, estos son los comandos u órdenes más útiles:\n\n"
             body = "\n\n".join(_entry_detail(entry) for entry in matches)
             return lead + body + "\n\nNo he ejecutado nada; solo te he indicado cómo hacerlo."
+        return _unavailable_reason(topic, context) + " No he ejecutado nada."
+
+    # Esta forma imperativa pertenece al manejador determinista de perfiles.
+    # No debe convertirse en una recomendación aproximada antes de que dicho
+    # manejador aplique la política owner_only y ejecute o deniegue la acción.
+    if re.match(
+        r"^(?:crear|crea|anadir|anade|dar de alta) "
+        r"(?:un )?perfil(?: de usuario| atlas)? (?:para|a|de) .+?$",
+        n,
+    ):
+        return None
+
     if "crear" in n and ("usuario" in n or n.startswith("crear us")):
-        matches = suggest_entries("crear usuario")
+        matches = suggest_entries("crear usuario", context=context)
         return (
             f"No existe exactamente el comando «{text.strip()}». "
             "Quizá buscas alguno de estos:\n\n"
@@ -685,7 +881,7 @@ def handle_command_help_request(text: str) -> str | None:
 
     # Sugerencias solo para entradas cortas que parecen una orden incompleta.
     if 1 <= len(n.split()) <= 4 and any(word in n for word in ("crear", "telegram", "usuario", "memoria", "record", "modo", "ayud", "version", "salir")):
-        matches = suggest_entries(n)
+        matches = suggest_entries(n, context=context)
         if matches:
             rendered = "\n".join(f"• {e.name}" for e in matches)
             if "crear usuario" not in _norm(rendered):

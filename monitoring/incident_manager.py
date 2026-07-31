@@ -71,6 +71,8 @@ class IncidentManager:
 
     @staticmethod
     def _severity_for(result: HealthCheckResult) -> IncidentSeverity:
+        if result.severity is not None:
+            return result.severity
         mapping = {
             HealthState.WARNING: IncidentSeverity.WARNING,
             HealthState.ERROR: IncidentSeverity.ERROR,

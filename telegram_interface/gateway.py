@@ -74,12 +74,13 @@ class TelegramGateway:
                 )
             else:
                 permissions = frozenset(self.permission_resolver(atlas_user_id))
+                assistant_name = self.core.active_personality(atlas_user_id).capitalize()
                 if "telegram.use" not in {item.casefold() for item in permissions}:
-                    response = GatewayResponse("Tu usuario no tiene permiso para utilizar Atlas desde Telegram.")
+                    response = GatewayResponse("Tu usuario no tiene permiso para utilizar el sistema desde Telegram.")
                 elif message.media_type:
-                    response = self._handle_media_message(message)
+                    response = self._handle_media_message(message, atlas_user_id=atlas_user_id)
                 elif not message.text.strip():
-                    response = GatewayResponse("Escribe un mensaje para hablar con Atlas.")
+                    response = GatewayResponse(f"Escribe un mensaje para hablar con {assistant_name}.")
                 else:
                     # Las respuestas sociales deterministas no necesitan activar
                     # usuario, contexto ni Ollama. Así pueden salir por el lane
@@ -90,7 +91,7 @@ class TelegramGateway:
                     # núcleo. Nunca deben resolverse por el carril social rápido.
                     special_greetings = {"buenos dias", "muy buenos dias", "buen dia", "buenas noches", "hasta manana", "me voy a dormir"}
                     quick = (
-                        quick_handler(message.text, "Atlas")
+                        quick_handler(message.text, assistant_name)
                         if callable(quick_handler) and normalized_message not in special_greetings
                         else None
                     )
@@ -110,7 +111,7 @@ class TelegramGateway:
                                 duration_ms=round((perf_counter() - started) * 1000, 3),
                                 error_code="processing_cooldown",
                             )
-                            return GatewayResponse("Atlas ha detectado varios errores. Espera unos segundos.")
+                            return GatewayResponse(f"{assistant_name} ha detectado varios errores. Espera unos segundos.")
                         personality = self.core.active_personality(atlas_user_id)
                         context = TelegramRequestContext(
                             channel="telegram",
@@ -128,13 +129,13 @@ class TelegramGateway:
                         try:
                             result = future.result(timeout=self.config.processing_timeout_seconds)
                             self._processing_errors.pop(error_key, None)
-                            response = GatewayResponse(str(result).strip() or "Atlas no ha generado una respuesta.")
+                            response = GatewayResponse(str(result).strip() or "No se ha generado una respuesta.")
                         except FutureTimeout:
                             future.cancel()
                             self._record_processing_error(error_key, error_count)
                             audit_result = "timeout"
                             audit_error = "core_timeout"
-                            response = GatewayResponse("Atlas ha tardado demasiado en responder. Intentalo de nuevo.")
+                            response = GatewayResponse(f"{assistant_name} ha tardado demasiado en responder. Intentalo de nuevo.")
                         except Exception as exc:
                             self._record_processing_error(error_key, error_count)
                             audit_result = "error"
@@ -167,7 +168,12 @@ class TelegramGateway:
             )
             return response
 
-    def _handle_media_message(self, message: TelegramMessage | None = None) -> GatewayResponse:
+    def _handle_media_message(
+        self,
+        message: TelegramMessage | None = None,
+        *,
+        atlas_user_id: str | None = None,
+    ) -> GatewayResponse:
         """Gestiona medios en cuarentena y mantiene compatibilidad histórica."""
         if message is None:
             message = self
@@ -195,7 +201,7 @@ class TelegramGateway:
                     media_type=message.media_type,
                     mime_type=message.mime_type,
                     caption=caption,
-                    user_id=message.user.telegram_user_id,
+                    user_id=atlas_user_id or message.user.telegram_user_id,
                 )
                 if result:
                     return GatewayResponse(str(result).strip())
@@ -286,10 +292,20 @@ class TelegramGateway:
         if command == "help":
             if state is not TelegramAccountState.LINKED:
                 return GatewayResponse("Comandos disponibles: /start, /help, /status, /whoami y /cancel.")
-            return GatewayResponse(
-                "Comandos disponibles: /start, /help, /status, /whoami, /assistant, "
-                "/daxter, /coco, /unlink y /cancel."
+            permissions = frozenset(self.permission_resolver(atlas_user_id))
+            context = TelegramRequestContext(
+                channel="telegram",
+                atlas_user_id=atlas_user_id,
+                session_id=f"telegram:{message.user.telegram_user_id}:{message.user.chat_id}",
+                telegram_user_id=message.user.telegram_user_id,
+                chat_id=message.user.chat_id,
+                message_id=message.message_id,
+                timestamp=message.timestamp,
+                active_personality=self.core.active_personality(atlas_user_id),
+                authentication_state=state,
+                permissions=permissions,
             )
+            return GatewayResponse(str(self.core.process("ayuda", context)).strip())
         if command == "status":
             if state is TelegramAccountState.LINKED and atlas_user_id:
                 return GatewayResponse(

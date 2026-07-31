@@ -151,6 +151,7 @@ class AtlasCommandsMixin:
                     channel=channel,
                     guest_session=self.guest_sessions.get(),
                     own_bot=bool(help_user.get("own_bot", True)),
+                    request_text=original_text,
                 )
             )
             return True
