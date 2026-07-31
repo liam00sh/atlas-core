@@ -139,6 +139,16 @@ class HomeIntentService:
         self._last_permission_denied_message = message
         return message
 
+    def _guest_presence_is_not_verified(self, user_id: str) -> bool:
+        """Aplica denegación segura si la presencia doméstica falla o no consta."""
+
+        try:
+            return self.environment.is_guest(
+                user_id
+            ) and not self.environment.is_guest_present(user_id)
+        except Exception:
+            return True
+
     def _assistant_key(self) -> str:
         name = ""
         if callable(self._assistant_name_provider):
@@ -314,10 +324,7 @@ class HomeIntentService:
                 )
 
             normalized_user_id = self.environment.normalize_user_id(user_id)
-            if (
-                self.environment.is_guest(normalized_user_id)
-                and not self.environment.is_guest_present(normalized_user_id)
-            ):
+            if self._guest_presence_is_not_verified(normalized_user_id):
                 return HomeIntentResponse(
                     handled=True,
                     message=self._guest_absent_message(),
@@ -406,10 +413,7 @@ class HomeIntentService:
             )
 
         normalized_user_id = self.environment.normalize_user_id(user_id)
-        if (
-            self.environment.is_guest(normalized_user_id)
-            and not self.environment.is_guest_present(normalized_user_id)
-        ):
+        if self._guest_presence_is_not_verified(normalized_user_id):
             return HomeIntentResponse(
                 handled=True,
                 message=self._guest_absent_message(),

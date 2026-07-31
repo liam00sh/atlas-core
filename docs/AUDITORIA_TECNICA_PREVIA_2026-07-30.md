@@ -781,3 +781,44 @@ definir su política explícita y adaptador autorizado. El análisis avanzado de
 contenido multimedia y la persistencia durable de una cola de salida siguen
 **pendientes** y no se presentan como funciones disponibles. No se añadió voz,
 no se cambió la arquitectura general y no se ejecutaron recuperaciones reales.
+
+## 7. Revisión focal de ayuda y ejecución doméstica (2026-07-31)
+
+La revisión previa al Pull Request detectó que `GUEST_HELP_CAPABILITIES`
+incluía `home.read`, `home.control.light` y `home.control.switch`, aunque el
+modelo real de `GuestSession` deniega expresamente `home_assistant`. No existía
+una justificación técnica para publicar controles domésticos como capacidad
+base de un invitado temporal. Las tres capacidades se retiraron de esa base;
+los usuarios domésticos solo las ven cuando sus permisos efectivos las
+conceden y el contexto de presencia satisface la política vigente.
+
+También se comprobó una diferencia en el caso de presencia desconocida: la
+ayuda denegaba de forma segura si el proveedor de presencia fallaba, pero la
+ejecución no capturaba esa excepción. `HomeIntentService` aplica ahora la misma
+denegación ante ausencia o presencia no verificable. Por último, la ayuda
+aproximada interceptaba la orden imperativa válida `crear perfil de usuario
+para ...` antes de que alcanzara el manejador determinista `owner_only`. La
+orden reconocida continúa ahora hacia ese manejador, que autoriza a REDACTED_2c7b6821719d y
+deniega al resto.
+
+Se añadió `tests/test_help_execution_equivalence.py`, que construye `Atlas`
+real y recorre `Atlas.process()` con Home Assistant simulado y persistencia en
+`tmp_path`. Cubre REDACTED_bc04a68d9192 en casa, fuera y con presencia desconocida; REDACTED_aebac53c46bb sin
+permiso; administrador no propietario; REDACTED_2c7b6821719d propietario; e invitado temporal.
+Para este último verifica ayuda general, búsqueda exacta, alias, aproximación,
+intención y ejecución doméstica/administrativa.
+
+Resultados:
+
+- tests focalizados, repetición 1: 41 superados;
+- tests focalizados, repetición 2: 41 superados;
+- `python -m pytest --collect-only -q`: 910 tests recopilados;
+- `python -m pytest -q`: 910 tests y 2.324 subtests superados, cero fallos y
+  cero errores, en 256,40 segundos;
+- `python -m compileall .`: código 0;
+- `git diff --check`: sin errores.
+
+Los hashes SHA-256 de `identity/data/people.json`, `animals.json` y
+`relationships.json` permanecieron idénticos antes y después de pytest, y el
+conjunto de `git status --porcelain` no cambió por la suite. No se contactó
+Home Assistant, Telegram, Raspberry, Ollama ni ningún servicio real.

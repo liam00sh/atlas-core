@@ -49,9 +49,6 @@ GUEST_HELP_CAPABILITIES = frozenset({
     "games",
     "jokes",
     "public_family_relationships",
-    "home.read",
-    "home.control.light",
-    "home.control.switch",
     "help",
 })
 
@@ -863,6 +860,17 @@ def handle_command_help_request(
             body = "\n\n".join(_entry_detail(entry) for entry in matches)
             return lead + body + "\n\nNo he ejecutado nada; solo te he indicado cómo hacerlo."
         return _unavailable_reason(topic, context) + " No he ejecutado nada."
+
+    # Esta forma imperativa pertenece al manejador determinista de perfiles.
+    # No debe convertirse en una recomendación aproximada antes de que dicho
+    # manejador aplique la política owner_only y ejecute o deniegue la acción.
+    if re.match(
+        r"^(?:crear|crea|anadir|anade|dar de alta) "
+        r"(?:un )?perfil(?: de usuario| atlas)? (?:para|a|de) .+?$",
+        n,
+    ):
+        return None
+
     if "crear" in n and ("usuario" in n or n.startswith("crear us")):
         matches = suggest_entries("crear usuario", context=context)
         return (
