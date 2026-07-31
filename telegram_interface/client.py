@@ -12,10 +12,20 @@ from urllib.request import Request, urlopen
 
 
 class TelegramClientError(RuntimeError):
-    def __init__(self, message: str, *, code: str = "telegram_api_error", retryable: bool = False) -> None:
+    def __init__(
+        self,
+        message: str,
+        *,
+        code: str = "telegram_api_error",
+        retryable: bool = False,
+        kind: str | None = None,
+        retry_after: float | None = None,
+    ) -> None:
         super().__init__(message)
         self.code = code
         self.retryable = retryable
+        self.kind = kind or ("transient" if retryable else "permanent")
+        self.retry_after = retry_after
 
 
 class TelegramClientProtocol(Protocol):
@@ -47,23 +57,36 @@ class TelegramBotClient:
             with self._opener(request, timeout=timeout) as response:
                 decoded = json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
+            retryable = exc.code == 429 or exc.code >= 500
             raise TelegramClientError(
                 f"Telegram rechazo la operacion HTTP {exc.code}.",
                 code=f"telegram_http_{exc.code}",
-                retryable=exc.code == 429 or exc.code >= 500,
+                retryable=retryable,
+                kind="rate_limit" if exc.code == 429 else ("transient" if retryable else "permanent"),
             ) from None
         except (URLError, TimeoutError, socket.timeout, OSError, json.JSONDecodeError):
             raise TelegramClientError(
                 "No se pudo comunicar de forma valida con Telegram.",
                 code="telegram_unavailable",
                 retryable=True,
+                kind="transient",
             ) from None
         if not isinstance(decoded, dict) or decoded.get("ok") is not True:
             error_code = decoded.get("error_code") if isinstance(decoded, dict) else None
+            retry_after = None
+            parameters = decoded.get("parameters") if isinstance(decoded, dict) else None
+            if isinstance(parameters, dict) and parameters.get("retry_after") is not None:
+                try:
+                    retry_after = max(0.0, float(parameters["retry_after"]))
+                except (TypeError, ValueError):
+                    retry_after = None
+            retryable = error_code == 429 or bool(error_code and error_code >= 500)
             raise TelegramClientError(
                 "Telegram devolvio un resultado no valido.",
                 code=f"telegram_api_{error_code or 'unknown'}",
-                retryable=error_code == 429 or bool(error_code and error_code >= 500),
+                retryable=retryable,
+                kind="rate_limit" if error_code == 429 else ("transient" if retryable else "permanent"),
+                retry_after=retry_after,
             )
         return decoded.get("result")
 

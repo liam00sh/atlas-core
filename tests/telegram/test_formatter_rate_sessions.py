@@ -19,7 +19,22 @@ def test_long_response_is_fragmented_and_numbered():
 
 
 def test_empty_response_has_safe_fallback():
-    assert split_message("  ") == ["Atlas no ha generado una respuesta."]
+    assert split_message("  ") == ["No se ha generado una respuesta."]
+
+
+def test_exact_limit_and_unicode_do_not_create_empty_chunks():
+    exact = "á" * 128
+    assert split_message(exact, limit=128) == [exact]
+    chunks = split_message(("😀 párrafo\n\n" * 80).strip(), limit=128)
+    assert chunks
+    assert all(chunk and len(chunk) <= 128 for chunk in chunks)
+
+
+def test_plain_long_message_preserves_content_without_duplication():
+    original = ("uno dos tres\n\n" * 80).strip()
+    chunks = split_message(original, limit=140)
+    payload = "".join(chunk.split("\n", 1)[1] for chunk in chunks)
+    assert payload == original
 
 
 def test_code_block_is_closed_and_reopened_when_fragmented():

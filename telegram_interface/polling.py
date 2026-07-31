@@ -4,13 +4,12 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from dataclasses import replace
 from datetime import UTC, datetime
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import hashlib
-import mimetypes
 import os
 import random
 import threading
-from time import sleep, monotonic
+from time import sleep, monotonic, time as wall_time
 from typing import Callable
 
 from telegram_interface.client import TelegramClientError, TelegramClientProtocol
@@ -42,6 +41,10 @@ class TelegramPoller:
         scheduler: ConversationScheduler | None = None,
         owner_user_id: str = "REDACTED_2c7b6821719d",
         lifecycle_notifier=None,
+        media_root: str | Path | None = None,
+        media_max_bytes: int | None = None,
+        media_ttl_hours: int | None = None,
+        wall_clock: Callable[[], float] = wall_time,
     ) -> None:
         self.client = client
         self.gateway = gateway
@@ -63,9 +66,10 @@ class TelegramPoller:
         self.scheduler = scheduler or ConversationScheduler(owner_user_id=owner_user_id)
         self.lifecycle_notifier = lifecycle_notifier
         root = Path(__file__).resolve().parents[1]
-        self.media_root = root / "data" / "telegram_media" / "quarantine"
-        self.media_max_bytes = int(os.getenv("ATLAS_TELEGRAM_MEDIA_MAX_BYTES", str(25 * 1024 * 1024)))
-        self.media_ttl_hours = int(os.getenv("ATLAS_TELEGRAM_MEDIA_TTL_HOURS", "24"))
+        self.media_root = Path(media_root) if media_root is not None else root / "data" / "telegram_media" / "quarantine"
+        self.media_max_bytes = int(media_max_bytes if media_max_bytes is not None else os.getenv("ATLAS_TELEGRAM_MEDIA_MAX_BYTES", str(25 * 1024 * 1024)))
+        self.media_ttl_hours = int(media_ttl_hours if media_ttl_hours is not None else os.getenv("ATLAS_TELEGRAM_MEDIA_TTL_HOURS", "24"))
+        self.wall_clock = wall_clock
 
     def validate_long_polling(self) -> None:
         info = self.client.get_webhook_info()
@@ -82,6 +86,7 @@ class TelegramPoller:
 
     def run(self, *, max_cycles: int | None = None) -> None:
         self.validate_long_polling()
+        self._cleanup_expired_media()
         if self.lifecycle_notifier is not None:
             self.lifecycle_notifier.notify_start()
         offset = self.storage.get_offset()
@@ -115,8 +120,13 @@ class TelegramPoller:
                     if not exc.retryable:
                         raise
                     failures += 1
-                    delay = min(60.0, 1.0 * (2 ** min(failures - 1, 6)))
-                    delay += self.random_source() * min(1.0, delay / 4)
+                    delay = (
+                        min(60.0, exc.retry_after)
+                        if exc.kind == "rate_limit" and exc.retry_after is not None
+                        else min(60.0, 1.0 * (2 ** min(failures - 1, 6)))
+                    )
+                    if exc.kind != "rate_limit":
+                        delay += self.random_source() * min(1.0, delay / 4)
                     self.sleeper(delay)
         finally:
             if max_cycles is not None:
@@ -140,15 +150,40 @@ class TelegramPoller:
             "document": {"application/pdf", "text/plain", "text/csv", "application/json", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
             "animation": {"video/mp4", "image/gif"},
         }
-        mime = (message.mime_type or mimetypes.guess_type(message.file_name or "")[0] or "application/octet-stream").casefold()
+        inferred_transport_mime = {
+            "photo": "image/jpeg",
+            "voice": "audio/ogg",
+        }.get(message.media_type)
+        # Para documentos y audios no se confía en el sufijo aportado por el
+        # remitente. El tipo debe venir en los metadatos de Telegram.
+        mime = (message.mime_type or inferred_transport_mime or "application/octet-stream").casefold()
         if mime not in allowed.get(message.media_type, set()):
             return replace(message, media_status="rejected_type")
         try:
             metadata = self.client.get_file(file_id=message.file_id)
             remote_path = str(metadata.get("file_path") or "").strip()
-            if not remote_path:
+            remote_parts = PurePosixPath(remote_path).parts
+            if (
+                not remote_path
+                or "://" in remote_path
+                or ".." in remote_parts
+                or remote_path.startswith(("/", "\\"))
+            ):
                 return replace(message, media_status="metadata_missing")
-            extension = Path(message.file_name or remote_path).suffix[:10] or mimetypes.guess_extension(mime) or ".bin"
+            declared_size = int(metadata.get("file_size") or 0)
+            if declared_size and declared_size > self.media_max_bytes:
+                return replace(message, media_status="rejected_too_large")
+            extension = {
+                "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp",
+                "audio/ogg": ".ogg", "audio/opus": ".opus", "audio/mpeg": ".mp3",
+                "audio/mp4": ".m4a", "audio/wav": ".wav", "audio/x-wav": ".wav",
+                "video/mp4": ".mp4", "video/webm": ".webm", "image/gif": ".gif",
+                "application/pdf": ".pdf", "text/plain": ".txt", "text/csv": ".csv",
+                "application/json": ".json",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
+                "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+            }.get(mime, ".bin")
             digest = hashlib.sha256(f"{message.user.telegram_user_id}:{message.message_id}:{message.file_id}".encode()).hexdigest()[:24]
             day = datetime.now(UTC).strftime("%Y-%m-%d")
             destination = self.media_root / day / f"{digest}{extension}"
@@ -156,6 +191,32 @@ class TelegramPoller:
             return replace(message, local_path=str(path), media_status="quarantined")
         except TelegramClientError as exc:
             return replace(message, media_status=exc.code)
+
+    def _cleanup_message_media(self, message: TelegramMessage) -> None:
+        if not message.local_path:
+            return
+        path = Path(message.local_path)
+        try:
+            path.resolve().relative_to(self.media_root.resolve())
+        except (OSError, ValueError):
+            return
+        try:
+            path.unlink(missing_ok=True)
+        except OSError:
+            return
+
+    def _cleanup_expired_media(self) -> None:
+        if not self.media_root.exists():
+            return
+        cutoff = self.wall_clock() - max(0, self.media_ttl_hours) * 3600
+        for path in self.media_root.rglob("*"):
+            if not path.is_file():
+                continue
+            try:
+                if path.stat().st_mtime <= cutoff:
+                    path.unlink(missing_ok=True)
+            except OSError:
+                continue
 
     def _submit_message(self, message: TelegramMessage) -> None:
         linker = getattr(self.gateway, "linker", None)
@@ -176,16 +237,26 @@ class TelegramPoller:
                 if response is not None:
                     self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
             finally:
+                self._cleanup_message_media(message)
                 finish_pending()
 
         def failed(_exc: BaseException) -> None:
             try:
+                assistant_name = "El asistente"
+                try:
+                    if atlas_user_id and hasattr(self.gateway.core, "active_personality"):
+                        assistant_name = str(
+                            self.gateway.core.active_personality(atlas_user_id)
+                        ).strip().capitalize() or assistant_name
+                except Exception:
+                    pass
                 self._send_chunks(
                     message.user.chat_id,
-                    "Atlas no pudo procesar el mensaje de forma segura. Inténtalo de nuevo.",
+                    f"{assistant_name} no pudo procesar el mensaje de forma segura. Inténtalo de nuevo.",
                     None,
                 )
             finally:
+                self._cleanup_message_media(message)
                 finish_pending()
 
         with self._pending_condition:
