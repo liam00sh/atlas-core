@@ -4,6 +4,51 @@ Fecha: 30 de julio de 2026
 Estado: informe previo a cualquier saneamiento o corrección  
 Alcance: `04 - Python/atlas_core`, documentación local y documentación oficial de Google Drive
 
+## Actualización: reparación aislada de monitorización
+
+Repositorio de trabajo: `C:\Proyectos\Atlas\atlas_core`
+Estado del bloque: reparación aplicada y pruebas focalizadas superadas; la
+validación global queda detenida por un nuevo error de colección ajeno a
+monitorización.
+
+### Causa confirmada
+
+`monitoring/supervisor.py` conservaba el supervisor antiguo basado en
+`ServiceHealth`, mientras `monitoring/bootstrap.py` y los tests utilizaban el
+contrato moderno con `SupervisorProbe`, `HealthCheckResult`, `IncidentManager`,
+`NotificationRouter` y `DesktopStateWriter`. Ambos diseños entraron juntos en el
+mismo checkpoint Git, por lo que no existía una versión histórica coherente que
+restaurar.
+
+### Reparación aplicada
+
+- Un único `AtlasSupervisor` moderno con sondas inyectables.
+- Sondas predeterminadas para el consumidor real `monitoring/run_supervisor.py`.
+- Eliminación de `ServiceHealth`, sin consumidores reales de ejecución.
+- Aislamiento de excepciones por sonda y continuación del resto del ciclo.
+- Conversión de fallos en `HealthCheckResult` saneados.
+- Integración de incidencias, notificaciones y estado de escritorio.
+- Timeouts finitos para HTTP, SSH y configuración temporal.
+- Espera interrumpible y cierre limpio.
+- Migración del test legado de serialización al modelo compartido.
+
+### Validación ejecutada
+
+- `python -m pytest tests/test_monitoring_supervisor.py -vv`: 5 tests superados.
+- `python -m pytest --collect-only -q`: 829 tests recopilados y 8 errores de
+  colección ajenos a monitorización.
+- `python -m pytest -q`: no ejecutado, porque la instrucción de auditoría obliga
+  a detenerse ante un nuevo bloqueo de colección.
+
+### Siguiente bloqueo
+
+Ocho tests de integración fallan al importar `core.atlas` porque no existe el
+paquete `ai.models`, aunque `core/atlas.py`, `main.py`,
+`scripts/run_telegram_bot.py` y la copia histórica del núcleo importan
+`ai.models.model_registry.ModelRegistry`. La carpeta tampoco aparece en las
+ramas y commits comprobados. Este defecto debe analizarse como el siguiente
+bloque independiente antes de reanudar la suite completa o la limpieza general.
+
 ## 1. Condiciones de partida
 
 El árbol de trabajo ya contenía numerosos cambios sin confirmar y archivos nuevos

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 from monitoring.desktop_state import DesktopStateWriter
 from monitoring.incident_manager import IncidentManager
@@ -18,6 +18,16 @@ def _env_bool(name: str, default: bool = False) -> bool:
     if value is None:
         return default
     return value.strip().casefold() in {"1", "true", "yes", "on", "sí", "si"}
+
+
+def _env_float(name: str, default: float, *, minimum: float) -> float:
+    try:
+        value = float(os.getenv(name, str(default)))
+    except (TypeError, ValueError):
+        return default
+    if value != value or value in {float("inf"), float("-inf")}:
+        return default
+    return max(minimum, value)
 
 
 def build_supervisor(
@@ -36,7 +46,11 @@ def build_supervisor(
             host=host,
             user=user,
             ssh_port=int(os.getenv("ATLAS_RASPBERRY_SSH_PORT", "22")),
-            timeout_seconds=float(os.getenv("ATLAS_RASPBERRY_TIMEOUT", "6")),
+            timeout_seconds=_env_float(
+                "ATLAS_RASPBERRY_TIMEOUT",
+                6.0,
+                minimum=0.1,
+            ),
             sd_mount=os.getenv("ATLAS_RASPBERRY_SD_MOUNT", "/"),
             usb_mount=os.getenv("ATLAS_RASPBERRY_USB_MOUNT", "/mnt/atlas-storage"),
         )
@@ -75,8 +89,10 @@ def build_supervisor(
                 "data/monitoring/supervisor_status.json",
             )
         ),
-        interval_seconds=float(
-            os.getenv("ATLAS_SUPERVISOR_INTERVAL", "15")
+        interval_seconds=_env_float(
+            "ATLAS_SUPERVISOR_INTERVAL",
+            15.0,
+            minimum=0.0,
         ),
     )
     return supervisor, monitor

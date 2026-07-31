@@ -6,8 +6,6 @@ Archivo: monitoring/run_supervisor.py
 from __future__ import annotations
 
 import signal
-import time
-
 from monitoring.env_loader import load_monitoring_env
 from monitoring.supervisor import AtlasSupervisor
 
@@ -27,10 +25,13 @@ def main() -> int:
         signal.signal(signal.SIGTERM, _stop)
 
     supervisor = AtlasSupervisor()
-
-    while not _STOP:
-        supervisor.run_once()
-        time.sleep(10)
+    try:
+        while not _STOP:
+            supervisor.run_once()
+            if supervisor.wait(supervisor.interval_seconds):
+                break
+    finally:
+        supervisor.close()
 
     return 0
 

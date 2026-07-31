@@ -1,18 +1,19 @@
 import json
+from dataclasses import asdict
 from pathlib import Path
 
-from monitoring.supervisor import ServiceHealth
+from monitoring.models import HealthCheckResult, HealthState
 
 
-def test_service_health_serializable():
-    health = ServiceHealth(
-        name="atlas_core",
-        healthy=True,
-        managed=True,
-        detail="ok",
-        pid=123,
+def test_health_check_result_serializable():
+    health = HealthCheckResult(
+        check_id="atlas_core",
+        display_name="Atlas Core",
+        state=HealthState.OK,
+        available=True,
+        details={"managed": True, "pid": 123},
     )
-    payload = json.dumps(health.__dict__)
+    payload = json.dumps(asdict(health))
     assert "atlas_core" in payload
 
 

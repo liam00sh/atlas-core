@@ -1,4 +1,4 @@
-from pathlib import Path
+import json
 
 from monitoring.desktop_state import DesktopStateWriter
 from monitoring.incident_manager import IncidentManager
@@ -97,3 +97,93 @@ def test_supervisor_writes_status(tmp_path):
     text = status_path.read_text(encoding="utf-8")
     assert '"raspberry"' in text
     assert '"sd"' in text
+
+
+def test_failing_probe_does_not_stop_other_probes(tmp_path):
+    notifications = []
+    router = NotificationRouter(
+        send_private=lambda *args: notifications.append(args) or True,
+    )
+    manager = IncidentManager(
+        tmp_path / "incidents.json",
+    )
+    status_path = tmp_path / "status.json"
+
+    def fail():
+        raise RuntimeError("token=secret-value")
+
+    healthy = HealthCheckResult(
+        check_id="ollama",
+        display_name="Ollama",
+        state=HealthState.OK,
+        available=True,
+        message="Disponible.",
+    )
+    supervisor = AtlasSupervisor(
+        probes=[
+            SupervisorProbe("home_assistant", fail),
+            SupervisorProbe("ollama", lambda: healthy),
+        ],
+        incident_manager=manager,
+        notification_router=router,
+        state_writer=DesktopStateWriter(status_path),
+        interval_seconds=0,
+    )
+
+    results = supervisor.run_once()
+
+    assert [item.check_id for item in results] == ["home_assistant", "ollama"]
+    assert results[0].error_code == "probe_exception"
+    assert "secret-value" not in (results[0].message or "")
+    assert results[1] is healthy
+    assert len(manager.active_incidents()) == 1
+    assert notifications
+    payload = json.loads(status_path.read_text(encoding="utf-8"))
+    assert set(payload["supervisor"]["checks"]) == {
+        "home_assistant",
+        "ollama",
+    }
+
+
+def test_probe_recovery_resolves_incident_and_close_is_clean(tmp_path):
+    notifications = []
+    router = NotificationRouter(
+        send_private=lambda *args: notifications.append(args) or True,
+    )
+    manager = IncidentManager(tmp_path / "incidents.json")
+    state = {"healthy": False}
+
+    def check():
+        healthy = state["healthy"]
+        return HealthCheckResult(
+            check_id="ollama",
+            display_name="Ollama",
+            state=HealthState.OK if healthy else HealthState.ERROR,
+            available=healthy,
+            message="Disponible." if healthy else "No responde.",
+        )
+
+    supervisor = AtlasSupervisor(
+        probes=[SupervisorProbe("ollama", check)],
+        incident_manager=manager,
+        notification_router=router,
+        state_writer=DesktopStateWriter(tmp_path / "status.json"),
+        interval_seconds=0,
+    )
+
+    supervisor.run_once()
+    assert len(manager.active_incidents()) == 1
+    state["healthy"] = True
+    supervisor.run_once()
+    assert manager.active_incidents() == []
+    assert len(notifications) == 2
+
+    supervisor.close()
+    assert supervisor.closed
+    assert supervisor.wait(0)
+    try:
+        supervisor.run_once()
+    except RuntimeError as exc:
+        assert "cerrado" in str(exc)
+    else:
+        raise AssertionError("run_once debe rechazar ciclos tras close()")
