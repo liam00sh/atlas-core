@@ -1,6 +1,11 @@
+import os
+import shutil
 import sys
+import tempfile
 import types
 from pathlib import Path
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -72,3 +77,76 @@ if "memory.visibility" not in sys.modules:
 
     module.normalize_visibility = _normalize_visibility
     sys.modules["memory.visibility"] = module
+
+
+def pytest_configure(config):
+    """Redirige toda persistencia de identidad y perfiles antes de recoger tests."""
+
+    sandbox = tempfile.TemporaryDirectory(prefix="atlas-pytest-")
+    sandbox_root = Path(sandbox.name)
+    identity_data = sandbox_root / "identity"
+    user_data = sandbox_root / "users"
+
+    shutil.copytree(ROOT / "identity" / "data", identity_data)
+    user_data.mkdir(parents=True, exist_ok=True)
+
+    environment = {
+        "ATLAS_IDENTITY_DATA_DIR": str(identity_data),
+        "ATLAS_USER_DATA_DIR": str(user_data),
+        "ATLAS_TELEGRAM_DATA_DIR": str(sandbox_root / "telegram"),
+        "ATLAS_INCIDENTS_PATH": str(sandbox_root / "monitoring" / "incidents.json"),
+        "ATLAS_SUPERVISOR_STATUS_PATH": str(
+            sandbox_root / "monitoring" / "supervisor_status.json"
+        ),
+    }
+    previous_environment = {
+        name: os.environ.get(name)
+        for name in environment
+    }
+    os.environ.update(environment)
+
+    config._atlas_persistence_sandbox = sandbox
+    config._atlas_previous_environment = previous_environment
+
+
+@pytest.fixture(autouse=True)
+def isolate_persistent_data(tmp_path, monkeypatch):
+    """Entrega a cada test una copia independiente de los datos persistentes."""
+
+    identity_data = tmp_path / "identity"
+    user_data = tmp_path / "users"
+    monitoring_data = tmp_path / "monitoring"
+    shutil.copytree(ROOT / "identity" / "data", identity_data)
+    user_data.mkdir(parents=True, exist_ok=True)
+    monitoring_data.mkdir(parents=True, exist_ok=True)
+
+    monkeypatch.setenv("ATLAS_IDENTITY_DATA_DIR", str(identity_data))
+    monkeypatch.setenv("ATLAS_USER_DATA_DIR", str(user_data))
+    monkeypatch.setenv("ATLAS_TELEGRAM_DATA_DIR", str(tmp_path / "telegram"))
+    monkeypatch.setenv(
+        "ATLAS_INCIDENTS_PATH",
+        str(monitoring_data / "incidents.json"),
+    )
+    monkeypatch.setenv(
+        "ATLAS_SUPERVISOR_STATUS_PATH",
+        str(monitoring_data / "supervisor_status.json"),
+    )
+
+
+def pytest_unconfigure(config):
+    """Restaura solo el entorno del proceso y elimina el sandbox temporal."""
+
+    previous_environment = getattr(
+        config,
+        "_atlas_previous_environment",
+        {},
+    )
+    for name, previous_value in previous_environment.items():
+        if previous_value is None:
+            os.environ.pop(name, None)
+        else:
+            os.environ[name] = previous_value
+
+    sandbox = getattr(config, "_atlas_persistence_sandbox", None)
+    if sandbox is not None:
+        sandbox.cleanup()

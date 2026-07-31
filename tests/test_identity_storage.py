@@ -54,6 +54,38 @@ class IdentityStorageTests(unittest.TestCase):
         self.assertTrue(manager.delete_person(mother.id))
         self.assertEqual(self.storage.load_relationships(), [])
 
+    def test_rejects_relationship_with_missing_endpoint(self):
+        mother = Person(name="REDACTED_aebac53c46bb")
+        missing_child = Person(name="REDACTED_2c7b6821719d")
+        self.storage.add_person(mother)
+        relationship = Relationship(
+            source_entity_id=mother.id,
+            relationship_type=MOTHER,
+            target_entity_id=missing_child.id,
+        )
+
+        with self.assertRaisesRegex(ValueError, "destino inexistente"):
+            self.storage.add_relationship(relationship)
+
+        self.assertEqual(self.storage.load_relationships(), [])
+
+    def test_rejects_relationship_endpoint_with_wrong_entity_type(self):
+        mother = Person(name="REDACTED_aebac53c46bb")
+        child = Person(name="REDACTED_2c7b6821719d")
+        self.storage.add_person(mother)
+        self.storage.add_person(child)
+        relationship = Relationship(
+            source_entity_id=mother.id,
+            source_entity_type="animal",
+            relationship_type=MOTHER,
+            target_entity_id=child.id,
+        )
+
+        with self.assertRaisesRegex(ValueError, "origen inexistente"):
+            self.storage.add_relationship(relationship)
+
+        self.assertEqual(self.storage.load_relationships(), [])
+
 
 if __name__ == "__main__":
     unittest.main()

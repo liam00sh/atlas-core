@@ -4,6 +4,102 @@ Fecha: 30 de julio de 2026
 Estado: informe previo a cualquier saneamiento o corrección  
 Alcance: `04 - Python/atlas_core`, documentación local y documentación oficial de Google Drive
 
+## Intervención: aislamiento de pytest e integridad de relaciones — 31 de julio de 2026
+
+Estado del bloque: **completado**. Los fallos restantes de la suite completa no
+pertenecen a persistencia de identidad, relaciones, perfiles efectivos ni
+biografías.
+
+### Causas raíz confirmadas
+
+1. `IdentityStorage()` y `UserManager()` resolvían sus rutas predeterminadas
+   directamente dentro del proyecto. Los tests unitarios de bajo nivel sí
+   inyectaban carpetas temporales, pero los tests que construían `Atlas` o
+   `UserManager` utilizaban esas rutas reales. Por eso una visita simulada podía
+   modificar el contador y la fecha de último encuentro de `people.json`.
+2. El commit de checkpoint `3e2e584` contenía dos generaciones concatenadas de
+   relaciones: 255 registros creados con los UUID anteriores y 254 registros
+   creados tras regenerar los UUID de las 44 personas. Los primeros 255 tenían
+   al menos un extremo inexistente; los últimos 254 formaban un grafo completo,
+   sin autorrelaciones ni duplicados exactos.
+3. `RelationshipEngine` ya comprobaba los extremos al crear relaciones, pero
+   `IdentityStorage.save_relationships()` y `add_relationship()` permitían
+   persistir objetos con IDs inexistentes o con un tipo de entidad incorrecto.
+4. La resolución conversacional aceptaba subsecuencias y similitud textual. Esa
+   heurística podía tratar `Salvador Vicente` como `REDACTED_103e3365dd76` sin
+   un alias verificado. Además, faltaba declarar `REDACTED_38b7adc65154` como
+   alias verificado de `REDACTED_e3b252570a2f`.
+5. El extractor de residencia de perfiles efectivos consumía también la frase
+   `y ha vivido en ...`, produciendo ubicaciones derivadas incorrectas.
+
+### Solución aplicada
+
+- `ATLAS_IDENTITY_DATA_DIR` y `ATLAS_USER_DATA_DIR` permiten redirigir la
+  persistencia sin cambiar el comportamiento de producción cuando no están
+  definidas.
+- `tests/conftest.py` crea un sandbox antes de la colección y una copia
+  independiente por test mediante `tmp_path`. También redirige las rutas
+  configurables de Telegram e incidencias de monitorización. No restaura datos
+  reales: impide que se abran para escritura durante pytest.
+- La capa de almacenamiento valida ambos extremos y su tipo antes de escribir
+  una colección de relaciones.
+- Se eliminaron mecánicamente solo los 255 registros huérfanos demostrados de
+  `identity/data/relationships.json`; se conservaron intactos los 254 registros
+  con extremos existentes.
+- La resolución de personas conserva coincidencias exactas por nombre o alias
+  y las aclaraciones basadas en relaciones verificadas, pero elimina la
+  selección automática por subsecuencia o similitud. `Salvador Vicente` ya no
+  se resuelve como `REDACTED_103e3365dd76`.
+- `REDACTED_38b7adc65154` se añadió como alias declarativo exclusivo de `REDACTED_342ad0893cb2
+  Carreres López` en la fuente familiar y en el JSON persistente.
+- El extractor biográfico separa correctamente residencia actual y residencias
+  anteriores.
+
+### Archivos modificados
+
+- Producción: `core/atlas_ai.py`, `core/user_manager.py`,
+  `identity/identity_storage.py`, `identity/family_data.py`.
+- Datos corregidos: `identity/data/people.json`,
+  `identity/data/relationships.json`.
+- Infraestructura de tests: `tests/conftest.py`.
+- Tests añadidos o corregidos: `tests/test_pytest_persistence_isolation.py`,
+  `tests/test_identity_storage.py`, `tests/test_family_data.py`,
+  `tests/test_family_initializer.py`,
+  `tests/test_person_reference_resolution.py` y
+  `tests/test_conversation_identity_regressions.py`.
+- Registro final: este documento.
+
+### Validación realizada
+
+- Aislamiento y almacenamiento, repetición 1: 9 superados en 0,31 s.
+- Aislamiento y almacenamiento, repetición 2: 9 superados en 0,18 s.
+- Relaciones, familia, perfiles y biografías: 126 superados, 1 test de ayuda
+  ajeno al bloque deseleccionado y 2.290 subtests superados en 123,28 s.
+- `python -m pytest --collect-only -q`: 863 tests recopilados en 0,48 s, sin
+  errores.
+- `python -m pytest -q`: 858 superados, 5 fallos, 2.324 subtests superados y 0
+  errores en 176,49 s.
+- Los SHA-256 de `people.json`, `animals.json` y `relationships.json` fueron
+  idénticos antes y después de cada repetición y de la suite completa. El
+  conjunto mostrado por `git status --porcelain` tampoco cambió durante las
+  ejecuciones; no se utilizó restauración posterior.
+
+### Riesgos y fallos pendientes
+
+- Ayuda y permisos: 2 fallos (`test_help_without_context_hides_owner_commands`
+  y `test_REDACTED_f73137d930c3_owner_sees_admin_commands`).
+- Interpretación meteorológica: 2 fallos
+  (`test_weather_without_location_uses_home_location` y
+  `test_august_request_does_not_fake_current_forecast`).
+- Saludos deterministas: 1 fallo
+  (`test_common_greetings_are_deterministic`) por un fixture que no proporciona
+  `guest_sessions` para `Buenas noches`.
+- `tests/__tmp_conftest_pytest_temp_fixed.py` continúa como artefacto histórico
+  versionado; no se eliminó porque esta intervención no autoriza limpieza
+  histórica general.
+- No se ejecutaron Home Assistant, Raspberry, automatizaciones reales,
+  Telegram, Ollama ni pruebas remotas.
+
 ## Actualización de continuidad — 31 de julio de 2026
 
 Estado del bloque: **parcialmente completado**. El bloqueo de colección causado
