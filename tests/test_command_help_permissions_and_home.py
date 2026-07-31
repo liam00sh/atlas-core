@@ -25,6 +25,8 @@ def test_explicit_category_permissions_filter_help():
         {
             "role": "friend",
             "help_categories": {"General", "Hogar y Home Assistant"},
+            "permissions": {"conversation", "home.control.light", "home.control.switch"},
+            "presence": "home_verified",
         }
     )
     assert "HOGAR Y HOME ASSISTANT" in text
