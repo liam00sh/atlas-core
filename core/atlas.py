@@ -789,25 +789,69 @@ class Atlas(AtlasAIMixin,
 
 
     def get_effective_help_user(self) -> dict:
+        """
+        Devuelve el contexto real de permisos utilizado por la ayuda.
+
+        Los perfiles de ``UserManager`` son diccionarios y almacenan sus
+        privilegios en ``roles``. La implementación anterior intentaba leer
+        atributos de objeto (``profile.role``), por lo que REDACTED_2c7b6821719d acababa con rol
+        vacío y la ayuda lo trataba como usuario normal o invitado.
+
+        El propietario principal de Atlas siempre conserva acceso administrativo
+        completo en su propio bot de Telegram.
+        """
         current_user = self.get_user()
         profile = None
         try:
-            profile = self.user_manager.get_profile(current_user)
+            profile = self.users.get_profile(current_user)
         except Exception:
-            pass
+            profile = None
 
-        role = str(getattr(profile, "role", "")).casefold() if profile else ""
-        permissions = (
-            getattr(profile, "permissions", None)
-            or getattr(profile, "allowed_capabilities", None)
-            or ()
+        if isinstance(profile, dict):
+            roles = {
+                str(item).strip().casefold()
+                for item in (profile.get("roles") or ())
+                if str(item).strip()
+            }
+            permissions = (
+                profile.get("permissions")
+                or profile.get("allowed_capabilities")
+                or ()
+            )
+            profile_name = profile.get("name") or current_user
+        else:
+            single_role = str(getattr(profile, "role", "") or "").strip().casefold()
+            roles = {single_role} if single_role else set()
+            roles.update(
+                str(item).strip().casefold()
+                for item in (getattr(profile, "roles", None) or ())
+                if str(item).strip()
+            )
+            permissions = (
+                getattr(profile, "permissions", None)
+                or getattr(profile, "allowed_capabilities", None)
+                or ()
+            )
+            profile_name = getattr(profile, "name", None) or current_user
+
+        main_user = str(self.users.get_main_user()).strip()
+        is_main_user = current_user.strip().casefold() == main_user.casefold()
+        is_admin = is_main_user or bool(
+            roles.intersection(
+                {"admin", "administrator", "owner", "propietario"}
+            )
         )
+
         return {
-            "name": current_user,
-            "role": role,
+            "name": profile_name,
+            "role": "owner" if is_main_user else (
+                "admin" if is_admin else next(iter(roles), "user")
+            ),
+            "roles": sorted(roles),
             "profile_exists": profile is not None,
             "permissions": permissions,
-            "is_admin": role in {"admin", "administrator", "owner", "propietario"},
+            "is_admin": is_admin,
+            "is_owner": is_main_user or "owner" in roles or "propietario" in roles,
             "own_bot": getattr(self, "current_telegram_own_bot", True),
         }
 

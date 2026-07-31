@@ -75,7 +75,6 @@ from identity.people_manager import PeopleManager
 
 from identity.person import Person
 
-from identity.relationship import ANIMAL_ENTITY
 from identity.relationship import PERSON_ENTITY
 
 from identity.relationship import AUNT
@@ -86,7 +85,6 @@ from identity.relationship import CHILD
 from identity.relationship import COUSIN
 from identity.relationship import DAUGHTER
 from identity.relationship import FATHER
-from identity.relationship import FRIEND
 from identity.relationship import GRANDFATHER
 from identity.relationship import GRANDMOTHER
 from identity.relationship import GRANDPARENT

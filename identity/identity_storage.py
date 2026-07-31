@@ -46,6 +46,7 @@ Descripción:
 # =============================================================================
 
 import json
+import os
 from copy import deepcopy
 
 from pathlib import Path
@@ -94,9 +95,14 @@ class IdentityStorage:
 
         if data_folder is None:
 
+            configured_data_folder = os.environ.get(
+                "ATLAS_IDENTITY_DATA_DIR"
+            )
+
             self.data_folder = (
-                Path(__file__).resolve().parent
-                / "data"
+                Path(configured_data_folder).resolve()
+                if configured_data_folder
+                else Path(__file__).resolve().parent / "data"
             )
 
         else:
@@ -909,6 +915,41 @@ class IdentityStorage:
                 "Todos los elementos deben ser "
                 "objetos Relationship."
             )
+
+        entity_ids = {
+            "person": {
+                person.id.casefold()
+                for person in self.load_people()
+            },
+            "animal": {
+                animal.id.casefold()
+                for animal in self.load_animals()
+            },
+        }
+
+        for relationship in relationships:
+            endpoints = (
+                (
+                    "origen",
+                    relationship.source_entity_id,
+                    relationship.source_entity_type,
+                ),
+                (
+                    "destino",
+                    relationship.target_entity_id,
+                    relationship.target_entity_type,
+                ),
+            )
+
+            for role, entity_id, entity_type in endpoints:
+                known_ids = entity_ids.get(entity_type, set())
+                if entity_id.casefold() in known_ids:
+                    continue
+
+                raise ValueError(
+                    "No se puede guardar una relación con un extremo "
+                    f"de {role} inexistente: {entity_type}:{entity_id}."
+                )
 
         data = [
             relationship.to_dict()

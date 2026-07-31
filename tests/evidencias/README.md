@@ -14,7 +14,7 @@ En esta carpeta pueden almacenarse, entre otros:
 
 - Capturas de la ejecución completa de la suite de pruebas.
 - Resultados finales de compilación (`compileall`).
-- Validaciones del script `clean_and_test.ps1`.
+- Validaciones del script `run_tests_safe.ps1`.
 - Evidencias de regresión tras la corrección de incidencias.
 - Capturas utilizadas para documentar el cierre de una fase.
 
@@ -31,7 +31,7 @@ Ejemplos:
 ```
 2026-07-15_tests_fase3_ok.png
 2026-07-15_compileall_ok.png
-2026-07-15_clean_and_test_ok.png
+2026-07-31_run_tests_safe_ok.png
 ```
 
 ## Buenas prácticas

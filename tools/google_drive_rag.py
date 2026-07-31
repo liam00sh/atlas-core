@@ -22,7 +22,6 @@ from tools.capability import Capability
 from tools.context import ToolContext
 from tools.google_drive_index import (
     GoogleDriveDocumentIndex,
-    IndexChunkMatch,
 )
 from tools.google_drive_semantic import (
     GoogleDriveSemanticIndex,

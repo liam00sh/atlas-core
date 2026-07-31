@@ -114,6 +114,14 @@ class FamilyDataTests(unittest.TestCase):
         }
         self.assertEqual(REDACTED_e899cf89ab27_alias_owners, {"REDACTED_32885d880536", "REDACTED_e3b252570a2f"})
 
+    def test_josefa_carreres_is_a_verified_alias_only_for_REDACTED_e899cf89ab27_carreres(self):
+        matches = [
+            person["name"]
+            for person in FAMILY_PEOPLE
+            if "REDACTED_38b7adc65154" in person.get("aliases", [])
+        ]
+        self.assertEqual(matches, ["REDACTED_e3b252570a2f"])
+
     def test_corrected_names_and_family_boundaries(self):
         people_by_name = {item["name"]: item for item in FAMILY_PEOPLE}
         animals_by_name = {item["name"]: item for item in FAMILY_ANIMALS}

@@ -70,6 +70,13 @@ class FamilyInitializerTests(unittest.TestCase):
         self.assertEqual({person.name for person in matches}, {"REDACTED_32885d880536", "REDACTED_e3b252570a2f"})
         self.assertIsNone(self.people.find_person_by_name("REDACTED_342ad0893cb2"))
 
+    def test_josefa_carreres_resolves_to_REDACTED_e899cf89ab27_carreres(self):
+        self.initializer.initialize()
+        josefa = self.people.find_person_by_name("REDACTED_38b7adc65154")
+        REDACTED_e899cf89ab27 = self.people.find_person_by_name("REDACTED_e3b252570a2f")
+        self.assertIsNotNone(josefa)
+        self.assertEqual(josefa.id, REDACTED_e899cf89ab27.id)
+
     def test_all_declared_animals_are_created_and_resolvable_by_alias(self):
         self.initializer.initialize()
         self.assertIsNotNone(self.people.find_animal_by_name("REDACTED_73007cb40c65"))

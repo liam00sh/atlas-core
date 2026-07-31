@@ -30,7 +30,11 @@ class _PeopleManager:
     def __init__(self):
         self.people = [
             _Person("REDACTED_f73137d930c3", "REDACTED_2c7b6821719d", ()),
-            _Person("REDACTED_e899cf89ab27_REDACTED_7b9528898599", "REDACTED_e3b252570a2f", ("REDACTED_342ad0893cb2",)),
+            _Person(
+                "REDACTED_e899cf89ab27_REDACTED_7b9528898599",
+                "REDACTED_e3b252570a2f",
+                ("REDACTED_342ad0893cb2", "REDACTED_6b8e6a2f600a", "REDACTED_38b7adc65154"),
+            ),
             _Person("REDACTED_e899cf89ab27_REDACTED_f73137d930c3", "REDACTED_32885d880536", ("REDACTED_342ad0893cb2",)),
             _Person("REDACTED_7b9528898599", "REDACTED_8762331d93e2", ("REDACTED_bc04a68d9192",)),
             _Person("REDACTED_1552db05a755", "REDACTED_65dc3df1f2c0", ("REDACTED_0392c3d1b4d3",)),
@@ -285,7 +289,7 @@ class ConversationIdentityRegressionTests(unittest.TestCase):
         self.assertIn("REDACTED_2c7b6821719d", first)
         self.assertIn("REDACTED_2c7b6821719d", second)
 
-    def test_fuzzy_carreras_resolves_to_carreres(self):
+    def test_verified_carreras_alias_resolves_to_carreres(self):
         atlas = _AtlasAI()
         atlas._prepare_entity_clarification("quien es REDACTED_342ad0893cb2")
         rewritten, handled = atlas._prepare_entity_clarification("REDACTED_6b8e6a2f600a")

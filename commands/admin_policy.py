@@ -45,7 +45,23 @@ def current_user_id() -> str:
 
 
 def is_admin_user() -> bool:
-    return current_user_id() == ADMIN_USER_ID
+    atlas = getattr(context, "atlas", None)
+    configured_owner = ""
+    if atlas is not None:
+        getter = getattr(atlas, "get_main_user", None)
+        if callable(getter):
+            configured_owner = str(getter() or "").strip().casefold()
+        if not configured_owner:
+            user_manager = getattr(atlas, "users", None) or getattr(
+                atlas, "user_manager", None
+            )
+            getter = getattr(user_manager, "get_main_user", None)
+            if callable(getter):
+                configured_owner = str(getter() or "").strip().casefold()
+
+    owner_id = configured_owner or ADMIN_USER_ID
+    active_user_id = current_user_id()
+    return bool(active_user_id) and active_user_id == owner_id
 
 
 def require_admin_user() -> bool:

@@ -23,6 +23,7 @@ except ImportError as exc:
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "data" / "monitoring" / "pc_status.json"
+SUPERVISOR_STATE_PATH = ROOT / "data" / "monitoring" / "supervisor_status.json"
 REFRESH_MS = 2000
 
 WINDOW_WIDTH = 430
@@ -125,6 +126,39 @@ def temperatures() -> str:
     )
 
 
+
+def uptime_status() -> str:
+    try:
+        seconds = max(0, int(time.time() - psutil.boot_time()))
+    except Exception:
+        return "—"
+
+    days, remainder = divmod(seconds, 86400)
+    hours, remainder = divmod(remainder, 3600)
+    minutes = remainder // 60
+
+    if days:
+        return f"{days} d {hours} h"
+    if hours:
+        return f"{hours} h {minutes} min"
+    return f"{minutes} min"
+
+
+def process_count() -> int:
+    try:
+        return len(psutil.pids())
+    except Exception:
+        return 0
+
+
+def load_status() -> str:
+    try:
+        load = psutil.getloadavg()
+    except (AttributeError, OSError):
+        return "—"
+
+    return " / ".join(f"{value:.2f}" for value in load)
+
 def disk_lines() -> list[str]:
     lines: list[str] = []
     seen: set[str] = set()
@@ -153,6 +187,45 @@ def disk_lines() -> list[str]:
     return lines[:6]
 
 
+
+def atlas_status() -> str:
+    """
+    Estado global de Atlas.
+
+    Se considera OK cuando:
+    - hay conexión a Internet;
+    - el estado del supervisor existe;
+    - no hay incidencias activas;
+    - la comprobación de Raspberry está disponible y en estado correcto.
+    """
+    if internet_status() != "OK":
+        return "ERROR"
+
+    try:
+        payload = json.loads(
+            SUPERVISOR_STATE_PATH.read_text(
+                encoding="utf-8"
+            )
+        )
+    except (OSError, json.JSONDecodeError):
+        return "SIN DATOS"
+
+    incidents = payload.get("incidents") or []
+    if incidents:
+        return "ERROR"
+
+    raspberry = payload.get("raspberry") or {}
+    state = str(raspberry.get("state", "")).lower()
+    available = bool(raspberry.get("available", False))
+
+    if available and state in {"ok", "healthy"}:
+        return "OK"
+
+    if not raspberry:
+        return "SIN DATOS"
+
+    return "ERROR"
+
 def snapshot() -> tuple[str, dict]:
     cpu = psutil.cpu_percent(interval=None)
     memory = psutil.virtual_memory()
@@ -167,11 +240,16 @@ def snapshot() -> tuple[str, dict]:
         "cpu_temperature": temperatures(),
         "wifi_signal": wifi_status(),
         "internet": internet_status(),
+        "atlas_status": atlas_status(),
+        "uptime": uptime_status(),
+        "process_count": process_count(),
+        "load_average": load_status(),
         "gpu": gpu,
     }
 
     lines = [
         "ATLAS · ESTADO DEL PC",
+        "",
         (
             f"CPU       {cpu:>5.1f}%   "
             f"TEMP {data['cpu_temperature']}"
@@ -199,6 +277,10 @@ def snapshot() -> tuple[str, dict]:
         (
             f"WIFI      {data['wifi_signal']}",
             f"INTERNET  {data['internet']}",
+            f"ATLAS     {data['atlas_status']}",
+            f"UPTIME    {data['uptime']}",
+            f"PROCESOS  {data['process_count']}",
+            f"CARGA     {data['load_average']}",
         )
     )
 
@@ -220,16 +302,35 @@ class Overlay:
         except tk.TclError:
             pass
 
+        self.title_label = tk.Label(
+            self.root,
+            text="ATLAS · ESTADO DEL PC",
+            justify="left",
+            anchor="nw",
+            font=("Consolas", 12, "bold"),
+            fg="#a9adb3",
+            bg="#111111",
+        )
+        self.title_label.pack(
+            anchor="w",
+            padx=12,
+            pady=(10, 0),
+        )
+
         self.label = tk.Label(
             self.root,
-            text="Iniciando monitor...",
+            text="\nIniciando monitor...",
             justify="left",
             anchor="nw",
             font=("Consolas", 11),
             fg="#a9adb3",
             bg="#111111",
         )
-        self.label.pack(padx=12, pady=10)
+        self.label.pack(
+            anchor="w",
+            padx=12,
+            pady=(0, 10),
+        )
 
         self.root.geometry(
             f"{WINDOW_WIDTH}x{WINDOW_HEIGHT}+0+50"
@@ -333,9 +434,10 @@ class Overlay:
             )
             temp.replace(STATE_PATH)
 
+            body_text = "\n".join(text.splitlines()[1:])
             self.root.after(
                 0,
-                lambda: self.label.config(text=text),
+                lambda: self.label.config(text=body_text),
             )
 
         threading.Thread(

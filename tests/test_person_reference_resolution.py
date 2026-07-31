@@ -78,11 +78,9 @@ class PersonReferenceResolutionTests(unittest.TestCase):
             {"REDACTED_fd70e667da43", "REDACTED_0a0e53340b75"},
         )
 
-    def test_REDACTED_1ec4ed037766_martinez_prefers_closest_ordered_match(self):
-        self.assertEqual(
-            self.names("José REDACTED_6311e2faf08cez"),
-            ["REDACTED_516d7f9914e7"],
-        )
+    def test_non_contiguous_names_are_not_treated_as_verified_aliases(self):
+        self.assertEqual(self.names("José REDACTED_6311e2faf08cez"), [])
+        self.assertEqual(self.names("Salvador Vicente"), [])
 
     def test_REDACTED_3a6d64c24cf8_does_not_match_REDACTED_7b9528898599(self):
         self.assertEqual(self.names("REDACTED_53b1fb446230"), ["REDACTED_53b1fb446230"])
@@ -95,16 +93,13 @@ class PersonReferenceResolutionTests(unittest.TestCase):
         self.assertEqual(len(self.names("REDACTED_342ad0893cb2")), 2)
         self.assertEqual(len(self.names("Salvador")), 2)
 
-    def test_unique_partial_reference_is_rewritten_to_canonical_name(self):
+    def test_unverified_partial_reference_is_not_rewritten(self):
         rewritten, handled = self.atlas._prepare_entity_clarification(
             "quien es REDACTED_1ec4ed037766 martinez"
         )
         self.assertFalse(handled)
-        self.assertIn("REDACTED_516d7f9914e7", rewritten)
-        self.assertEqual(
-            self.atlas._resolved_entity_id,
-            "jmmp",
-        )
+        self.assertEqual(rewritten, "quien es REDACTED_1ec4ed037766 martinez")
+        self.assertFalse(hasattr(self.atlas, "_resolved_entity_id"))
 
 
 class VerifiedResponseStyleTests(unittest.TestCase):

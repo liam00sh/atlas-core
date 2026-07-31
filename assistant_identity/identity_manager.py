@@ -70,7 +70,6 @@ from assistant_identity.identity_registry import get_identity
 from assistant_identity.identity_registry import has_identity
 from assistant_identity.identity_registry import list_identities
 
-from assistant_identity.mode import CLASSIC_MODE
 from assistant_identity.mode import MODE_NAMES
 from assistant_identity.mode import get_mode_label
 

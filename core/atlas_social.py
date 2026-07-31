@@ -247,6 +247,13 @@ class AtlasSocialMixin:
         context = getattr(self, "channel_request_context", None)
         return str(getattr(context, "channel", "cli") or "cli").casefold()
 
+    def _social_choice(self, replies):
+        """Permite inyectar una selección estable sin quitar variedad en producción."""
+        chooser = getattr(self, "social_reply_choice", None)
+        if callable(chooser):
+            return chooser(tuple(replies))
+        return random.choice(tuple(replies))
+
     def _handle_channel_social_precommand(self, original_text: str) -> bool:
         if self._social_channel() != "telegram":
             return False
@@ -573,8 +580,80 @@ class AtlasSocialMixin:
 
         return False
 
+    def _handle_friend_fact_conversation(self, original_text: str) -> bool:
+        normalized = self._social_normalize(original_text)
+        owner = self._social_user()
+
+        declaration = re.match(
+            r"^(?:mi\s+)?amigo(?:\s+argentino)?\s+se\s+llama\s+"
+            r"(?P<name>[a-záéíóúüñ][a-záéíóúüñ '-]{1,60})"
+            r"(?:\s+y\s+vive\s+en\s+(?P<location>[a-záéíóúüñ][a-záéíóúüñ .'-]{1,80}))?$",
+            normalized,
+        )
+        if declaration:
+            name = " ".join(declaration.group("name").split()).title()
+            location = declaration.group("location")
+            self.register_known_person(
+                display_name=name,
+                told_by=owner,
+                relation_owner=owner,
+                friendship_level=2,
+            )
+            if location:
+                self.register_person_fact(
+                    person_name=name,
+                    fact_type="location",
+                    value=" ".join(location.split()).title(),
+                    told_by=owner,
+                )
+            print()
+            if location:
+                print(f"Entendido: tu amigo se llama {name} y vive en {' '.join(location.split()).title()}.")
+            else:
+                print(f"Entendido: tu amigo se llama {name}.")
+            return True
+
+        if re.search(r"\bcomo\s+se\s+llama\s+mi\s+amigo(?:\s+argentino)?\b", normalized):
+            try:
+                repository = self.friends_repository
+                data = repository._read()
+                owner_person = repository.find_person(owner)
+            except Exception:
+                data, owner_person = {}, None
+            candidates = []
+            if owner_person is not None:
+                prefix = f"{owner_person.person_id}::"
+                for key, raw in data.get("relations", {}).items():
+                    if not key.startswith(prefix):
+                        continue
+                    if int(raw.get("level", 0)) < 1 or not raw.get("active", True):
+                        continue
+                    target_id = raw.get("target_person_id")
+                    person = data.get("people", {}).get(target_id)
+                    if person:
+                        candidates.append(person)
+            argentina = []
+            for person in candidates:
+                facts = person.get("facts", [])
+                locations = [str(f.get("value", "")) for f in facts if f.get("fact_type") == "location"]
+                if any("argentina" in self._social_normalize(value) or "buenos aires" in self._social_normalize(value) for value in locations):
+                    argentina.append(person)
+            selected = argentina or candidates
+            if len(selected) == 1:
+                print(); print(f"Tu amigo se llama {selected[0].get('display_name')}.")
+                return True
+            if len(selected) > 1:
+                names = ", ".join(str(person.get("display_name")) for person in selected)
+                print(); print(f"Tengo varios amigos registrados: {names}. ¿A cuál te refieres?")
+                return True
+            return False
+
+        return False
+
     def _handle_social_conversation(self, original_text: str) -> bool:
         normalized = self._social_normalize(original_text)
+        if self._handle_friend_fact_conversation(original_text):
+            return True
         emojis = self._social_emojis(original_text)
         if not normalized and emojis:
             joined = "".join(emojis)
@@ -596,17 +675,22 @@ class AtlasSocialMixin:
             return False
 
         greeting_markers = {
-            "hola", "buenas", "buenos dias", "buenas tardes",
-            "buenas noches", "hola que tal", "hola como estas",
+            "hola", "buenas", "buenas tardes",
+            "hola que tal", "hola como estas",
             "buenas que tal", "hi", "hey", "ey", "holi",
         }
         if normalized in greeting_markers:
             user = self._social_user()
             print()
-            print(random.choice((
+            print(self._social_choice((
                 f"¡Hola, {user}! 👋",
                 f"¡Buenas, {user}!",
                 f"¡Muy buenas, {user}! ¿Qué tal?",
+                f"¡Hola de nuevo, {user}! ¿Qué necesitas?",
+                f"¡Ey, {user}! Aquí estoy 🙂",
+                f"¡Buenas! Dime, {user}, ¿en qué te ayudo?",
+                f"¡Hola! Todo listo por aquí, {user}.",
+                f"¡Qué alegría verte, {user}! ¿Qué hacemos?",
             )))
             return True
 

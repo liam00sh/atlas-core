@@ -54,87 +54,91 @@ from core.atlas import Atlas
 from core.startup import startup
 
 
-def main() -> None:
+def build_atlas() -> Atlas:
     """
-    Inicia Atlas y mantiene activa su consola interactiva.
-
-    Flujo:
-
-        1. Se consulta el modelo predeterminado.
-        2. Se crea el proveedor de Ollama.
-        3. Se crea una única instancia de Atlas.
-        4. Se publica la instancia en core.context.
-        5. Se ejecuta la secuencia de inicio.
-        6. Se abre la consola interactiva.
+    Construye y publica una única instancia de Atlas.
     """
 
-    # -------------------------------------------------------------------------
-    # REGISTRO DE MODELOS
-    # -------------------------------------------------------------------------
-
-    # Crea el registro de modelos conocidos por Atlas.
     model_registry = ModelRegistry()
+    default_model = model_registry.get_default_model_name()
 
-    # Obtiene el nombre del modelo configurado como predeterminado.
-    #
-    # Actualmente:
-    #
-    #     qwen2.5:7b
-    default_model = (
-        model_registry.get_default_model_name()
-    )
-
-    # -------------------------------------------------------------------------
-    # PROVEEDOR DE INTELIGENCIA ARTIFICIAL
-    # -------------------------------------------------------------------------
-
-    # Crea el proveedor encargado de comunicarse con Ollama.
-    #
-    # El proveedor todavía no ejecuta ninguna consulta durante
-    # la creación. Solo conserva la configuración necesaria.
     ai_provider = OllamaProvider(
         model_name=default_model,
         timeout=180,
     )
 
-    # -------------------------------------------------------------------------
-    # INSTANCIA PRINCIPAL DE ATLAS
-    # -------------------------------------------------------------------------
-
-    # Se crea una única instancia del núcleo para toda la aplicación.
-    #
-    # El proveedor se inyecta desde fuera para evitar que core/atlas.py
-    # dependa directamente de Ollama.
     atlas = Atlas(
         ai_provider=ai_provider
     )
 
-    # -------------------------------------------------------------------------
-    # CONTEXTO GLOBAL
-    # -------------------------------------------------------------------------
-
-    # Los comandos y otros módulos pueden consultar esta instancia
-    # mediante core.context.
     context.atlas = atlas
+    return atlas
 
-    # -------------------------------------------------------------------------
-    # INICIALIZACIÓN
-    # -------------------------------------------------------------------------
 
-    # Prepara el entorno y muestra la información de inicio.
+def main_background() -> None:
+    """
+    Inicia el núcleo de Atlas sin abrir la consola interactiva.
+
+    Este modo está pensado para ejecutarse con pythonw.exe o desde
+    atlas_launcher.py.
+    """
+
+    import signal
+    import threading
+
+    atlas = build_atlas()
+
+    # En segundo plano evitamos la secuencia visual de inicio.
+    # Los servicios permanentes y las interfaces remotas son gestionados
+    # por atlas_launcher.py.
+    stop_event = threading.Event()
+
+    def _stop(*_args) -> None:
+        stop_event.set()
+
+    if hasattr(signal, "SIGINT"):
+        signal.signal(signal.SIGINT, _stop)
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, _stop)
+
+    while not stop_event.wait(1.0):
+        pass
+
+
+def main() -> None:
+    """
+    Inicia Atlas con consola interactiva.
+    """
+
+    atlas = build_atlas()
+
     startup(
         atlas
     )
 
-    # -------------------------------------------------------------------------
-    # CONSOLA
-    # -------------------------------------------------------------------------
-
-    # Mantiene Atlas esperando órdenes hasta que el usuario decide salir.
     start_shell(
         atlas
     )
 
 
+def cli() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="Proyecto Atlas",
+    )
+    parser.add_argument(
+        "--background",
+        action="store_true",
+        help="Ejecuta Atlas sin abrir la consola interactiva.",
+    )
+    args = parser.parse_args()
+
+    if args.background:
+        main_background()
+    else:
+        main()
+
+
 if __name__ == "__main__":
-    main()
+    cli()

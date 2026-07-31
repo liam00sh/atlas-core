@@ -1585,28 +1585,6 @@ class AtlasAIMixin:
 
         return None
 
-    @staticmethod
-    def _ordered_token_span(
-        query_tokens: list[str],
-        reference_tokens: list[str],
-    ) -> int | None:
-        """Devuelve el menor tramo que contiene los tokens en el mismo orden."""
-
-        if not query_tokens or not reference_tokens:
-            return None
-
-        positions = []
-        search_from = 0
-        for token in query_tokens:
-            try:
-                position = reference_tokens.index(token, search_from)
-            except ValueError:
-                return None
-            positions.append(position)
-            search_from = position + 1
-
-        return positions[-1] - positions[0] + 1
-
     def _extract_requested_person_reference(
         self,
         user_message: str,
@@ -1636,7 +1614,7 @@ class AtlasAIMixin:
         - «REDACTED_77c013518681» devuelve solo REDACTED_77c013518681.
         - «REDACTED_fd70e667da43» devuelve REDACTED_fd70e667da43 y REDACTED_0a0e53340b75.
         - «REDACTED_53b1fb446230» no coincide con REDACTED_bc04a68d9192.
-        - Una combinación no contigua usa el candidato con menor separación.
+        - No se resuelven combinaciones no contiguas ni nombres parecidos.
         """
 
         requested = self._normalize_entity_text(requested_reference)
@@ -1647,7 +1625,6 @@ class AtlasAIMixin:
         people = self.people_manager.get_people()
         exact = []
         prefix = []
-        subsequence = []
 
         for person in people:
             primary = self._normalize_entity_text(person.name)
@@ -1667,20 +1644,6 @@ class AtlasAIMixin:
             if primary_tokens[:len(query_tokens)] == query_tokens:
                 prefix.append(person)
 
-            best_span = None
-            for reference in references:
-                reference_tokens = reference.split()
-                if (
-                    not reference_tokens
-                    or reference_tokens[0] != query_tokens[0]
-                ):
-                    continue
-                span = self._ordered_token_span(query_tokens, reference_tokens)
-                if span is not None and (best_span is None or span < best_span):
-                    best_span = span
-            if best_span is not None:
-                subsequence.append((best_span, person))
-
         def unique(items):
             return list({person.id: person for person in items}.values())
 
@@ -1694,14 +1657,7 @@ class AtlasAIMixin:
         if exact:
             return sorted(exact, key=lambda person: person.name.casefold())
 
-        if not subsequence:
-            return []
-        best_span = min(span for span, _ in subsequence)
-        best = unique([
-            person for span, person in subsequence
-            if span == best_span
-        ])
-        return sorted(best, key=lambda person: person.name.casefold())
+        return []
 
     def _find_ambiguous_person_reference(
         self,
@@ -1939,40 +1895,6 @@ class AtlasAIMixin:
                         )
                     )
 
-                    fuzzy_match = False
-                    ambiguous_reference_tokens = set(
-                        self._normalize_entity_text(
-                            pending.get("reference", "")
-                        ).split()
-                    )
-                    answer_words = [
-                        token for token in normalized_answer.split()
-                        if (
-                            len(token) >= 4
-                            and token not in ambiguous_reference_tokens
-                        )
-                    ]
-                    candidate_words = [
-                        self._normalize_entity_text(part)
-                        for part in person.name.split()
-                        if (
-                            len(part) >= 4
-                            and self._normalize_entity_text(part)
-                            not in ambiguous_reference_tokens
-                        )
-                    ]
-                    for answer_word in answer_words:
-                        if any(
-                            SequenceMatcher(
-                                None,
-                                answer_word,
-                                candidate_word,
-                            ).ratio() >= 0.78
-                            for candidate_word in candidate_words
-                        ):
-                            fuzzy_match = True
-                            break
-
                     speaker_relation_match = (
                         self._candidate_matches_speaker_relation(
                             person,
@@ -1994,12 +1916,10 @@ class AtlasAIMixin:
                     }
                     if set(normalized_answer.split()).issubset(relation_only_tokens):
                         relationship_match = False
-                        fuzzy_match = False
 
                     if (
                         reference_match
                         or relationship_match
-                        or fuzzy_match
                         or speaker_relation_match
                     ):
                         resolved.append(person)
@@ -2074,62 +1994,6 @@ class AtlasAIMixin:
         ambiguous = self._find_ambiguous_person_reference(original_text)
 
         if ambiguous is None:
-            normalized_question = self._normalize_entity_text(original_text)
-            match = re.search(
-                r"(?:quien es|quien era|hablame de|cuentame sobre|que sabes de)\s+([a-z0-9_]+)",
-                normalized_question,
-            )
-            if match:
-                requested_name = match.group(1)
-                exact_known = []
-                fuzzy_known = []
-                for person in self.people_manager.get_people():
-                    references = [person.name.split()[0], *getattr(person, "aliases", [])]
-                    normalized_references = {
-                        self._normalize_entity_text(reference)
-                        for reference in references
-                        if self._normalize_entity_text(reference)
-                    }
-                    if requested_name in normalized_references:
-                        exact_known.append(person)
-                        continue
-                    best = max(
-                        (SequenceMatcher(None, requested_name, reference).ratio() for reference in normalized_references),
-                        default=0.0,
-                    )
-                    if best >= 0.72:
-                        fuzzy_known.append((best, person))
-
-                if not exact_known and fuzzy_known:
-                    fuzzy_known.sort(key=lambda item: item[0], reverse=True)
-                    best_score = fuzzy_known[0][0]
-                    best_people = [
-                        person for score, person in fuzzy_known
-                        if best_score - score <= 0.03
-                    ]
-                    if best_score >= 0.80 and len(best_people) == 1:
-                        selected = best_people[0]
-                        rewritten = re.sub(
-                            rf"(?<!\w){re.escape(match.group(1))}(?!\w)",
-                            selected.name,
-                            original_text,
-                            count=1,
-                            flags=re.IGNORECASE,
-                        )
-                        return (
-                            rewritten
-                            + f"\nAclaración: «{match.group(1)}» parece una errata de «{selected.name}».",
-                            False,
-                        )
-
-                    options = " o ".join(person.name for person in best_people)
-                    print()
-                    print(
-                        f"No conozco a nadie llamado {match.group(1).title()}. "
-                        f"¿Es una persona nueva o querías decir {options}?"
-                    )
-                    return original_text, True
-
             return original_text, False
 
         reference, candidates = ambiguous

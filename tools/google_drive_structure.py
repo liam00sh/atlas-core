@@ -13,7 +13,7 @@ from typing import Any
 from tools.base_tool import BaseTool, ToolRisk
 from tools.capability import Capability
 from tools.context import ToolContext
-from tools.google_drive import DriveItem, GoogleDriveClient
+from tools.google_drive import GoogleDriveClient
 from tools.result import ToolResult
 
 

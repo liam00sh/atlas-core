@@ -7,7 +7,7 @@ para el propietario y protección FIFO dentro de cada sesión.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from itertools import count
 import re
 import threading

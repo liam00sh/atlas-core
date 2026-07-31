@@ -335,6 +335,30 @@ class PeopleManager:
 
         return None
 
+
+    def get_biographical_profile(
+        self,
+        user_profile: str,
+    ) -> dict | None:
+        """
+        Devuelve la representación biográfica de la persona vinculada
+        a un perfil de usuario.
+        """
+
+        person = self.find_person_by_user_profile(user_profile)
+        if person is None:
+            return None
+
+        return {
+            "id": person.id,
+            "name": person.name,
+            "aliases": list(person.aliases),
+            "grammatical_gender": person.grammatical_gender,
+            "status": person.status,
+            "summary": person.summary,
+            "user_profile": person.user_profile,
+        }
+
     # =========================================================================
     # CREACIÓN DE PERSONAS
     # =========================================================================
