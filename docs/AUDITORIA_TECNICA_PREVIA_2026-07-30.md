@@ -4,6 +4,109 @@ Fecha: 30 de julio de 2026
 Estado: informe previo a cualquier saneamiento o corrección  
 Alcance: `04 - Python/atlas_core`, documentación local y documentación oficial de Google Drive
 
+## Actualización de continuidad — 31 de julio de 2026
+
+Estado del bloque: **parcialmente completado**. El bloqueo de colección causado
+por `ai.models` está reparado y la integración controlada del bootstrap de
+monitorización es satisfactoria. La suite completa sigue mostrando defectos
+preexistentes fuera del alcance de esta intervención y, por tanto, la auditoría
+integral todavía no puede declararse cerrada.
+
+### Repositorio y rama oficiales
+
+- Repositorio de desarrollo: `C:\Proyectos\Atlas\atlas_core`.
+- Remoto: `https://github.com/REDACTED_b4f38f5848fd/atlas-core.git`.
+- Rama principal de GitHub: `main`.
+- Rama de esta intervención: `auditoria-limpieza-2026-07-31`.
+- Google Drive se reserva para documentación oficial y copias de seguridad; su
+  carpeta sincronizada no debe utilizarse como repositorio Git activo.
+
+### Causa raíz de `ai.models` y evidencia
+
+`ModelRegistry` y sus importaciones aparecieron en el commit `abd96e5`. El
+historial, todos los objetos Git y las ramas disponibles no contienen ningún
+archivo bajo `ai/models/`, aunque `ai/README.md` documenta ese paquete como el
+registro y selector de modelos. La causa es la regla histórica `models/` de
+`.gitignore`, introducida en `e173ce1`: `git check-ignore` demuestra que también
+ignoraba `ai/models/model_registry.py`, no solo el directorio raíz destinado a
+modelos descargados.
+
+Los consumidores vigentes son `core/atlas.py`, `main.py` y
+`scripts/run_telegram_bot.py`. Esperan construcción sin argumentos y
+`get_default_model_name()`. El propio `main.py` documenta `qwen2.5:7b` como
+predeterminado; `config.py` declara Ollama como proveedor y permite configurar
+`AI_MODEL`.
+
+### Contrato final de modelos
+
+- `ModelDefinition` inmutable con nombre y proveedor.
+- `ModelRegistry()` registra `qwen2.5:7b` para Ollama.
+- La configuración central puede seleccionar otro modelo predeterminado.
+- Registro, resolución, selección y listado explícitos.
+- Modelos desconocidos y duplicados producen errores claros.
+- El registro no consulta Ollama ni instala modelos; la disponibilidad real
+  continúa siendo responsabilidad de `OllamaProvider`.
+- `.gitignore` limita `/models/` al directorio raíz y permite versionar
+  `ai/models/`.
+
+Archivos de implementación y prueba añadidos o ajustados:
+
+- `.gitignore`;
+- `ai/models/__init__.py`;
+- `ai/models/model_registry.py`;
+- `tests/test_model_registry.py`.
+
+### Integración controlada del bootstrap
+
+`monitoring/bootstrap.py` admite ahora sondas y un monitor Raspberry opcionales
+inyectados. Sin inyección mantiene el comportamiento de producción: requiere
+host, construye `RaspberryMonitor` y registra su sonda. La prueba
+`tests/test_monitoring_bootstrap_integration.py` usa únicamente `tmp_path`, un
+emisor Telegram simulado, sondas ficticias, variables temporales e intervalo
+acotado.
+
+La prueba demuestra construcción mediante el bootstrap, arranque en hilo,
+sonda saludable, excepción aislada en otra sonda, incidencia y notificación,
+escritura temporal, recuperación, resolución, segunda notificación, cierre y
+ausencia del hilo al terminar. El valor sensible simulado no aparece en los
+archivos persistidos.
+
+### Resultados de validación
+
+- `tests/test_model_registry.py`: 5 superados en 0,19 s.
+- Tests de supervisor, modelo compartido e integración del bootstrap: 8
+  superados en 0,15 s.
+- `python -m pytest --collect-only -q`: 856 tests recopilados en 0,44 s, sin
+  errores. La salida completa está en
+  `docs/auditoria/pytest_collect_final_2026-07-31.txt`.
+- `python -m pytest -q`: 848 superados, 263 fallos contabilizados y 2.579
+  subtests superados en 158,99 s; 0 omitidos indicados por pytest.
+
+Los fallos globales restantes no importan `ModelRegistry` ni afectan a los
+tests de monitorización. Se agrupan en perfiles efectivos y biografías, ayuda y
+permisos, interpretación meteorológica, saludo determinista e integridad de
+extremos de relaciones. La suite también modifica el contador y la última fecha
+de encuentro de REDACTED_2c7b6821719d en `identity/data/people.json`; ese efecto se restauró al
+estado exacto de `HEAD` y debe corregirse en una fase posterior mediante mejor
+aislamiento de datos de prueba.
+
+### Smoke test predeterminado
+
+No se ejecutó. El ciclo predeterminado abre TCP/SSH contra la Raspberry y usa
+`StrictHostKeyChecking=accept-new`, que puede modificar `known_hosts`, además de
+ejecutar un script remoto de diagnóstico. Aunque las operaciones remotas son de
+lectura y los timeouts son finitos, no se puede garantizar ausencia total de
+cambios externos. La prueba de integración controlada cubre el comportamiento
+funcional sin asumir ese riesgo.
+
+### Pendientes reales
+
+La reparación de `ModelRegistry` y la validación controlada de monitorización
+están completadas. La auditoría integral continúa bloqueada por los fallos
+globales enumerados. Deben investigarse como bloques independientes, empezando
+por la contaminación de datos persistentes durante pytest y la integridad de
+relaciones, antes de declarar limpia la suite.
+
 ## Actualización: reparación aislada de monitorización
 
 Repositorio de trabajo: `C:\Proyectos\Atlas\atlas_core`
