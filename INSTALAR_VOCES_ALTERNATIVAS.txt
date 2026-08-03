@@ -1,0 +1,47 @@
+PAQUETE DE INTEGRACIÓN INICIAL DE VOCES ALTERNATIVAS
+
+DESTINO
+-------
+Extrae el contenido de este ZIP directamente en la raíz local del repositorio
+atlas-core, es decir, en la misma carpeta donde están main.py, config.py,
+requirements.txt, ai/, core/ y tests/.
+
+Ejemplo:
+REDACTED_ad35dfb21264\...\atlas-core\
+
+Después de extraer deben existir:
+C:\...\atlas-core\voice\
+C:\...\atlas-core\tools\kokoro_bridge.py
+C:\...\atlas-core\tests\test_voice_catalog.py
+C:\...\atlas-core\docs\INTEGRACION_VOCES_ALTERNATIVAS.md
+
+IMPORTANTE
+----------
+No extraigas la carpeta contenedora atlas_voice_integration dentro del
+repositorio. Copia o extrae SU CONTENIDO en la raíz de atlas-core.
+
+COMANDOS RECOMENDADOS
+---------------------
+Abre PowerShell en la raíz local de atlas-core:
+
+git status
+git switch main
+git pull --ff-only
+git switch -c fase-6-voces-alternativas
+
+Extrae ahora el ZIP en esa carpeta.
+
+Comprueba:
+git status
+python -m compileall voice tools/kokoro_bridge.py
+python -m pytest -q tests/test_voice_catalog.py tests/test_voice_preferences.py tests/test_voice_resolver.py
+
+Si todo pasa:
+git add voice tools/kokoro_bridge.py tests/test_voice_catalog.py tests/test_voice_preferences.py tests/test_voice_resolver.py docs/INTEGRACION_VOCES_ALTERNATIVAS.md
+git commit -m "Añade base modular de voces alternativas"
+git push -u origin fase-6-voces-alternativas
+
+Después abre GitHub y crea un Pull Request:
+fase-6-voces-alternativas -> main
+
+NO HAGAS todavía merge hasta revisar juntos los tests y los archivos.
