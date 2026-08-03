@@ -6,11 +6,9 @@ Archivo: console/shell.py
 Descripción:
     Implementa la consola interactiva de Atlas.
 
-    La consola recibe las entradas del usuario y las envía
-    al núcleo mediante Atlas.process().
-
     Cuando la voz está habilitada, captura la salida visible de cada turno,
-    la conserva en pantalla y la reproduce mediante el servicio TTS.
+    conserva el texto en pantalla y lo reproduce con la preferencia persistente
+    del usuario autenticado.
 ===============================================================================
 """
 
@@ -18,10 +16,12 @@ from __future__ import annotations
 
 from contextlib import redirect_stdout
 from io import StringIO
+from pathlib import Path
 import sys
 
 from voice.config import VOICE_SPEAK_CONSOLE_OUTPUT
 from voice.models import AssistantIdentity
+from voice.preferences.manager import VoicePreferenceManager
 from voice.runtime import build_voice_service
 
 
@@ -54,11 +54,25 @@ def _active_identity(atlas) -> AssistantIdentity:
     return AssistantIdentity.DAXTER
 
 
+def _build_preference_manager(atlas) -> VoicePreferenceManager:
+    project_root = Path(__file__).resolve().parent.parent
+    return VoicePreferenceManager(
+        storage_path=(
+            project_root
+            / "data"
+            / "voice"
+            / "user_preferences.json"
+        ),
+        user_provider=lambda: atlas.get_user(),
+    )
+
+
 def start_shell(atlas) -> None:
     """Inicia el bucle principal de la consola."""
 
     running = True
     voice_service = build_voice_service()
+    preference_manager = _build_preference_manager(atlas)
 
     while running:
         try:
@@ -81,9 +95,13 @@ def start_shell(atlas) -> None:
                 captured.getvalue()
             )
             if spoken_text:
+                preferences = preference_manager.get_current()
                 result = voice_service.speak(
                     spoken_text,
                     identity=_active_identity(atlas),
+                    preferences=preferences,
+                    speed=preferences.speech_rate,
+                    volume=preferences.speech_volume,
                 )
                 if not result.success and result.error:
                     print(

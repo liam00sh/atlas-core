@@ -18,6 +18,7 @@ from voice.models import (
     SynthesisResult,
 )
 from voice.player import WavePlayer
+from voice.preferences.voice_preferences import VoicePreferences
 from voice.providers.kokoro_provider import KokoroProvider
 from voice.resolver.voice_resolver import VoiceResolver
 
@@ -45,7 +46,11 @@ class VoiceService:
     def preferred_voice(
         self,
         identity: AssistantIdentity,
+        preferences: VoicePreferences | None = None,
     ) -> str:
+        if preferences is not None:
+            return preferences.preferred_voice_for(identity)
+
         if identity is AssistantIdentity.COCO:
             return COCO_PREFERRED_VOICE
         return DAXTER_PREFERRED_VOICE
@@ -56,6 +61,7 @@ class VoiceService:
         *,
         identity: AssistantIdentity | str,
         requested_voice_id: str | None = None,
+        preferences: VoicePreferences | None = None,
         speed: float = 1.0,
         volume: float = 1.0,
     ) -> SynthesisResult:
@@ -72,12 +78,19 @@ class VoiceService:
             )
 
         requested = requested_voice_id or self.preferred_voice(
-            resolved_identity
+            resolved_identity,
+            preferences,
         )
+        fallback_enabled = (
+            preferences.fallback_enabled
+            if preferences is not None
+            else True
+        )
+
         selection = self.resolver.resolve(
             identity=resolved_identity,
             requested_voice_id=requested,
-            fallback_enabled=True,
+            fallback_enabled=fallback_enabled,
         )
 
         if selection.selected_voice_id is None:
@@ -134,19 +147,33 @@ class VoiceService:
 
     @staticmethod
     def clean_console_text(text: str) -> str:
-        """Quita ruido visual que no debe pronunciarse."""
+        """Quita ruido visual conservando párrafos y puntuación."""
 
-        lines: list[str] = []
-        for raw_line in text.splitlines():
+        paragraphs: list[str] = []
+        current_lines: list[str] = []
+
+        for raw_line in text.replace("\r\n", "\n").split("\n"):
             line = raw_line.strip()
+
             if not line:
+                if current_lines:
+                    paragraphs.append(" ".join(current_lines))
+                    current_lines = []
                 continue
-            if line.startswith(("INFO:", "DEBUG:", "WARNING:", "ERROR:")):
+
+            if line.startswith(
+                ("INFO:", "DEBUG:", "WARNING:", "ERROR:")
+            ):
                 continue
+
             if set(line) <= {"=", "-", "_", "*"}:
                 continue
-            lines.append(line)
 
-        combined = " ".join(lines)
-        combined = re.sub(r"\s+", " ", combined).strip()
+            current_lines.append(line)
+
+        if current_lines:
+            paragraphs.append(" ".join(current_lines))
+
+        combined = "\n\n".join(paragraphs)
+        combined = re.sub(r"[ \t]+", " ", combined).strip()
         return combined

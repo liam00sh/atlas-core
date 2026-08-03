@@ -1,0 +1,51 @@
+EXTRAE EL CONTENIDO DEL ZIP EN LA RAÍZ DE atlas-core.
+
+RAMA
+-----
+git switch main
+git pull --ff-only origin main
+git switch -c fase-6-preferencias-y-prosodia
+
+ARCHIVOS NUEVOS
+---------------
+voice/prosody.py
+voice/preferences/storage.py
+voice/preferences/manager.py
+tools/voice_preferences_cli.py
+tests/test_voice_prosody.py
+tests/test_voice_preference_store.py
+docs/PREFERENCIAS_Y_PROSODIA_VOZ.md
+
+ARCHIVOS SUSTITUIDOS
+--------------------
+voice/preferences/__init__.py
+voice/service.py
+tools/kokoro_bridge.py
+console/shell.py
+
+PRUEBAS
+-------
+python -m compileall voice console/shell.py tools/kokoro_bridge.py tools/voice_preferences_cli.py
+
+python -m pytest -q tests/test_voice_catalog.py tests/test_voice_preferences.py tests/test_voice_resolver.py tests/test_voice_service.py tests/test_kokoro_provider.py tests/test_voice_prosody.py tests/test_voice_preference_store.py
+
+PRUEBA DE PREFERENCIAS
+----------------------
+python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --show
+python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --identity daxter --voice daxter_alex
+python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --show
+
+PRUEBA DE PROSODIA
+------------------
+python -m tools.test_voice_runtime --identity daxter --voice daxter_alex "Hola, REDACTED_2c7b6821719d. Vamos a comprobar las pausas. Primero, una pausa corta; después, una pausa media. Ahora termina el párrafo.
+
+Este es un párrafo nuevo. Debería escucharse una pausa más larga."
+
+SUBIDA
+------
+git status
+git add voice console/shell.py tools/kokoro_bridge.py tools/voice_preferences_cli.py tests/test_voice_prosody.py tests/test_voice_preference_store.py docs/PREFERENCIAS_Y_PROSODIA_VOZ.md INSTALAR_PREFERENCIAS_Y_PROSODIA.txt
+git commit -m "Añade preferencias persistentes y prosodia natural"
+git push -u origin fase-6-preferencias-y-prosodia
+
+No hagas merge hasta revisar las pruebas y escuchar la prosodia.
