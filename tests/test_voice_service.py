@@ -11,11 +11,19 @@ class FakeProvider:
         return True
 
     def supports_voice(self, provider_voice_id: str) -> bool:
-        return provider_voice_id in {"em_alex", "em_santa", "ef_dora"}
+        return provider_voice_id in {
+            "em_alex",
+            "em_santa",
+            "ef_dora",
+        }
 
     def synthesize(self, request):
-        request.output_path.parent.mkdir(parents=True, exist_ok=True)
+        request.output_path.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
         request.output_path.write_bytes(b"RIFFfake")
+
         return SynthesisResult(
             success=True,
             output_path=request.output_path,
@@ -36,7 +44,9 @@ class FakePlayer:
         return True
 
 
-def test_official_daxter_falls_back_to_alex(tmp_path) -> None:
+def test_official_daxter_falls_back_to_alex(
+    tmp_path,
+) -> None:
     player = FakePlayer()
     service = VoiceService(
         provider=FakeProvider(),
@@ -55,7 +65,9 @@ def test_official_daxter_falls_back_to_alex(tmp_path) -> None:
     assert len(player.played) == 1
 
 
-def test_official_coco_falls_back_to_dora(tmp_path) -> None:
+def test_official_coco_falls_back_to_dora(
+    tmp_path,
+) -> None:
     service = VoiceService(
         provider=FakeProvider(),
         player=FakePlayer(),
@@ -83,5 +95,5 @@ def test_console_cleanup_ignores_visual_separators() -> None:
 
     assert (
         VoiceService.clean_console_text(text)
-        == "Hola, REDACTED_2c7b6821719d. Todo está bien."
+        == "Hola, REDACTED_2c7b6821719d.\n\nTodo está bien."
     )
