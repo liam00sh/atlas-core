@@ -47,6 +47,7 @@ class SynthesisRequest:
 
     text: str
     voice_id: str
+    provider_voice_id: str
     output_path: Path
     speed: float = 1.0
     volume: float = 1.0

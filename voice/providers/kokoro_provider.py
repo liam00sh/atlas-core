@@ -3,24 +3,31 @@
 from __future__ import annotations
 
 import json
-import shlex
+import re
 import subprocess
 from pathlib import Path
 
-from voice.config import (
-    KOKORO_COMMAND,
-    VOICE_PROVIDER_TIMEOUT_SECONDS,
-)
+from voice.config import KOKORO_COMMAND, VOICE_PROVIDER_TIMEOUT_SECONDS
 from voice.models import SynthesisRequest, SynthesisResult
 from voice.providers.base_tts_provider import BaseTTSProvider
 
+def _split_windows_command(command: str) -> list[str]:
+    """
+    Divide un comando de Windows conservando correctamente las rutas
+    que contienen espacios, pero elimina las comillas exteriores.
+    """
+    matches = re.findall(
+        r'"([^"]*)"|(\S+)',
+        command,
+    )
+
+    return [
+        quoted or unquoted
+        for quoted, unquoted in matches
+    ]
 
 class KokoroProvider(BaseTTSProvider):
-    """Invoca un puente externo de Kokoro mediante entrada/salida JSON.
-
-    El puente se ejecuta en un entorno Python 3.12 separado. Atlas Core no
-    importa el paquete ``kokoro`` ni depende directamente de él.
-    """
+    """Invoca un puente externo de Kokoro mediante entrada/salida JSON."""
 
     provider_id = "kokoro"
 
@@ -52,11 +59,23 @@ class KokoroProvider(BaseTTSProvider):
                 error="ATLAS_KOKORO_COMMAND no está configurado.",
             )
 
+        if not self.supports_voice(request.provider_voice_id):
+            return SynthesisResult(
+                success=False,
+                output_path=None,
+                voice_id=request.voice_id,
+                provider_id=self.provider_id,
+                error=(
+                    "Kokoro no admite la voz "
+                    f"'{request.provider_voice_id}'."
+                ),
+            )
+
         request.output_path.parent.mkdir(parents=True, exist_ok=True)
 
         payload = {
             "text": request.text,
-            "voice": request.voice_id,
+            "voice": request.provider_voice_id,
             "output_path": str(request.output_path),
             "speed": request.speed,
             "volume": request.volume,
@@ -64,7 +83,7 @@ class KokoroProvider(BaseTTSProvider):
 
         try:
             completed = subprocess.run(
-                shlex.split(self._command, posix=False),
+                _split_windows_command(self._command),
                 input=json.dumps(payload, ensure_ascii=False),
                 text=True,
                 capture_output=True,
