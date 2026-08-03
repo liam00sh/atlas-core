@@ -16,6 +16,9 @@ from telegram_interface.progress import build_progress_message
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.storage import TelegramStorage
+from telegram_interface.response_modes import TelegramResponseModeStore
+from telegram_interface.voice_delivery import TelegramVoiceRenderer
+from pathlib import Path
 
 
 def _display_assistant_name(name: str) -> str:
@@ -114,6 +117,15 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         TelegramDeliveryQueue(storage),
         client,
     )
+    response_modes = TelegramResponseModeStore(storage)
+    project_root = Path(__file__).resolve().parents[1]
+    voice_renderer = TelegramVoiceRenderer(
+        project_root=project_root,
+        user_provider=lambda: getattr(voice_renderer, '_current_user', 'REDACTED_2c7b6821719d'),
+        personality_provider=lambda: gateway.core.active_personality(
+            getattr(voice_renderer, '_current_user', 'REDACTED_2c7b6821719d')
+        ),
+    )
     poller = TelegramPoller(
         client=client,
         gateway=gateway,
@@ -123,6 +135,8 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         progress_message_factory=progress_message,
         delivery_dispatcher=delivery_dispatcher,
         owner_user_id="REDACTED_2c7b6821719d",
+        voice_renderer=voice_renderer,
+        response_mode_store=response_modes,
     )
     return TelegramRuntime(config, storage, linker, sessions, gateway, poller, lifecycle)
 

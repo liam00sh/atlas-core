@@ -15,6 +15,11 @@ from telegram_interface.models import (
     TelegramRequestContext,
 )
 from telegram_interface.rate_limiter import TelegramRateLimiter
+from telegram_interface.response_modes import (
+    TelegramResponseModeStore,
+    confirmation_text,
+    detect_response_mode_directive,
+)
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.progress import append_response_time
 import traceback
@@ -45,6 +50,12 @@ class TelegramGateway:
         self.permission_resolver = permission_resolver or (lambda _user: frozenset({"telegram.use"}))
         self.rate_limiter = rate_limiter or TelegramRateLimiter(config.rate_limit_per_minute)
         self.clock = clock
+        storage = getattr(linker, "storage", None)
+        self.response_modes = (
+            TelegramResponseModeStore(storage)
+            if storage is not None
+            else None
+        )
         self._processing_errors: dict[tuple[str, str], tuple[int, float]] = {}
         self._executor = ThreadPoolExecutor(max_workers=config.max_concurrent_operations, thread_name_prefix="atlas-telegram")
 
@@ -66,7 +77,23 @@ class TelegramGateway:
             state = TelegramAccountState(account.get("state", "unlinked"))
             atlas_user_id = account.get("atlas_user_id") if state is TelegramAccountState.LINKED else None
             command, argument = self._command(message.text)
-            if command:
+            mode_directive = (
+                detect_response_mode_directive(message.text)
+                if atlas_user_id else None
+            )
+            if (
+                mode_directive is not None
+                and self.response_modes is not None
+                and atlas_user_id is not None
+            ):
+                self.response_modes.set(
+                    atlas_user_id,
+                    mode_directive,
+                )
+                response = GatewayResponse(
+                    confirmation_text(mode_directive)
+                )
+            elif command:
                 response = self._handle_command(command, argument, message, state, atlas_user_id)
             elif state is not TelegramAccountState.LINKED or atlas_user_id is None:
                 response = GatewayResponse(

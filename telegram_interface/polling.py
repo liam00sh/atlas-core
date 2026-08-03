@@ -16,6 +16,8 @@ from telegram_interface.client import TelegramClientError, TelegramClientProtoco
 from telegram_interface.formatter import split_message
 from telegram_interface.gateway import TelegramGateway
 from telegram_interface.models import TelegramMessage
+from telegram_interface.response_modes import resolve_delivery_mode
+from telegram_interface.voice_delivery import TelegramVoiceRenderer
 from telegram_interface.storage import TelegramStorage
 from telegram_interface.progress import progress_delay_for
 from telegram_interface.scheduler import ConversationScheduler
@@ -45,6 +47,8 @@ class TelegramPoller:
         media_max_bytes: int | None = None,
         media_ttl_hours: int | None = None,
         wall_clock: Callable[[], float] = wall_time,
+        voice_renderer: TelegramVoiceRenderer | None = None,
+        response_mode_store=None,
     ) -> None:
         self.client = client
         self.gateway = gateway
@@ -70,6 +74,8 @@ class TelegramPoller:
         self.media_max_bytes = int(media_max_bytes if media_max_bytes is not None else os.getenv("ATLAS_TELEGRAM_MEDIA_MAX_BYTES", str(25 * 1024 * 1024)))
         self.media_ttl_hours = int(media_ttl_hours if media_ttl_hours is not None else os.getenv("ATLAS_TELEGRAM_MEDIA_TTL_HOURS", "24"))
         self.wall_clock = wall_clock
+        self.voice_renderer = voice_renderer
+        self.response_mode_store = response_mode_store
 
     def validate_long_polling(self) -> None:
         info = self.client.get_webhook_info()
@@ -235,7 +241,18 @@ class TelegramPoller:
         def done(response) -> None:
             try:
                 if response is not None:
-                    self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
+                    delivered = self._send_response(
+                        message=message,
+                        atlas_user_id=atlas_user_id,
+                        text=response.text,
+                        parse_mode=response.parse_mode,
+                    )
+                    if not delivered:
+                        self._send_chunks(
+                            message.user.chat_id,
+                            response.text,
+                            response.parse_mode,
+                        )
             finally:
                 self._cleanup_message_media(message)
                 finish_pending()
@@ -302,6 +319,50 @@ class TelegramPoller:
                     self.client.send_message(chat_id=message.user.chat_id, text=text, parse_mode=None)
         except (TelegramClientError, RuntimeError, ValueError):
             return
+
+
+    def _send_response(
+        self,
+        *,
+        message: TelegramMessage,
+        atlas_user_id: str,
+        text: str,
+        parse_mode: str | None,
+    ) -> bool:
+        mode = (
+            self.response_mode_store.get(atlas_user_id)
+            if self.response_mode_store is not None
+            else "automatic"
+        )
+        audio_available = (
+            self.voice_renderer is not None
+            and self.voice_renderer.is_available()
+        )
+        delivery = resolve_delivery_mode(
+            configured_mode=mode,
+            incoming_media_type=message.media_type,
+            audio_available=audio_available,
+        )
+
+        if delivery != "audio" or self.voice_renderer is None:
+            return False
+
+        self.voice_renderer._current_user = atlas_user_id
+        result = self.voice_renderer.render(text)
+        if not result.success or result.ogg_path is None:
+            return False
+
+        try:
+            with self._send_lock:
+                self.client.send_voice(
+                    chat_id=message.user.chat_id,
+                    voice_path=result.ogg_path,
+                )
+            return True
+        except TelegramClientError:
+            return False
+        finally:
+            self.voice_renderer.cleanup(result)
 
     def _send_chunks(self, chat_id: str, text: str, parse_mode: str | None) -> None:
         with self._send_lock:

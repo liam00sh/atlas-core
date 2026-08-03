@@ -32,7 +32,7 @@ class DesktopWidgets:
 
         self.raspberry = self._build_window(
             width=430,
-            height=520,
+            height=560,
             x_offset=19,
             y_offset=390,
             anchor_right=True,
@@ -40,7 +40,7 @@ class DesktopWidgets:
         )
         self.raspberry_title_label = tk.Label(
             self.raspberry,
-            text="ATLAS · ESTADO Y SERVICIOS \n",
+            text="ATLAS · ESTADO DE LA RPi\n",
             justify="left",
             anchor="nw",
             fg="#a9adb3",
@@ -63,6 +63,36 @@ class DesktopWidgets:
             font=("Consolas", 11),
         )
         self.raspberry_label.pack(
+            anchor="w",
+            padx=12,
+            pady=(0, 10),
+        )
+
+        self.raspberry_services_title_label = tk.Label(
+            self.raspberry,
+            text="ATLAS · SERVICIO\n",
+            justify="left",
+            anchor="nw",
+            fg="#a9adb3",
+            bg="#111111",
+            font=("Consolas", 12, "bold"),
+        )
+        self.raspberry_services_title_label.pack(
+            anchor="w",
+            padx=12,
+            pady=(30, 0),
+        )
+
+        self.raspberry_services_label = tk.Label(
+            self.raspberry,
+            text="Sin datos",
+            justify="left",
+            anchor="nw",
+            fg="#a9adb3",
+            bg="#111111",
+            font=("Consolas", 11),
+        )
+        self.raspberry_services_label.pack(
             anchor="w",
             padx=12,
             pady=(0, 10),
@@ -231,7 +261,7 @@ class DesktopWidgets:
         ha = details.get("home_assistant") or {}
 
         state = str(result.get("state", "unknown")).upper()
-        lines = [
+        return "\n".join([
             f"ESTADO       {state}",
             f"HOST         {details.get('hostname', 'N/D')}",
             f"IP           {(details.get('network') or {}).get('primary_ip', 'N/D')}",
@@ -245,23 +275,19 @@ class DesktopWidgets:
             f"HOME ASSIST. {'OK' if ha.get('container_running') else 'ERROR'}",
             f"UPTIME       {int(details.get('uptime_seconds', 0) // 3600)} h",
             f"ÚLTIMO CHECK {result.get('checked_at', 'N/D')[-14:-6]}",
-        ]
-        supervisor = payload.get("supervisor") or {}
-        checks = supervisor.get("checks") or {}
-        if checks:
-            lines.extend(("", "SERVICIOS"))
-            for check_id, check in sorted(checks.items()):
-                status = str((check or {}).get("state", "unknown")).upper()
-                lines.append(f"{check_id[:18]:18} {status}")
-        incidents = payload.get("incidents") or []
-        recoveries = supervisor.get("recent_recoveries") or []
-        recommendations = supervisor.get("recovery_recommendations") or []
-        lines.extend((
-            "",
-            f"INCIDENCIAS  {len(incidents)} abiertas",
-            f"RECUPERACIÓN {len(recommendations)} recomendadas / {len(recoveries)} recientes",
-            f"HEARTBEAT    {supervisor.get('heartbeat', 'N/D')}",
-        ))
+        ])
+
+
+    def _render_services(self, payload: dict) -> str:
+        services = payload.get("services") or {}
+        if not services:
+            return "Sin datos"
+
+        lines: list[str] = []
+        for name, item in services.items():
+            healthy = bool((item or {}).get("healthy", False))
+            state = "OK" if healthy else "ERROR"
+            lines.append(f"{name:<20} {state}")
         return "\n".join(lines)
 
     def _render_banner(self, payload: dict) -> tuple[str, str, str] | None:
@@ -393,6 +419,7 @@ class DesktopWidgets:
             payload = {}
 
         self.raspberry_label.config(text=self._render_raspberry(payload))
+        self.raspberry_services_label.config(text=self._render_services(payload))
 
         if self.demo_mode:
             type_text, message_text, color = self._demo_banner()

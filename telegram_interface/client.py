@@ -8,6 +8,8 @@ from pathlib import Path
 from typing import Any, Protocol
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
+import mimetypes
+import uuid
 from urllib.request import Request, urlopen
 
 
@@ -31,6 +33,7 @@ class TelegramClientError(RuntimeError):
 class TelegramClientProtocol(Protocol):
     def get_updates(self, *, offset: int, timeout: int) -> list[dict[str, Any]]: ...
     def send_message(self, *, chat_id: str, text: str, parse_mode: str | None = None) -> dict[str, Any]: ...
+    def send_voice(self, *, chat_id: str, voice_path: str | Path, caption: str | None = None) -> dict[str, Any]: ...
     def get_me(self) -> dict[str, Any]: ...
     def get_webhook_info(self) -> dict[str, Any]: ...
     def get_file(self, *, file_id: str) -> dict[str, Any]: ...
@@ -103,6 +106,99 @@ class TelegramBotClient:
         if parse_mode:
             parameters["parse_mode"] = parse_mode
         result = self._call("sendMessage", parameters, timeout=30)
+        return result if isinstance(result, dict) else {}
+
+
+    def send_voice(
+        self,
+        *,
+        chat_id: str,
+        voice_path: str | Path,
+        caption: str | None = None,
+    ) -> dict[str, Any]:
+        path = Path(voice_path)
+        if not path.is_file():
+            raise TelegramClientError(
+                "No existe el audio que se debe enviar.",
+                code="voice_file_missing",
+            )
+
+        boundary = f"----AtlasTelegram{uuid.uuid4().hex}"
+        mime_type = mimetypes.guess_type(path.name)[0] or "audio/ogg"
+        pieces: list[bytes] = []
+
+        def add_field(name: str, value: str) -> None:
+            pieces.extend(
+                [
+                    f"--{boundary}\r\n".encode(),
+                    (
+                        f'Content-Disposition: form-data; '
+                        f'name="{name}"\r\n\r\n'
+                    ).encode(),
+                    value.encode("utf-8"),
+                    b"\r\n",
+                ]
+            )
+
+        add_field("chat_id", chat_id)
+        if caption:
+            add_field("caption", caption)
+
+        pieces.extend(
+            [
+                f"--{boundary}\r\n".encode(),
+                (
+                    'Content-Disposition: form-data; name="voice"; '
+                    f'filename="{path.name}"\r\n'
+                ).encode(),
+                f"Content-Type: {mime_type}\r\n\r\n".encode(),
+                path.read_bytes(),
+                b"\r\n",
+                f"--{boundary}--\r\n".encode(),
+            ]
+        )
+
+        request = Request(
+            f"{self._base_url}/sendVoice",
+            data=b"".join(pieces),
+            method="POST",
+            headers={
+                "Content-Type": (
+                    "multipart/form-data; "
+                    f"boundary={boundary}"
+                )
+            },
+        )
+
+        try:
+            with self._opener(request, timeout=90) as response:
+                decoded = json.loads(response.read().decode("utf-8"))
+        except HTTPError as exc:
+            raise TelegramClientError(
+                f"Telegram rechazó la nota de voz HTTP {exc.code}.",
+                code=f"telegram_http_{exc.code}",
+                retryable=exc.code == 429 or exc.code >= 500,
+            ) from None
+        except (
+            URLError,
+            TimeoutError,
+            socket.timeout,
+            OSError,
+            json.JSONDecodeError,
+        ):
+            raise TelegramClientError(
+                "No se pudo enviar la nota de voz.",
+                code="telegram_voice_unavailable",
+                retryable=True,
+            ) from None
+
+        if not isinstance(decoded, dict) or decoded.get("ok") is not True:
+            raise TelegramClientError(
+                "Telegram devolvió un resultado inválido al enviar voz.",
+                code="telegram_voice_invalid_response",
+            )
+
+        result = decoded.get("result")
         return result if isinstance(result, dict) else {}
 
     def get_me(self) -> dict[str, Any]:

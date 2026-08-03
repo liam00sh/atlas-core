@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import os
 import socket
 import subprocess
-from typing import Callable
+from typing import Any, Callable
 
 from monitoring.models import HealthCheckResult, HealthState
 
@@ -213,7 +214,7 @@ PY
         if isinstance(temperature, (int, float)):
             if temperature >= 80:
                 critical.append("temperature")
-            elif temperature >= 70:
+            elif temperature >= 75:
                 warnings.append("temperature")
 
         sd = details.get("sd", {})
