@@ -1,0 +1,30 @@
+EXTRAE EL CONTENIDO DEL ZIP EN LA RAÍZ DE atlas-core.
+
+Este paquete sustituye:
+- voice/models.py
+- voice/config.py
+- voice/providers/kokoro_provider.py
+- console/shell.py
+
+Y añade:
+- voice/player.py
+- voice/service.py
+- voice/runtime.py
+- tools/test_voice_runtime.py
+- tests/test_voice_service.py
+- tests/test_kokoro_provider.py
+- docs/ACTIVACION_VOCES_ALTERNATIVAS.md
+
+COMANDOS:
+
+git switch main
+git pull --ff-only
+git switch -c fase-6-voces-alternativas-operativas
+
+Extrae el ZIP.
+
+python -m compileall voice console/shell.py tools/kokoro_bridge.py tools/test_voice_runtime.py
+python -m pytest -q tests/test_voice_catalog.py tests/test_voice_preferences.py tests/test_voice_resolver.py tests/test_voice_service.py tests/test_kokoro_provider.py
+
+No hagas merge hasta probar:
+python tools/test_voice_runtime.py --identity daxter --voice daxter_alex
