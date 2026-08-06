@@ -102,6 +102,19 @@ class TelegramGateway:
                 elif self.response_mode_store is not None and (mode := detect_response_mode_directive(message.text)) is not None:
                     self.response_mode_store.set(atlas_user_id, mode)
                     response = GatewayResponse(confirmation_text(mode), delivery_hint="text")
+                elif (
+                    not message.media_type
+                    and self.media_processor is not None
+                    and (
+                        pending_stt := self.media_processor.process_text_followup(
+                            message.text, context, self.core
+                        )
+                    ) is not None
+                ):
+                    response = GatewayResponse(
+                        pending_stt.text,
+                        stage_timings_ms=pending_stt.timings_ms,
+                    )
                 elif message.media_type:
                     token = bind_request_timing(timing)
                     try:
