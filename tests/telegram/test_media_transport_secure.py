@@ -16,6 +16,7 @@ from telegram_interface.media import (
     TelegramMediaQuarantine,
     TelegramMediaValidator,
 )
+from tests.telegram.ogg_fixtures import make_ogg_opus
 
 
 class _Client:
@@ -44,9 +45,10 @@ def _downloader(tmp_path, client):
 
 
 def test_detects_real_type_without_trusting_declared_name_or_mime(tmp_path):
-    client = _Client(b"OggS" + b"\x00" * 32)
+    payload = make_ogg_opus()
+    client = _Client(payload)
     result = _downloader(tmp_path, client).download(
-        TelegramMediaEnvelope("voice", "opaque-id", declared_size=36)
+        TelegramMediaEnvelope("voice", "opaque-id", declared_size=len(payload))
     )
     try:
         assert result.detected_mime == "audio/ogg"
@@ -61,7 +63,7 @@ def test_detects_real_type_without_trusting_declared_name_or_mime(tmp_path):
     ("payload", "code"),
     [
         (b"MZ" + b"\x00" * 30, "media_executable"),
-        (b"OggS" + b"MZ" + b"\x00" * 30, "media_polyglot"),
+        (make_ogg_opus() + b"MZ" + b"\x00" * 30, "media_polyglot"),
         (b"", "media_empty"),
     ],
 )

@@ -11,6 +11,7 @@ import pytest
 from scripts.check_stt_config import _safe_config, transcribe_local_audio
 from telegram_interface.multimedia import TelegramMultimediaProcessor
 from tests.telegram.conftest import link_user, make_message
+from tests.telegram.ogg_fixtures import make_ogg_opus
 from voice.stt import BaseSTTProvider, STTConfidence, STTConfig, STTError, STTResult
 from voice.stt_policy import (
     AtlasIntentConfidenceResolver,
@@ -65,7 +66,7 @@ class LiveConverter:
 
 
 def _ogg(path: Path) -> Path:
-    path.write_bytes(b"OggS" + b"\x00" * 128)
+    path.write_bytes(make_ogg_opus())
     return path
 
 
