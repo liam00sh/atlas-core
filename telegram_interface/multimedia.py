@@ -5,8 +5,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 from time import perf_counter
+from time import monotonic
 import os
 import re
+import threading
 import unicodedata
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 import shutil
@@ -19,7 +21,8 @@ from telegram_interface.analyzers import (
     ImageNormalizerProtocol,
 )
 from telegram_interface.models import TelegramMessage, TelegramRequestContext
-from voice.stt import STTError, STTService
+from voice.stt import STTConfidence, STTError, STTResult, STTService
+from voice.stt_policy import STTDecisionKind, STTInputPolicy
 from identity.face_recognition import FaceAccessContext, FacePolicyError, FaceRecognitionError
 
 
@@ -28,6 +31,15 @@ class MultimediaResult:
     text: str
     timings_ms: dict[str, float] = field(default_factory=dict)
     input_language: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class _PendingSTTTurn:
+    kind: STTDecisionKind
+    text: str
+    intent: str
+    sensitive: bool
+    created_at: float
 
 
 class TelegramMultimediaProcessor:
@@ -42,6 +54,9 @@ class TelegramMultimediaProcessor:
         work_dir: str | Path | None = None,
         face_service=None,
         analysis_timeout_seconds: float = 45.0,
+        stt_policy: STTInputPolicy | None = None,
+        clarification_ttl_seconds: float = 120.0,
+        clock=monotonic,
     ) -> None:
         self.stt = stt
         self.language_resolver = language_resolver or (lambda _user: None)
@@ -51,6 +66,11 @@ class TelegramMultimediaProcessor:
         self.work_dir = Path(work_dir) if work_dir is not None else Path("data/telegram_media/analysis")
         self.face_service = face_service
         self.analysis_timeout_seconds = float(analysis_timeout_seconds)
+        self.stt_policy = stt_policy or STTInputPolicy()
+        self.clarification_ttl_seconds = max(1.0, float(clarification_ttl_seconds))
+        self.clock = clock
+        self._pending_stt: dict[str, _PendingSTTTurn] = {}
+        self._pending_lock = threading.RLock()
 
     def process(self, message: TelegramMessage, context: TelegramRequestContext, core) -> MultimediaResult | None:
         if message.media_type == "photo" or (
@@ -80,13 +100,132 @@ class TelegramMultimediaProcessor:
                 "audio_empty": "No he detectado voz utilizable en el audio.",
                 "audio_corrupt": "El audio está dañado o usa un formato que no se puede convertir.",
                 "ffmpeg_unavailable": "No puedo convertir el audio porque FFmpeg no está disponible.",
+                "stt_runtime_error": "El reconocimiento de voz local ha fallado; puedes escribir el mensaje mientras se revisa.",
             }
             return MultimediaResult(messages.get(exc.code, "No he podido transcribir el audio de forma segura."))
 
-        # La transcripción entra exactamente una vez en el mismo adaptador que
-        # el texto. No se crea historial, memoria ni segunda inteligencia aquí.
-        response = core.process(transcript.text, context)
+        if pending_result := self._resolve_pending(
+            transcript.text,
+            transcript.confidence,
+            context,
+            core,
+            timings,
+            transcript.language,
+        ):
+            return pending_result
+
+        # La política común detiene antes del núcleo cualquier transcripción
+        # dudosa o incompleta: no ejecuta acciones ni escribe memoria.
+        context_reader = getattr(core, "stt_intent_context", None)
+        intent_context = context_reader(context) if callable(context_reader) else None
+        decision = self.stt_policy.evaluate(transcript, intent_context)
+        if decision.kind is not STTDecisionKind.PROCESS:
+            self._remember_pending(getattr(context, "session_id", ""), decision)
+            return MultimediaResult(
+                decision.response or "No he podido confirmar la transcripción.",
+                timings,
+                transcript.language,
+            )
+        # Solo la versión fiable entra una vez en el mismo adaptador que texto.
+        response = core.process(decision.text, context)
         return MultimediaResult(str(response), timings, transcript.language)
+
+    def process_text_followup(self, text: str, context: TelegramRequestContext, core) -> MultimediaResult | None:
+        """Resuelve una confirmación/aclaración STT escrita sin persistirla."""
+        return self._resolve_pending(text, STTConfidence.HIGH, context, core, {}, None)
+
+    def _remember_pending(self, session_id: str, decision) -> None:
+        if not session_id:
+            return
+        if decision.kind not in {STTDecisionKind.CONFIRM, STTDecisionKind.CLARIFY}:
+            return
+        if decision.kind is STTDecisionKind.CLARIFY and decision.intent != "incomplete_command":
+            return
+        with self._pending_lock:
+            self._pending_stt[session_id] = _PendingSTTTurn(
+                decision.kind,
+                decision.text,
+                decision.intent,
+                decision.sensitive,
+                self.clock(),
+            )
+
+    def _take_pending(self, session_id: str) -> _PendingSTTTurn | None:
+        with self._pending_lock:
+            pending = self._pending_stt.get(session_id)
+            if pending is None:
+                return None
+            if self.clock() - pending.created_at > self.clarification_ttl_seconds:
+                self._pending_stt.pop(session_id, None)
+                return None
+            return pending
+
+    def _clear_pending(self, session_id: str) -> None:
+        with self._pending_lock:
+            self._pending_stt.pop(session_id, None)
+
+    def _resolve_pending(
+        self,
+        reply: str,
+        speech_confidence: STTConfidence,
+        context: TelegramRequestContext,
+        core,
+        timings: dict[str, float],
+        language: str | None,
+    ) -> MultimediaResult | None:
+        session_id = getattr(context, "session_id", "")
+        if not session_id:
+            return None
+        pending = self._take_pending(session_id)
+        if pending is None:
+            return None
+        if speech_confidence is not STTConfidence.HIGH:
+            return MultimediaResult(
+                "La confirmación tampoco se ha entendido con suficiente seguridad. Repítela, por favor.",
+                timings,
+                language,
+            )
+        normalized = self._plain(reply)
+        yes = normalized in {"si", "correcto", "confirmo", "eso es", "exacto"}
+        no = normalized in {"no", "incorrecto", "cancelar", "cancela"}
+        if no:
+            self._clear_pending(session_id)
+            return MultimediaResult("De acuerdo. Dime de nuevo la frase correcta.", timings, language)
+        if pending.kind is STTDecisionKind.CONFIRM:
+            if not yes:
+                self._clear_pending(session_id)
+                return None
+            self._clear_pending(session_id)
+            if pending.sensitive:
+                return MultimediaResult(
+                    "Por seguridad, repite la orden sensible completa para obtener una transcripción de confianza alta.",
+                    timings,
+                    language,
+                )
+            candidate = pending.text
+        else:
+            if yes or not normalized:
+                return MultimediaResult("Necesito el dato que falta, no solo una confirmación.", timings, language)
+            self._clear_pending(session_id)
+            verb = self._plain(pending.text).split()[0]
+            candidate = f"{verb} {' '.join(reply.split())}"
+
+        intent_context_reader = getattr(core, "stt_intent_context", None)
+        intent_context = intent_context_reader(context) if callable(intent_context_reader) else None
+        decision = self.stt_policy.evaluate(
+            STTResult(candidate, language, confidence=STTConfidence.HIGH),
+            intent_context,
+        )
+        if decision.kind is not STTDecisionKind.PROCESS:
+            self._remember_pending(session_id, decision)
+            return MultimediaResult(decision.response or "Necesito una aclaración.", timings, language)
+        return MultimediaResult(str(core.process(decision.text, context)), timings, language)
+
+    @staticmethod
+    def _plain(text: str) -> str:
+        value = unicodedata.normalize("NFKD", str(text).casefold())
+        value = "".join(char for char in value if not unicodedata.combining(char))
+        return " ".join(re.sub(r"[^a-z0-9]+", " ", value).split())
 
     def _process_image(self, message: TelegramMessage, context: TelegramRequestContext, core) -> MultimediaResult:
         if self.image_normalizer is None or not self.image_normalizer.is_available():

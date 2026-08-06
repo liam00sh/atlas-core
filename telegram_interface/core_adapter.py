@@ -15,6 +15,7 @@ from typing import Protocol
 from ai.context.context_manager import AIContextManager
 from core.request_timing import measure_stage, record_stage_duration
 from telegram_interface.models import TelegramRequestContext
+from voice.stt_policy import STTIntentContext
 
 
 class AtlasCoreProtocol(Protocol):
@@ -385,6 +386,27 @@ class AtlasCoreAdapter:
                 if self.atlas.get_user().casefold() != previous_user.casefold():
                     self.atlas.change_user(previous_user)
 
+    def stt_intent_context(self, context: TelegramRequestContext) -> STTIntentContext:
+        """Lee contexto temporal de la sesión sin activar usuario ni escribir estado."""
+        with self._lock:
+            manager = self._ai_context_states.get(context.session_id)
+            messages = manager.get_messages() if manager is not None else []
+            immediate_history = tuple(
+                str(item.get("content", ""))
+                for item in messages[-4:]
+                if str(item.get("content", "")).strip()
+            )
+            pending = []
+            if self._confirmation_states.get(context.session_id) is not None:
+                pending.append("confirmation")
+            if self._legacy_memory_states.get(context.session_id) is not None:
+                pending.append("memory_confirmation")
+            return STTIntentContext(
+                immediate_history=immediate_history,
+                pending_slots=tuple(pending),
+                has_temporary_memory=self._legacy_memory_states.get(context.session_id) is not None,
+            )
+
     def change_personality(self, atlas_user_id: str, personality: str) -> bool:
         with self._lock:
             previous_user = self.atlas.get_user()
@@ -414,3 +436,7 @@ class CallableCoreAdapter:
 
     def change_personality(self, atlas_user_id: str, personality: str) -> bool:
         return bool(self.personality_setter(atlas_user_id, personality))
+
+    @staticmethod
+    def stt_intent_context(_context: TelegramRequestContext) -> STTIntentContext:
+        return STTIntentContext()
