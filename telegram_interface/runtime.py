@@ -24,6 +24,7 @@ from voice.config import VOICE_ENABLED
 from voice.preferences.manager import VoicePreferenceManager
 from voice.service import VoiceService
 from telegram_interface.voice_delivery import TelegramVoiceRenderer
+from telegram_interface.analyzers import PillowImageNormalizer, SafeLocalDocumentAnalyzer
 from pathlib import Path
 
 
@@ -53,6 +54,9 @@ TELEGRAM_CHANNEL_ALLOWED_PERMISSIONS = frozenset(
         # conceder administración al resto de cuentas.
         "telegram.admin_link",
         "telegram.admin_revoke",
+        # Solo atraviesan el canal si un resolvedor central externo los ha
+        # concedido de forma explícita; el resolvedor predeterminado no lo hace.
+        "face.enroll", "face.recognize", "face.revoke", "face.status",
     }
 )
 
@@ -105,7 +109,10 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
             AudioConverter(timeout_seconds=min(30.0, stt_config.timeout_seconds)),
             config=stt_config,
             work_dir=config.data_dir / "quarantine" / "stt",
-        )
+        ),
+        image_normalizer=PillowImageNormalizer(),
+        document_analyzer=SafeLocalDocumentAnalyzer(),
+        work_dir=config.data_dir / "quarantine" / "analysis",
     )
     gateway = TelegramGateway(
         config=config,
