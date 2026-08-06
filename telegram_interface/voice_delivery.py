@@ -49,6 +49,11 @@ class TelegramVoiceRenderer:
         )
         timings["tts.synthesize"] = round((perf_counter() - started) * 1000, 3)
         wav_path = Path(result.output_path) if result.output_path is not None else None
+        if wav_path is not None:
+            try:
+                wav_path.resolve().relative_to(Path(self.voice_service.output_dir).resolve())
+            except (OSError, ValueError):
+                return TelegramVoiceResult(False, None, "El proveedor TTS produjo una ruta no autorizada.", timings)
         if not result.success or wav_path is None or not wav_path.is_file():
             self._unlink(wav_path)
             return TelegramVoiceResult(False, None, result.error or "La síntesis no produjo un WAV.", timings)
@@ -76,6 +81,10 @@ class TelegramVoiceRenderer:
         if completed.returncode != 0 or not ogg_path.is_file():
             self._unlink(ogg_path)
             return TelegramVoiceResult(False, None, "FFmpeg no pudo preparar la nota de voz.", timings)
+        try:
+            ogg_path.chmod(0o600)
+        except OSError:
+            pass
         return TelegramVoiceResult(True, ogg_path, timings_ms=timings)
 
     @classmethod

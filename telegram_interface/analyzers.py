@@ -45,6 +45,9 @@ class ImageNormalizerProtocol(Protocol):
 class PillowImageNormalizer:
     """Corrige orientación y vuelve a codificar sin EXIF ni metadatos."""
 
+    def __init__(self, *, max_pixels: int = 40_000_000) -> None:
+        self.max_pixels = max_pixels
+
     def is_available(self) -> bool:
         return importlib.util.find_spec("PIL") is not None
 
@@ -57,12 +60,17 @@ class PillowImageNormalizer:
         target.parent.mkdir(parents=True, exist_ok=True)
         try:
             with Image.open(source) as image:
+                if image.width * image.height > self.max_pixels:
+                    raise AnalysisError("image_too_large", "La imagen supera el máximo seguro de píxeles.")
                 image.verify()
             with Image.open(source) as image:
                 clean = ImageOps.exif_transpose(image)
                 if clean.mode not in {"RGB", "L"}:
                     clean = clean.convert("RGB")
                 clean.save(target, format="PNG", optimize=True)
+        except AnalysisError:
+            target.unlink(missing_ok=True)
+            raise
         except Exception as exc:
             target.unlink(missing_ok=True)
             raise AnalysisError("image_corrupt", "La imagen no se puede normalizar.") from exc
@@ -119,7 +127,16 @@ class SafeLocalDocumentAnalyzer:
                     raise AnalysisError("document_encrypted", "El PDF está cifrado.")
                 if len(reader.pages) > self.max_pages:
                     raise AnalysisError("document_too_many_pages", "El PDF supera el máximo de páginas.")
-                text = "\n\n".join((page.extract_text() or "") for page in reader.pages)
+                parts: list[str] = []
+                used = 0
+                for page in reader.pages:
+                    page_text = page.extract_text() or ""
+                    remaining = self.max_characters - used
+                    if remaining <= 0:
+                        break
+                    parts.append(page_text[:remaining])
+                    used += min(len(page_text), remaining)
+                text = "\n\n".join(parts)
             except AnalysisError:
                 raise
             except Exception as exc:
@@ -129,7 +146,16 @@ class SafeLocalDocumentAnalyzer:
 
         try:
             document = Document(str(target))
-            text = "\n".join(paragraph.text for paragraph in document.paragraphs)
+            parts = []
+            used = 0
+            for paragraph in document.paragraphs:
+                remaining = self.max_characters - used
+                if remaining <= 0:
+                    break
+                value = paragraph.text[:remaining]
+                parts.append(value)
+                used += len(value)
+            text = "\n".join(parts)
         except Exception as exc:
             raise AnalysisError("document_corrupt", "El DOCX no se puede extraer.") from exc
         return self._bounded(text, mime_type, 1)

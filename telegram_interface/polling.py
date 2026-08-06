@@ -232,19 +232,21 @@ class TelegramPoller:
                             audio_available=bool(self.voice_renderer and self.voice_renderer.is_available()),
                         )
                     if mode == "audio" and self.voice_renderer is not None and atlas_user_id:
-                        rendered = self.voice_renderer.render(response.text, user_id=atlas_user_id)
-                        stages.update(rendered.timings_ms)
+                        rendered = None
                         try:
+                            rendered = self.voice_renderer.render(response.text, user_id=atlas_user_id)
+                            stages.update(rendered.timings_ms)
                             if rendered.success and rendered.ogg_path is not None:
                                 upload_started = perf_counter()
                                 with self._send_lock:
                                     self.client.send_voice(chat_id=message.user.chat_id, path=rendered.ogg_path)
                                 stages["telegram.upload"] = round((perf_counter() - upload_started) * 1000, 3)
                                 sent_audio = True
-                        except TelegramClientError:
+                        except (TelegramClientError, OSError, RuntimeError, ValueError):
                             sent_audio = False
                         finally:
-                            self.voice_renderer.cleanup(rendered)
+                            if rendered is not None:
+                                self.voice_renderer.cleanup(rendered)
                     if not sent_audio:
                         send_started = perf_counter()
                         self._send_chunks(message.user.chat_id, response.text, response.parse_mode)

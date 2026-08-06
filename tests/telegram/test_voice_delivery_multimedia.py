@@ -146,12 +146,15 @@ class Gateway:
 
 
 class Renderer:
-    def __init__(self, tmp_path):
+    def __init__(self, tmp_path, *, render_error=False):
         self.path = tmp_path / "out.ogg"
         self.cleaned = 0
+        self.render_error = render_error
 
     def is_available(self): return True
     def render(self, _text, *, user_id):
+        if self.render_error:
+            raise RuntimeError("fallo TTS simulado")
         self.path.write_bytes(b"OggS")
         return TelegramVoiceResult(True, self.path, timings_ms={"tts.synthesize": 1.0})
     def cleanup(self, result):
@@ -172,3 +175,13 @@ def test_poller_sends_one_complete_response_and_falls_back_to_text_on_upload_err
     assert len(client.sent_voice) == 1
     assert renderer.cleaned == 1
     assert not renderer.path.exists()
+
+
+def test_unexpected_tts_error_falls_back_to_one_text_response(storage, tmp_path):
+    client = Client()
+    renderer = Renderer(tmp_path, render_error=True)
+    TelegramPoller(
+        client=client, gateway=Gateway(), storage=storage, voice_renderer=renderer
+    ).run(max_cycles=1)
+    assert len(client.sent_text) == 1
+    assert client.sent_voice == []

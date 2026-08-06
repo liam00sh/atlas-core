@@ -9,6 +9,7 @@ from identity.face_recognition import (
     FaceAccessContext,
     FaceIdentityStore,
     FacePolicyError,
+    FaceRecognitionError,
     PrivateFaceRecognitionService,
 )
 
@@ -78,3 +79,19 @@ def test_revoke_requires_reinforced_confirmation_and_removes_embeddings(tmp_path
         service.revoke("person-001", access("face.revoke"), reinforced_confirmation=False)
     assert service.revoke("person-001", access("face.revoke"), reinforced_confirmation=True)
     assert store.get("person-001") is None
+
+
+def test_corrupt_gallery_is_never_silently_overwritten(tmp_path):
+    path = tmp_path / "faces.json"
+    path.write_text("{broken", encoding="utf-8")
+    store = FaceIdentityStore(path)
+    provider = Provider()
+    provider.values = {"one": [[0.1]], "two": [[0.1]]}
+    service = PrivateFaceRecognitionService(store, provider)
+    with pytest.raises(FaceRecognitionError) as raised:
+        service.enroll(
+            "person-001", ["one", "two"], access("face.enroll"),
+            consent_at=datetime(2025, 1, 1, tzinfo=UTC), reinforced_confirmation=True,
+        )
+    assert getattr(raised.value, "code", None) == "face_store_corrupt"
+    assert path.read_text(encoding="utf-8") == "{broken"

@@ -102,7 +102,9 @@ class TelegramMediaValidator:
         if data.startswith(b"ID3") or data[:2] in {b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"}:
             return "audio/mpeg"
         if len(data) >= 12 and data[4:8] == b"ftyp":
-            return "audio/mp4"
+            if data[8:12] in {b"M4A ", b"M4B "}:
+                return "audio/mp4"
+            raise TelegramMediaError("rejected_type", "El contenedor MP4 no demuestra ser solo audio.")
         if data.startswith(b"%PDF-"):
             return "application/pdf"
         if data.startswith(b"PK\x03\x04") and zipfile.is_zipfile(path):
@@ -126,6 +128,9 @@ class TelegramMediaValidator:
             marker = data.rfind(b"IEND")
             if marker < 0 or len(data[marker + 4 :].strip(b"\x00\r\n\t ")) > 4:
                 raise TelegramMediaError("media_corrupt", "PNG incompleto o con datos añadidos.")
+        if mime in {"image/webp", "audio/wav"}:
+            if len(data) < 12 or int.from_bytes(data[4:8], "little") + 8 != len(data):
+                raise TelegramMediaError("media_corrupt", "Contenedor RIFF incompleto.")
         if mime == "application/pdf":
             if b"%%EOF" not in data[-2048:]:
                 raise TelegramMediaError("media_corrupt", "PDF incompleto.")
@@ -144,7 +149,7 @@ class TelegramMediaValidator:
             total = 0
             for info in infos:
                 parts = PurePosixPath(info.filename).parts
-                if info.filename.startswith(("/", "\\")) or ".." in parts:
+                if info.filename.startswith(("/", "\\")) or ".." in parts or "\\" in info.filename or ":" in parts[0]:
                     raise TelegramMediaError("media_path_traversal", "Ruta interna insegura.")
                 if info.filename.casefold().endswith(("vbaproject.bin", ".exe", ".dll", ".js", ".ps1")):
                     raise TelegramMediaError("media_active_content", "Macros o ejecutables rechazados.")
@@ -195,8 +200,11 @@ class TelegramMediaQuarantine:
             return
         cutoff = (self.clock() if now is None else now) - max(0, ttl_hours) * 3600
         for path in self.root.rglob("*"):
-            if path.is_file() and path.stat().st_mtime <= cutoff:
-                self.cleanup(path)
+            try:
+                if path.is_file() and path.stat().st_mtime <= cutoff:
+                    self.cleanup(path)
+            except OSError:
+                continue
 
 
 class TelegramMediaDownloader:
@@ -223,6 +231,10 @@ class TelegramMediaDownloader:
         try:
             path = self.client.download_file(file_path=remote_path, destination=provisional, max_bytes=limit)
             downloaded_path = Path(path)
+            try:
+                downloaded_path.resolve().relative_to(self.quarantine.root.resolve())
+            except (OSError, ValueError) as exc:
+                raise TelegramMediaError("media_path_traversal", "La descarga salió de la cuarentena.") from exc
             self.quarantine.secure(path)
             downloaded_ms = round((perf_counter() - download_started) * 1000, 3)
             validation_started = perf_counter()

@@ -138,11 +138,14 @@ class TelegramMultimediaProcessor:
                 cleanup_path=clean_path,
             )
             timing = {"image.analyze": round((perf_counter() - started) * 1000, 3)}
-            details = [f"Descripción visual: {analysis.summary}"]
+            details = [f"Descripción visual: {str(analysis.summary)[:8000]}"]
             if analysis.visible_text:
-                details.append(f"Texto visible: {analysis.visible_text}")
+                details.append(f"Texto visible: {str(analysis.visible_text)[:4000]}")
             if analysis.objects:
-                details.append("Objetos generales: " + ", ".join(analysis.objects))
+                details.append(
+                    "Objetos generales: "
+                    + ", ".join(str(item)[:100] for item in analysis.objects[:100])
+                )
             if message.text.strip():
                 details.append("Petición del usuario: " + " ".join(message.text.split())[:1000])
             prompt = (
@@ -156,6 +159,7 @@ class TelegramMultimediaProcessor:
                 "image_corrupt": "La imagen está dañada o no se puede normalizar.",
                 "image_normalizer_unavailable": "No está disponible el normalizador seguro de imágenes.",
                 "image_timeout": "El análisis de imagen ha agotado el tiempo configurado.",
+                "image_too_large": "La imagen supera el máximo seguro de píxeles.",
             }
             return MultimediaResult(messages.get(exc.code, "No he podido analizar la imagen de forma segura."))
         finally:

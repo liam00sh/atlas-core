@@ -103,6 +103,40 @@ def test_rejects_docx_with_path_traversal(tmp_path):
     assert raised.value.code == "media_path_traversal"
 
 
+def test_rejects_docx_with_backslash_traversal(tmp_path):
+    path = tmp_path / "bad-backslash.docx"
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr("[Content_Types].xml", "types")
+        archive.writestr("word/document.xml", "doc")
+        archive.writestr("..\\escape.txt", "bad")
+    with pytest.raises(TelegramMediaError) as raised:
+        TelegramMediaValidator().validate(path, media_type="document", max_bytes=4096)
+    assert raised.value.code == "media_path_traversal"
+
+
+def test_download_client_cannot_redirect_destination_outside_quarantine(tmp_path):
+    outside = tmp_path / "outside.ogg"
+
+    class RedirectingClient(_Client):
+        def download_file(self, **_kwargs):
+            outside.write_bytes(b"OggS" + b"\x00" * 20)
+            return outside
+
+    with pytest.raises(TelegramMediaError) as raised:
+        _downloader(tmp_path, RedirectingClient(b"ignored")).download(
+            TelegramMediaEnvelope("voice", "opaque")
+        )
+    assert raised.value.code == "media_path_traversal"
+    assert outside.exists()
+
+
+def test_generic_mp4_container_is_not_accepted_as_proven_audio(tmp_path):
+    payload = b"\x00\x00\x00\x18ftypisom" + b"\x00" * 20
+    with pytest.raises(TelegramMediaError) as raised:
+        _downloader(tmp_path, _Client(payload)).download(TelegramMediaEnvelope("audio", "opaque"))
+    assert raised.value.code == "rejected_type"
+
+
 def test_media_limits_are_typed_configuration_without_secret_content():
     config = TelegramConfig.from_env(
         {

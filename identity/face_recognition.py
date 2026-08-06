@@ -113,12 +113,14 @@ class FaceIdentityStore:
         with self._lock:
             try:
                 payload = json.loads(self.path.read_text(encoding="utf-8"))
-            except (FileNotFoundError, OSError, json.JSONDecodeError):
+            except FileNotFoundError:
                 return {}
+            except (OSError, json.JSONDecodeError) as exc:
+                raise FaceRecognitionError("face_store_corrupt", "El almacén facial no se puede leer con seguridad.") from exc
             raw_records = payload.get("identities", {}) if isinstance(payload, dict) else {}
             result: dict[str, FaceIdentityRecord] = {}
-            if not isinstance(raw_records, dict):
-                return result
+            if not isinstance(payload, dict) or not isinstance(raw_records, dict):
+                raise FaceRecognitionError("face_store_corrupt", "El almacén facial tiene una estructura no válida.")
             for key, raw in raw_records.items():
                 try:
                     record = FaceIdentityRecord(
@@ -133,8 +135,8 @@ class FaceIdentityStore:
                     )
                     self._validate_record(record)
                     result[self._validate_id(str(key))] = record
-                except (KeyError, TypeError, ValueError):
-                    continue
+                except (KeyError, TypeError, ValueError) as exc:
+                    raise FaceRecognitionError("face_store_corrupt", "El almacén facial contiene un registro no válido.") from exc
             return result
 
     def _write(self, records: dict[str, FaceIdentityRecord]) -> None:
@@ -164,6 +166,9 @@ class FaceIdentityStore:
 
     @staticmethod
     def _validate_record(record: FaceIdentityRecord) -> None:
+        dimensions = {len(vector) for vector in record.embeddings}
+        if len(dimensions) > 1:
+            raise ValueError("Los embeddings faciales no comparten dimensión.")
         for vector in record.embeddings:
             if not vector or len(vector) > 4096 or any(not math.isfinite(value) for value in vector):
                 raise ValueError("Embedding facial no válido.")

@@ -168,6 +168,8 @@ class TelegramBotClient:
         target = Path(path)
         if not target.is_file():
             raise TelegramClientError("El archivo de salida no existe.", code="upload_missing")
+        if target.stat().st_size > 50 * 1024 * 1024:
+            raise TelegramClientError("El archivo de salida supera el límite del cliente.", code="upload_too_large")
         boundary = f"atlas-{secrets.token_hex(16)}"
         body = bytearray()
 
