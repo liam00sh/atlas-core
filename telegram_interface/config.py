@@ -32,6 +32,11 @@ class TelegramConfig:
     timezone_name: str = "Europe/Madrid"
     data_dir: Path = Path("data/integrations/telegram")
     debug_content_logging: bool = False
+    media_voice_max_bytes: int = 12 * 1024 * 1024
+    media_audio_max_bytes: int = 25 * 1024 * 1024
+    media_photo_max_bytes: int = 12 * 1024 * 1024
+    media_document_max_bytes: int = 20 * 1024 * 1024
+    media_ttl_hours: int = 24
 
     @property
     def token_present(self) -> bool:
@@ -58,6 +63,11 @@ class TelegramConfig:
             timezone_name=values.get("ATLAS_TELEGRAM_TIMEZONE", "Europe/Madrid").strip() or "Europe/Madrid",
             data_dir=Path(values.get("ATLAS_TELEGRAM_DATA_DIR", "data/integrations/telegram")),
             debug_content_logging=_parse_bool(values.get("ATLAS_TELEGRAM_DEBUG_CONTENT", "false"), "ATLAS_TELEGRAM_DEBUG_CONTENT"),
+            media_voice_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_VOICE_MAX_BYTES", 12 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_audio_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_AUDIO_MAX_BYTES", 25 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_photo_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_PHOTO_MAX_BYTES", 12 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_document_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_DOCUMENT_MAX_BYTES", 20 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_ttl_hours=_parse_int(values, "ATLAS_TELEGRAM_MEDIA_TTL_HOURS", 24, 1, 168),
         )
         config.validate()
         return config
@@ -79,6 +89,13 @@ class TelegramConfig:
             "progress_delay_seconds": self.progress_delay_seconds,
             "timezone_name": self.timezone_name,
             "debug_content_logging": self.debug_content_logging,
+            "media_limits_bytes": {
+                "voice": self.media_voice_max_bytes,
+                "audio": self.media_audio_max_bytes,
+                "photo": self.media_photo_max_bytes,
+                "document": self.media_document_max_bytes,
+            },
+            "media_ttl_hours": self.media_ttl_hours,
         }
 
 

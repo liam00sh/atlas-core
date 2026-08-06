@@ -40,6 +40,10 @@ class TelegramMessage:
     file_size: int | None = None
     local_path: str | None = None
     media_status: str | None = None
+    detected_mime: str | None = None
+    media_byte_size: int | None = None
+    media_sha256: str | None = field(default=None, repr=False)
+    media_timings_ms: dict[str, float] = field(default_factory=dict)
 
     @classmethod
     def from_update(cls, update: dict[str, Any]) -> TelegramMessage | None:

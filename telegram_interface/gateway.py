@@ -55,6 +55,9 @@ class TelegramGateway:
     def handle(self, message: TelegramMessage) -> GatewayResponse:
         started = perf_counter()
         timing = RequestTiming()
+        for stage, milliseconds in message.media_timings_ms.items():
+            if isinstance(milliseconds, (int, float)) and milliseconds >= 0:
+                timing.add_ms(stage, float(milliseconds))
         audit_result = "ok"
         audit_error: str | None = None
         if message.chat_type != "private":

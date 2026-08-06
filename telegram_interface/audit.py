@@ -15,6 +15,9 @@ _TIMING_STAGES = frozenset({
     "receive_validation_linking", "context_memory", "tool_selection",
     "weather_call", "model_call", "core_processing", "composition",
     "telegram_send", "total",
+    "media.download", "media.validation", "audio.convert", "stt.transcribe",
+    "image.analyze", "face.detect", "face.compare", "document.extract",
+    "tts.synthesize", "telegram.upload",
 })
 
 

@@ -12,6 +12,7 @@ from telegram_interface.gateway import TelegramGateway
 from telegram_interface.identity_linker import TelegramIdentityLinker
 from telegram_interface.interuser_delivery import TelegramDeliveryDispatcher, TelegramDeliveryQueue
 from telegram_interface.polling import TelegramPoller
+from telegram_interface.media import TelegramMediaLimits
 from telegram_interface.progress import build_progress_message
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
@@ -123,6 +124,13 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         progress_message_factory=progress_message,
         delivery_dispatcher=delivery_dispatcher,
         owner_user_id="REDACTED_2c7b6821719d",
+        media_limits=TelegramMediaLimits(
+            voice=config.media_voice_max_bytes,
+            audio=config.media_audio_max_bytes,
+            photo=config.media_photo_max_bytes,
+            document=config.media_document_max_bytes,
+        ),
+        media_ttl_hours=config.media_ttl_hours,
     )
     return TelegramRuntime(config, storage, linker, sessions, gateway, poller, lifecycle)
 
