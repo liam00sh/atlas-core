@@ -259,6 +259,9 @@ Validación final exacta:
 6. `0c10036 feat(telegram): envía archivos desde rutas autorizadas`
 7. `c44bc36 fix(multimedia): limita duración y tiempo de análisis`
 8. `28cdd91 fix(security): endurece límites y cuarentena multimedia`
+9. `af0af40 docs: documenta seguridad y validación multimedia`
+10. `2801bf8 docs: corrige formato del informe multimedia`
+11. `HEAD docs: actualiza inventario final de commits` (este cierre documental)
 
 No se hizo push, merge ni reescritura de historial.
 
