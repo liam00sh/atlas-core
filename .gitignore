@@ -97,9 +97,13 @@ data/integrations/telegram/supervisor_status.json
 # Telegram: cuentas, sesiones y datos privados
 # -----------------------------------------------------------------------------
 data/integrations/telegram/state.json
+data/integrations/telegram/audit.jsonl
 data/integrations/telegram/pending_messages.json
 data/integrations/telegram/quarantine/
 data/integrations/telegram/downloads/
+
+# Estado cotidiano y ubicación temporal por usuario (datos locales privados)
+data/daily_life/state.json
 
 # -----------------------------------------------------------------------------
 # Datos privados de usuarios
