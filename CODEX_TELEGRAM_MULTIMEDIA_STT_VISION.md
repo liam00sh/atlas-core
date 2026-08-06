@@ -1,8 +1,10 @@
 # Revisión Telegram multimedia, STT y visión
 
-Fecha: 2026-08-06  
-Rama: `feature/telegram-multimedia-stt-vision`  
-Base exacta: `daebe6bd` (`origin/main`)  
+Fecha: 2026-08-06
+
+Rama: `feature/telegram-multimedia-stt-vision`
+
+Base exacta: `daebe6bd` (`origin/main`)
 Worktree seguro: `C:\Proyectos\Atlas\atlas_core_multimedia`
 
 ## 1. Inventario inicial
