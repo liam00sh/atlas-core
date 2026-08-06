@@ -26,6 +26,9 @@ from voice.service import VoiceService
 from telegram_interface.voice_delivery import TelegramVoiceRenderer
 from telegram_interface.analyzers import PillowImageNormalizer, SafeLocalDocumentAnalyzer
 from pathlib import Path
+from telegram_interface.outbound import TelegramOutboundMediaService
+from tools.telegram_media import build_telegram_media_tools
+from tools.exceptions import ToolRegistrationError
 
 
 def _display_assistant_name(name: str) -> str:
@@ -57,6 +60,8 @@ TELEGRAM_CHANNEL_ALLOWED_PERMISSIONS = frozenset(
         # Solo atraviesan el canal si un resolvedor central externo los ha
         # concedido de forma explícita; el resolvedor predeterminado no lo hace.
         "face.enroll", "face.recognize", "face.revoke", "face.status",
+        "telegram.send_photo", "telegram.send_voice",
+        "telegram.send_audio", "telegram.send_document",
     }
 )
 
@@ -132,6 +137,43 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         return build_progress_message(message.text, personality)
 
     client = TelegramBotClient(config.token)
+    def linked_account(atlas_user_id: str):
+        for account in storage.section("accounts").values():
+            if (
+                isinstance(account, dict)
+                and account.get("state") == "linked"
+                and str(account.get("atlas_user_id", "")).casefold() == atlas_user_id.casefold()
+            ):
+                return account
+        return None
+
+    outbound = TelegramOutboundMediaService(
+        client=client,
+        account_resolver=linked_account,
+        allowed_roots={
+            "outbox": config.data_dir / "outbox",
+            "generated": config.data_dir / "outbox" / "generated",
+        },
+        max_bytes={
+            "photo": config.media_photo_max_bytes,
+            "voice": config.media_voice_max_bytes,
+            "audio": config.media_audio_max_bytes,
+            "document": config.media_document_max_bytes,
+        },
+        audit=lambda kind, size, result: TelegramAuditLogger(config.data_dir / "audit.jsonl").record(
+            action=f"send_{kind}", result=result, telegram_user_id="outbound",
+            chat_id="outbound", duration_ms=None, media_type=kind, byte_size=size,
+        ),
+    )
+    for tool in build_telegram_media_tools(outbound):
+        try:
+            atlas.framework_tool_registry.register(tool)
+        except ToolRegistrationError:
+            # Un runtime reconstruido puede encontrar la herramienta ya
+            # registrada; no se sustituye silenciosamente por otra instancia.
+            existing = atlas.framework_tool_registry.get(tool.tool_id)
+            if not isinstance(existing, type(tool)):
+                raise
     voice_renderer = None
     if VOICE_ENABLED:
         voice_preferences = VoicePreferenceManager(

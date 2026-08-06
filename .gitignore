@@ -101,6 +101,7 @@ data/integrations/telegram/audit.jsonl
 data/integrations/telegram/pending_messages.json
 data/integrations/telegram/quarantine/
 data/integrations/telegram/downloads/
+data/integrations/telegram/outbox/
 data/telegram_media/
 data/voice/stt/
 data/face/

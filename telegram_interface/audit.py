@@ -42,6 +42,8 @@ class TelegramAuditLogger:
         duration_ms: float | None = None,
         error_code: str | None = None,
         stage_timings_ms: Mapping[str, float] | None = None,
+        media_type: str | None = None,
+        byte_size: int | None = None,
     ) -> None:
         event: dict[str, Any] = {
             "timestamp": datetime.now(UTC).isoformat(),
@@ -59,6 +61,8 @@ class TelegramAuditLogger:
                 for key, value in (stage_timings_ms or {}).items()
                 if key in _TIMING_STAGES and isinstance(value, (int, float)) and value >= 0
             },
+            "media_type": media_type if media_type in {"voice", "audio", "photo", "document"} else None,
+            "byte_size": int(byte_size) if isinstance(byte_size, int) and byte_size >= 0 else None,
         }
         line = json.dumps(event, ensure_ascii=False, sort_keys=True) + "\n"
         with self._lock:
