@@ -168,3 +168,5 @@ reports/local/
 
 # Pytest runtime local
 .pytest_runtime/
+
+.pytest_run_*/
