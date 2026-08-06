@@ -24,6 +24,7 @@ from telegram_interface.media import (
 from telegram_interface.storage import TelegramStorage
 from telegram_interface.progress import progress_delay_for
 from telegram_interface.scheduler import ConversationScheduler
+from telegram_interface.response_modes import resolve_delivery_mode
 
 
 class TelegramWebhookConfiguredError(RuntimeError):
@@ -51,6 +52,8 @@ class TelegramPoller:
         media_limits: TelegramMediaLimits | None = None,
         media_ttl_hours: int | None = None,
         wall_clock: Callable[[], float] = wall_time,
+        voice_renderer=None,
+        response_mode_store=None,
     ) -> None:
         self.client = client
         self.gateway = gateway
@@ -76,6 +79,8 @@ class TelegramPoller:
         self.media_max_bytes = int(media_max_bytes or 25 * 1024 * 1024)
         self.media_ttl_hours = int(media_ttl_hours or 24)
         self.wall_clock = wall_clock
+        self.voice_renderer = voice_renderer
+        self.response_mode_store = response_mode_store
         if media_limits is not None:
             limits = media_limits
         elif media_max_bytes is not None:
@@ -206,10 +211,36 @@ class TelegramPoller:
         def done(response) -> None:
             try:
                 if response is not None:
-                    send_started = perf_counter()
-                    self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
                     stages = dict(getattr(response, "stage_timings_ms", {}) or {})
-                    stages["telegram_send"] = round((perf_counter() - send_started) * 1000, 3)
+                    sent_audio = False
+                    mode = "text"
+                    delivery_hint = getattr(response, "delivery_hint", None)
+                    if delivery_hint in {"text", "audio"}:
+                        mode = delivery_hint
+                    elif self.response_mode_store is not None and atlas_user_id:
+                        mode = resolve_delivery_mode(
+                            configured_mode=self.response_mode_store.get(atlas_user_id),
+                            incoming_media_type=message.media_type,
+                            audio_available=bool(self.voice_renderer and self.voice_renderer.is_available()),
+                        )
+                    if mode == "audio" and self.voice_renderer is not None and atlas_user_id:
+                        rendered = self.voice_renderer.render(response.text, user_id=atlas_user_id)
+                        stages.update(rendered.timings_ms)
+                        try:
+                            if rendered.success and rendered.ogg_path is not None:
+                                upload_started = perf_counter()
+                                with self._send_lock:
+                                    self.client.send_voice(chat_id=message.user.chat_id, path=rendered.ogg_path)
+                                stages["telegram.upload"] = round((perf_counter() - upload_started) * 1000, 3)
+                                sent_audio = True
+                        except TelegramClientError:
+                            sent_audio = False
+                        finally:
+                            self.voice_renderer.cleanup(rendered)
+                    if not sent_audio:
+                        send_started = perf_counter()
+                        self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
+                        stages["telegram_send"] = round((perf_counter() - send_started) * 1000, 3)
                     audit = getattr(self.gateway, "audit", None)
                     if audit is not None:
                         audit.record(

@@ -18,6 +18,7 @@ from telegram_interface.models import (
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.progress import append_response_time
+from telegram_interface.response_modes import confirmation_text, detect_response_mode_directive
 import traceback
 
 
@@ -37,6 +38,7 @@ class TelegramGateway:
         permission_resolver=None,
         rate_limiter: TelegramRateLimiter | None = None,
         media_processor=None,
+        response_mode_store=None,
         clock=monotonic,
     ) -> None:
         self.config = config
@@ -47,6 +49,7 @@ class TelegramGateway:
         self.permission_resolver = permission_resolver or (lambda _user: frozenset({"telegram.use"}))
         self.rate_limiter = rate_limiter or TelegramRateLimiter(config.rate_limit_per_minute)
         self.media_processor = media_processor
+        self.response_mode_store = response_mode_store
         self.clock = clock
         self._processing_errors: dict[tuple[str, str], tuple[int, float]] = {}
         self._executor = ThreadPoolExecutor(max_workers=config.max_concurrent_operations, thread_name_prefix="atlas-telegram")
@@ -96,6 +99,9 @@ class TelegramGateway:
                 )
                 if "telegram.use" not in {item.casefold() for item in permissions}:
                     response = GatewayResponse("Tu usuario no tiene permiso para utilizar el sistema desde Telegram.")
+                elif self.response_mode_store is not None and (mode := detect_response_mode_directive(message.text)) is not None:
+                    self.response_mode_store.set(atlas_user_id, mode)
+                    response = GatewayResponse(confirmation_text(mode), delivery_hint="text")
                 elif message.media_type:
                     token = bind_request_timing(timing)
                     try:
@@ -181,6 +187,7 @@ class TelegramGateway:
                     parse_mode=response.parse_mode,
                     close_session=response.close_session,
                     stage_timings_ms=response.stage_timings_ms,
+                    delivery_hint=response.delivery_hint,
                 )
             timing.add("total", perf_counter() - started)
             response = GatewayResponse(
@@ -188,6 +195,7 @@ class TelegramGateway:
                 parse_mode=response.parse_mode,
                 close_session=response.close_session,
                 stage_timings_ms=timing.snapshot(),
+                delivery_hint=response.delivery_hint,
             )
             self.audit.record(
                 action=command or "message",

@@ -25,7 +25,7 @@ class TelegramStorage:
 
     @staticmethod
     def _empty() -> dict[str, Any]:
-        return {"version": 3, "accounts": {}, "link_codes": {}, "sessions": {}, "deliveries": {}, "reply_context": {}, "lifecycle": {}, "offset": 0}
+        return {"version": 3, "accounts": {}, "link_codes": {}, "sessions": {}, "deliveries": {}, "reply_context": {}, "lifecycle": {}, "response_modes": {}, "offset": 0}
 
     def _load(self) -> dict[str, Any]:
         try:

@@ -14,11 +14,17 @@ from telegram_interface.interuser_delivery import TelegramDeliveryDispatcher, Te
 from telegram_interface.polling import TelegramPoller
 from telegram_interface.media import TelegramMediaLimits
 from telegram_interface.multimedia import TelegramMultimediaProcessor
+from telegram_interface.response_modes import TelegramResponseModeStore
 from telegram_interface.progress import build_progress_message
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.storage import TelegramStorage
 from voice.stt import AudioConverter, FasterWhisperSTTProvider, STTConfig, STTService
+from voice.config import VOICE_ENABLED
+from voice.preferences.manager import VoicePreferenceManager
+from voice.service import VoiceService
+from telegram_interface.voice_delivery import TelegramVoiceRenderer
+from pathlib import Path
 
 
 def _display_assistant_name(name: str) -> str:
@@ -91,6 +97,7 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         except Exception:
             pass
     sessions = TelegramSessionManager(storage, ttl_seconds=config.session_ttl_seconds)
+    response_modes = TelegramResponseModeStore(storage)
     stt_config = STTConfig.from_env()
     media_processor = TelegramMultimediaProcessor(
         stt=STTService(
@@ -109,6 +116,7 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         rate_limiter=TelegramRateLimiter(config.rate_limit_per_minute),
         permission_resolver=lambda user: _telegram_permissions(atlas, user),
         media_processor=media_processor,
+        response_mode_store=response_modes,
     )
     def progress_message(message) -> str:
         account = linker.get_account(message.user.telegram_user_id)
@@ -117,6 +125,18 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         return build_progress_message(message.text, personality)
 
     client = TelegramBotClient(config.token)
+    voice_renderer = None
+    if VOICE_ENABLED:
+        voice_preferences = VoicePreferenceManager(
+            storage_path=Path("data/voice/user_preferences.json"),
+            user_provider=lambda: "",
+        )
+        voice_renderer = TelegramVoiceRenderer(
+            voice_service=VoiceService(),
+            preference_resolver=voice_preferences.get,
+            personality_resolver=gateway.core.active_personality,
+            output_dir=config.data_dir / "quarantine" / "tts",
+        )
     lifecycle = TelegramLifecycleNotifier(
         storage,
         client,
@@ -143,6 +163,8 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
             document=config.media_document_max_bytes,
         ),
         media_ttl_hours=config.media_ttl_hours,
+        voice_renderer=voice_renderer,
+        response_mode_store=response_modes,
     )
     return TelegramRuntime(config, storage, linker, sessions, gateway, poller, lifecycle)
 

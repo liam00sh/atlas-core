@@ -26,7 +26,8 @@ class VoiceService:
         return COCO_PREFERRED_VOICE if identity is AssistantIdentity.COCO else DAXTER_PREFERRED_VOICE
 
     def speak(self, text: str, *, identity, requested_voice_id=None,
-              preferences=None, speed=1.0, volume=1.0) -> SynthesisResult:
+              preferences=None, speed=1.0, volume=1.0,
+              play_audio=True) -> SynthesisResult:
         identity = AssistantIdentity(identity)
         clean_text = self.clean_console_text(text)
         requested = requested_voice_id or self.preferred_voice(identity, preferences)
@@ -60,7 +61,7 @@ class VoiceService:
             raw.success, raw.output_path, definition.voice_id, raw.provider_id,
             raw.error, requested, selection.fallback_used, selection.reason,
         )
-        if result.success and result.output_path is not None:
+        if play_audio and result.success and result.output_path is not None:
             if not self.player.play(result.output_path):
                 return SynthesisResult(
                     False, result.output_path, result.voice_id, result.provider_id,

@@ -119,6 +119,7 @@ class GatewayResponse:
     parse_mode: str | None = None
     close_session: bool = False
     stage_timings_ms: dict[str, float] = field(default_factory=dict)
+    delivery_hint: str | None = None
 
 
 def _optional_text(value: object) -> str | None:
