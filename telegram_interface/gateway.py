@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from time import monotonic, perf_counter
+from core.request_timing import RequestTiming, bind_request_timing, reset_request_timing
 from telegram_interface.audit import TelegramAuditLogger
 from telegram_interface.config import TelegramConfig
 from telegram_interface.core_adapter import AtlasCoreAdapter
@@ -53,6 +54,7 @@ class TelegramGateway:
 
     def handle(self, message: TelegramMessage) -> GatewayResponse:
         started = perf_counter()
+        timing = RequestTiming()
         audit_result = "ok"
         audit_error: str | None = None
         if message.chat_type != "private":
@@ -125,7 +127,16 @@ class TelegramGateway:
                             authentication_state=state,
                             permissions=permissions,
                         )
-                        future = self._executor.submit(self.core.process, message.text, context)
+                        timing.add("receive_validation_linking", perf_counter() - started)
+
+                        def process_with_timing():
+                            token = bind_request_timing(timing)
+                            try:
+                                return self.core.process(message.text, context)
+                            finally:
+                                reset_request_timing(token)
+
+                        future = self._executor.submit(process_with_timing)
                         try:
                             result = future.result(timeout=self.config.processing_timeout_seconds)
                             self._processing_errors.pop(error_key, None)
@@ -155,7 +166,15 @@ class TelegramGateway:
                     append_response_time(response.text, elapsed_seconds, current_personality),
                     parse_mode=response.parse_mode,
                     close_session=response.close_session,
+                    stage_timings_ms=response.stage_timings_ms,
                 )
+            timing.add("total", perf_counter() - started)
+            response = GatewayResponse(
+                response.text,
+                parse_mode=response.parse_mode,
+                close_session=response.close_session,
+                stage_timings_ms=timing.snapshot(),
+            )
             self.audit.record(
                 action=command or "message",
                 result=audit_result,
@@ -165,6 +184,7 @@ class TelegramGateway:
                 personality=self.core.active_personality(atlas_user_id) if atlas_user_id else None,
                 duration_ms=round((perf_counter() - started) * 1000, 3),
                 error_code=audit_error,
+                stage_timings_ms=response.stage_timings_ms,
             )
             return response
 
