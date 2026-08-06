@@ -1,0 +1,4 @@
+# En telegram_interface/runtime.py cambia:
+# progress_delay_seconds=4.0,
+# por:
+# progress_delay_seconds=2.0,

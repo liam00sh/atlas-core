@@ -1,0 +1,85 @@
+# Sustituye únicamente estos métodos dentro de TelegramPoller.
+
+    def _handle_with_ordered_progress(self, message: TelegramMessage):
+        if self.progress_message_factory is None or self.progress_delay_seconds <= 0:
+            return self.gateway.handle(message)
+        if message.text.lstrip().startswith("/"):
+            return self.gateway.handle(message)
+
+        # Las órdenes de formato deben resolverse de inmediato y no pasar por
+        # la cola de progreso ni por Atlas Core.
+        if detect_response_mode_directive(message.text) is not None:
+            return self.gateway.handle(message)
+
+        delay = progress_delay_for(message.text, self.progress_delay_seconds)
+        if delay < 0:
+            return self.gateway.handle(message)
+
+        future = self._message_executor.submit(self.gateway.handle, message)
+        try:
+            return future.result(timeout=delay)
+        except FutureTimeout:
+            sent_at = monotonic()
+            self._send_progress_now(message)
+            result = future.result()
+            remaining = 0.35 - (monotonic() - sent_at)
+            if remaining > 0:
+                self.sleeper(remaining)
+            return result
+
+    def _send_response(
+        self,
+        *,
+        message: TelegramMessage,
+        atlas_user_id: str,
+        text: str,
+        parse_mode: str | None,
+    ) -> bool:
+        mode = (
+            self.response_mode_store.get(atlas_user_id)
+            if self.response_mode_store is not None
+            else "automatic"
+        )
+        audio_available = (
+            self.voice_renderer is not None
+            and self.voice_renderer.is_available()
+        )
+        delivery = resolve_delivery_mode(
+            configured_mode=mode,
+            incoming_media_type=message.media_type,
+            audio_available=audio_available,
+        )
+
+        if delivery != "audio" or self.voice_renderer is None:
+            return False
+
+        self.voice_renderer._current_user = atlas_user_id
+        result = self.voice_renderer.render(text)
+        if not result.success or result.ogg_path is None:
+            # En modo audio forzado no enviamos una respuesta normal de texto
+            # sin avisar: el usuario debe saber que el TTS falló.
+            if str(mode) == "audio_only":
+                self._send_chunks(
+                    message.user.chat_id,
+                    "No he podido generar el audio en esta respuesta. Mantengo el modo solo audio y usaré texto únicamente como respaldo técnico.",
+                    None,
+                )
+            return False
+
+        try:
+            with self._send_lock:
+                self.client.send_voice(
+                    chat_id=message.user.chat_id,
+                    voice_path=result.ogg_path,
+                )
+            return True
+        except TelegramClientError:
+            if str(mode) == "audio_only":
+                self._send_chunks(
+                    message.user.chat_id,
+                    "No he podido enviar la nota de voz. Mantengo el modo solo audio y usaré texto únicamente como respaldo técnico.",
+                    None,
+                )
+            return False
+        finally:
+            self.voice_renderer.cleanup(result)

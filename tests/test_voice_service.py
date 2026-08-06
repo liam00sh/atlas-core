@@ -84,6 +84,28 @@ def test_official_coco_falls_back_to_dora(
     assert result.voice_id == "coco_dora"
 
 
+def test_speak_can_synthesize_without_local_playback(
+    tmp_path,
+) -> None:
+    player = FakePlayer()
+    service = VoiceService(
+        provider=FakeProvider(),
+        player=player,
+        output_dir=tmp_path,
+    )
+
+    result = service.speak(
+        "Mensaje privado de Telegram.",
+        identity=AssistantIdentity.DAXTER,
+        requested_voice_id="daxter_alex",
+        play_audio=False,
+    )
+
+    assert result.success is True
+    assert result.output_path is not None
+    assert player.played == []
+
+
 def test_console_cleanup_ignores_visual_separators() -> None:
     text = """
     ====================
