@@ -103,6 +103,8 @@ data/integrations/telegram/quarantine/
 data/integrations/telegram/downloads/
 data/telegram_media/
 data/voice/stt/
+data/face/
+data/biometrics/
 
 # Estado cotidiano y ubicación temporal por usuario (datos locales privados)
 data/daily_life/state.json
