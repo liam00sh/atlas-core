@@ -9,9 +9,11 @@ import re
 import random
 import threading
 import unicodedata
+from time import perf_counter
 from typing import Protocol
 
 from ai.context.context_manager import AIContextManager
+from core.request_timing import measure_stage, record_stage_duration
 from telegram_interface.models import TelegramRequestContext
 
 
@@ -184,11 +186,31 @@ class AtlasCoreAdapter:
         return f"¡Hola, {first}! Encantado de saludarte 👋"
 
     @classmethod
-    def _clean_response(cls, response: str) -> str:
+    def _clean_response(
+        cls,
+        response: str,
+        user_text: str | None = None,
+        user_name: str | None = None,
+    ) -> str:
         cleaned = cls._VISIBILITY_LABEL_RE.sub(" ", response)
         cleaned = re.sub(r"[ \t]+\n", "\n", cleaned)
         cleaned = re.sub(r" {2,}", " ", cleaned)
-        return cleaned.strip()
+        cleaned = cleaned.strip()
+        if user_text and cleaned:
+            lines = cleaned.splitlines()
+            first = lines[0].strip()
+            prompt = cls._plain(user_text).strip(" ?!¡¿.,;:")
+            first_plain = cls._plain(first).strip(" ?!¡¿.,;:")
+            echoed = first_plain == prompt
+            if user_name and ":" in first:
+                label, _, remainder = first.partition(":")
+                echoed = (
+                    cls._plain(label) == cls._plain(user_name)
+                    and cls._plain(remainder).strip(" ?!¡¿.,;:") == prompt
+                )
+            if echoed:
+                cleaned = "\n".join(lines[1:]).strip()
+        return cleaned
 
 
     @classmethod
@@ -266,6 +288,7 @@ class AtlasCoreAdapter:
             if meta:
                 return f"{identity_intro}\n{meta}".strip() if identity_intro else meta
 
+            context_started = perf_counter()
             previous_user = self.atlas.get_user()
             previous_session = getattr(self.atlas, "session_id", None)
             previous_request_context = getattr(self.atlas, "channel_request_context", None)
@@ -303,7 +326,8 @@ class AtlasCoreAdapter:
                         context.session_id,
                         AIContextManager(max_messages=getattr(self.atlas, "ai_context_max_messages", 10)),
                     )
-                with redirect_stdout(output):
+                record_stage_duration("context_memory", perf_counter() - context_started)
+                with redirect_stdout(output), measure_stage("core_processing"):
                     self.atlas.process(corrected_text)
             finally:
                 if confirmations is not None:
@@ -335,13 +359,20 @@ class AtlasCoreAdapter:
                 if memory_service is not None:
                     memory_service.pending_memory = previous_pending_memory
 
-            response = self._clean_response(output.getvalue().strip())
-            adapter = getattr(self.atlas, "adapt_response_for_profile", None)
-            if callable(adapter) and response:
-                response = self._clean_response(adapter(response, context.atlas_user_id))
-            if identity_intro:
-                return self._clean_response(f"{identity_intro}\n{response}") if response else identity_intro
-            return response or "Atlas no ha generado una respuesta."
+            with measure_stage("composition"):
+                response = self._clean_response(
+                    output.getvalue().strip(), corrected_text, self._short_name(context.atlas_user_id)
+                )
+                adapter = getattr(self.atlas, "adapt_response_for_profile", None)
+                if callable(adapter) and response:
+                    response = self._clean_response(
+                        adapter(response, context.atlas_user_id),
+                        corrected_text,
+                        self._short_name(context.atlas_user_id),
+                    )
+                if identity_intro:
+                    return self._clean_response(f"{identity_intro}\n{response}") if response else identity_intro
+                return response or "Atlas no ha generado una respuesta."
 
     def active_personality(self, atlas_user_id: str) -> str:
         with self._lock:

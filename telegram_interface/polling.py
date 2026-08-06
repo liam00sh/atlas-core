@@ -9,7 +9,7 @@ import hashlib
 import os
 import random
 import threading
-from time import sleep, monotonic, time as wall_time
+from time import sleep, monotonic, perf_counter, time as wall_time
 from typing import Callable
 
 from telegram_interface.client import TelegramClientError, TelegramClientProtocol
@@ -235,7 +235,20 @@ class TelegramPoller:
         def done(response) -> None:
             try:
                 if response is not None:
+                    send_started = perf_counter()
                     self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
+                    stages = dict(getattr(response, "stage_timings_ms", {}) or {})
+                    stages["telegram_send"] = round((perf_counter() - send_started) * 1000, 3)
+                    audit = getattr(self.gateway, "audit", None)
+                    if audit is not None:
+                        audit.record(
+                            action="message_timing",
+                            result="ok",
+                            telegram_user_id=message.user.telegram_user_id,
+                            chat_id=message.user.chat_id,
+                            atlas_user_id=atlas_user_id,
+                            stage_timings_ms=stages,
+                        )
             finally:
                 self._cleanup_message_media(message)
                 finish_pending()
@@ -285,14 +298,8 @@ class TelegramPoller:
         try:
             return future.result(timeout=delay)
         except FutureTimeout:
-            sent_at = monotonic()
             self._send_progress_now(message)
-            result = future.result()
-            # Separación visual mínima para evitar que Telegram agrupe ambos envíos.
-            remaining = 0.35 - (monotonic() - sent_at)
-            if remaining > 0:
-                self.sleeper(remaining)
-            return result
+            return future.result()
 
     def _send_progress_now(self, message: TelegramMessage) -> None:
         try:

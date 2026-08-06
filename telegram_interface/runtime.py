@@ -119,7 +119,7 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         gateway=gateway,
         storage=storage,
         poll_timeout=config.poll_timeout,
-        progress_delay_seconds=4.0,
+        progress_delay_seconds=config.progress_delay_seconds,
         progress_message_factory=progress_message,
         delivery_dispatcher=delivery_dispatcher,
         owner_user_id="REDACTED_2c7b6821719d",
