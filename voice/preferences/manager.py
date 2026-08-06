@@ -29,6 +29,9 @@ class VoicePreferenceManager:
     def get_current(self) -> VoicePreferences:
         return self.store.load(self.user_provider())
 
+    def get(self, user_id: str) -> VoicePreferences:
+        return self.store.load(user_id)
+
     def set_voice(
         self,
         *,

@@ -21,6 +21,10 @@ class RequestTiming:
         with self._lock:
             self.values_ms[name] = round(self.values_ms.get(name, 0.0) + seconds * 1000, 3)
 
+    def add_ms(self, name: str, milliseconds: float) -> None:
+        with self._lock:
+            self.values_ms[name] = round(self.values_ms.get(name, 0.0) + milliseconds, 3)
+
     def snapshot(self) -> dict[str, float]:
         with self._lock:
             return dict(self.values_ms)

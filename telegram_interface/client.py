@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import secrets
 import socket
 from pathlib import Path
 from typing import Any, Protocol
@@ -35,6 +36,10 @@ class TelegramClientProtocol(Protocol):
     def get_webhook_info(self) -> dict[str, Any]: ...
     def get_file(self, *, file_id: str) -> dict[str, Any]: ...
     def download_file(self, *, file_path: str, destination: str | Path, max_bytes: int) -> Path: ...
+    def send_voice(self, *, chat_id: str, path: str | Path) -> dict[str, Any]: ...
+    def send_audio(self, *, chat_id: str, path: str | Path) -> dict[str, Any]: ...
+    def send_photo(self, *, chat_id: str, path: str | Path) -> dict[str, Any]: ...
+    def send_document(self, *, chat_id: str, path: str | Path) -> dict[str, Any]: ...
 
 
 class TelegramBotClient:
@@ -146,3 +151,46 @@ class TelegramBotClient:
             raise
         except (HTTPError, URLError, TimeoutError, socket.timeout, OSError) as exc:
             raise TelegramClientError("No se pudo descargar el archivo de Telegram.", code="media_download_failed", retryable=True) from exc
+
+    def send_voice(self, *, chat_id: str, path: str | Path) -> dict[str, Any]:
+        return self._upload("sendVoice", "voice", chat_id, path, "audio/ogg")
+
+    def send_audio(self, *, chat_id: str, path: str | Path) -> dict[str, Any]:
+        return self._upload("sendAudio", "audio", chat_id, path, "audio/mpeg")
+
+    def send_photo(self, *, chat_id: str, path: str | Path) -> dict[str, Any]:
+        return self._upload("sendPhoto", "photo", chat_id, path, "image/jpeg")
+
+    def send_document(self, *, chat_id: str, path: str | Path) -> dict[str, Any]:
+        return self._upload("sendDocument", "document", chat_id, path, "application/octet-stream")
+
+    def _upload(self, method: str, field: str, chat_id: str, path: str | Path, content_type: str) -> dict[str, Any]:
+        target = Path(path)
+        if not target.is_file():
+            raise TelegramClientError("El archivo de salida no existe.", code="upload_missing")
+        if target.stat().st_size > 50 * 1024 * 1024:
+            raise TelegramClientError("El archivo de salida supera el límite del cliente.", code="upload_too_large")
+        boundary = f"atlas-{secrets.token_hex(16)}"
+        body = bytearray()
+
+        def append(value: bytes) -> None:
+            body.extend(value)
+
+        append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"chat_id\"\r\n\r\n{chat_id}\r\n".encode())
+        append(f"--{boundary}\r\nContent-Disposition: form-data; name=\"{field}\"; filename=\"media\"\r\nContent-Type: {content_type}\r\n\r\n".encode())
+        append(target.read_bytes())
+        append(f"\r\n--{boundary}--\r\n".encode())
+        request = Request(
+            f"{self._base_url}/{method}",
+            data=bytes(body),
+            headers={"Content-Type": f"multipart/form-data; boundary={boundary}"},
+            method="POST",
+        )
+        try:
+            with self._opener(request, timeout=60) as response:
+                decoded = json.loads(response.read().decode("utf-8"))
+        except (HTTPError, URLError, TimeoutError, socket.timeout, OSError, json.JSONDecodeError) as exc:
+            raise TelegramClientError("No se pudo enviar el archivo a Telegram.", code="telegram_upload_failed", retryable=True) from exc
+        if not isinstance(decoded, dict) or decoded.get("ok") is not True or not isinstance(decoded.get("result"), dict):
+            raise TelegramClientError("Telegram rechazó el archivo.", code="telegram_upload_rejected")
+        return decoded["result"]

@@ -3,10 +3,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from dataclasses import replace
-from datetime import UTC, datetime
-from pathlib import Path, PurePosixPath
-import hashlib
-import os
+from pathlib import Path
 import random
 import threading
 from time import sleep, monotonic, perf_counter, time as wall_time
@@ -16,9 +13,18 @@ from telegram_interface.client import TelegramClientError, TelegramClientProtoco
 from telegram_interface.formatter import split_message
 from telegram_interface.gateway import TelegramGateway
 from telegram_interface.models import TelegramMessage
+from telegram_interface.media import (
+    TelegramMediaDownloader,
+    TelegramMediaError,
+    TelegramMediaLimits,
+    TelegramMediaPipeline,
+    TelegramMediaQuarantine,
+    TelegramMediaValidator,
+)
 from telegram_interface.storage import TelegramStorage
 from telegram_interface.progress import progress_delay_for
 from telegram_interface.scheduler import ConversationScheduler
+from telegram_interface.response_modes import resolve_delivery_mode
 
 
 class TelegramWebhookConfiguredError(RuntimeError):
@@ -43,8 +49,12 @@ class TelegramPoller:
         lifecycle_notifier=None,
         media_root: str | Path | None = None,
         media_max_bytes: int | None = None,
+        media_limits: TelegramMediaLimits | None = None,
         media_ttl_hours: int | None = None,
         wall_clock: Callable[[], float] = wall_time,
+        voice_renderer=None,
+        response_mode_store=None,
+        audio_max_duration_seconds: float = 180.0,
     ) -> None:
         self.client = client
         self.gateway = gateway
@@ -67,9 +77,22 @@ class TelegramPoller:
         self.lifecycle_notifier = lifecycle_notifier
         root = Path(__file__).resolve().parents[1]
         self.media_root = Path(media_root) if media_root is not None else root / "data" / "telegram_media" / "quarantine"
-        self.media_max_bytes = int(media_max_bytes if media_max_bytes is not None else os.getenv("ATLAS_TELEGRAM_MEDIA_MAX_BYTES", str(25 * 1024 * 1024)))
-        self.media_ttl_hours = int(media_ttl_hours if media_ttl_hours is not None else os.getenv("ATLAS_TELEGRAM_MEDIA_TTL_HOURS", "24"))
+        self.media_max_bytes = int(media_max_bytes or 25 * 1024 * 1024)
+        self.media_ttl_hours = int(media_ttl_hours or 24)
         self.wall_clock = wall_clock
+        self.voice_renderer = voice_renderer
+        self.response_mode_store = response_mode_store
+        self.audio_max_duration_seconds = float(audio_max_duration_seconds)
+        if media_limits is not None:
+            limits = media_limits
+        elif media_max_bytes is not None:
+            limits = TelegramMediaLimits(*([int(media_max_bytes)] * 4))
+        else:
+            limits = TelegramMediaLimits()
+        self.media_quarantine = TelegramMediaQuarantine(self.media_root, clock=wall_clock)
+        self.media_pipeline = TelegramMediaPipeline(
+            TelegramMediaDownloader(self.client, self.media_quarantine, TelegramMediaValidator(), limits)
+        )
 
     def validate_long_polling(self) -> None:
         info = self.client.get_webhook_info()
@@ -140,83 +163,44 @@ class TelegramPoller:
     def _prepare_media(self, message: TelegramMessage) -> TelegramMessage:
         if not message.media_type or not message.file_id:
             return message
-        if message.file_size and message.file_size > self.media_max_bytes:
-            return replace(message, media_status="rejected_too_large")
-        allowed = {
-            "photo": {"image/jpeg", "image/png", "image/webp"},
-            "voice": {"audio/ogg", "audio/opus"},
-            "audio": {"audio/mpeg", "audio/mp4", "audio/ogg", "audio/wav", "audio/x-wav"},
-            "video": {"video/mp4", "video/webm"},
-            "document": {"application/pdf", "text/plain", "text/csv", "application/json", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/vnd.openxmlformats-officedocument.presentationml.presentation"},
-            "animation": {"video/mp4", "image/gif"},
-        }
-        inferred_transport_mime = {
-            "photo": "image/jpeg",
-            "voice": "audio/ogg",
-        }.get(message.media_type)
-        # Para documentos y audios no se confía en el sufijo aportado por el
-        # remitente. El tipo debe venir en los metadatos de Telegram.
-        mime = (message.mime_type or inferred_transport_mime or "application/octet-stream").casefold()
-        if mime not in allowed.get(message.media_type, set()):
-            return replace(message, media_status="rejected_type")
+        if (
+            message.media_type in {"voice", "audio"}
+            and message.media_duration_seconds is not None
+            and message.media_duration_seconds > self.audio_max_duration_seconds
+        ):
+            return replace(message, media_status="audio_too_long")
         try:
-            metadata = self.client.get_file(file_id=message.file_id)
-            remote_path = str(metadata.get("file_path") or "").strip()
-            remote_parts = PurePosixPath(remote_path).parts
-            if (
-                not remote_path
-                or "://" in remote_path
-                or ".." in remote_parts
-                or remote_path.startswith(("/", "\\"))
-            ):
-                return replace(message, media_status="metadata_missing")
-            declared_size = int(metadata.get("file_size") or 0)
-            if declared_size and declared_size > self.media_max_bytes:
-                return replace(message, media_status="rejected_too_large")
-            extension = {
-                "image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp",
-                "audio/ogg": ".ogg", "audio/opus": ".opus", "audio/mpeg": ".mp3",
-                "audio/mp4": ".m4a", "audio/wav": ".wav", "audio/x-wav": ".wav",
-                "video/mp4": ".mp4", "video/webm": ".webm", "image/gif": ".gif",
-                "application/pdf": ".pdf", "text/plain": ".txt", "text/csv": ".csv",
-                "application/json": ".json",
-                "application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": ".xlsx",
-                "application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
-            }.get(mime, ".bin")
-            digest = hashlib.sha256(f"{message.user.telegram_user_id}:{message.message_id}:{message.file_id}".encode()).hexdigest()[:24]
-            day = datetime.now(UTC).strftime("%Y-%m-%d")
-            destination = self.media_root / day / f"{digest}{extension}"
-            path = self.client.download_file(file_path=remote_path, destination=destination, max_bytes=self.media_max_bytes)
-            return replace(message, local_path=str(path), media_status="quarantined")
+            self.media_pipeline.downloader.client = self.client
+            envelope = self.media_pipeline.receive(
+                media_type=message.media_type,
+                file_id=message.file_id,
+                declared_size=message.file_size,
+                declared_mime=message.mime_type,
+            )
+            return replace(
+                message,
+                local_path=str(envelope.quarantine_path),
+                media_status="quarantined",
+                detected_mime=envelope.detected_mime,
+                media_byte_size=envelope.byte_size,
+                media_sha256=envelope.sha256,
+                media_timings_ms=dict(envelope.timings_ms),
+            )
+        except TelegramMediaError as exc:
+            return replace(message, media_status=exc.code)
         except TelegramClientError as exc:
             return replace(message, media_status=exc.code)
 
     def _cleanup_message_media(self, message: TelegramMessage) -> None:
         if not message.local_path:
             return
-        path = Path(message.local_path)
-        try:
-            path.resolve().relative_to(self.media_root.resolve())
-        except (OSError, ValueError):
-            return
-        try:
-            path.unlink(missing_ok=True)
-        except OSError:
-            return
+        self.media_quarantine.cleanup(message.local_path)
 
     def _cleanup_expired_media(self) -> None:
-        if not self.media_root.exists():
-            return
-        cutoff = self.wall_clock() - max(0, self.media_ttl_hours) * 3600
-        for path in self.media_root.rglob("*"):
-            if not path.is_file():
-                continue
-            try:
-                if path.stat().st_mtime <= cutoff:
-                    path.unlink(missing_ok=True)
-            except OSError:
-                continue
+        self.media_quarantine.cleanup_expired(
+            ttl_hours=self.media_ttl_hours,
+            now=self.wall_clock(),
+        )
 
     def _submit_message(self, message: TelegramMessage) -> None:
         linker = getattr(self.gateway, "linker", None)
@@ -235,10 +219,38 @@ class TelegramPoller:
         def done(response) -> None:
             try:
                 if response is not None:
-                    send_started = perf_counter()
-                    self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
                     stages = dict(getattr(response, "stage_timings_ms", {}) or {})
-                    stages["telegram_send"] = round((perf_counter() - send_started) * 1000, 3)
+                    sent_audio = False
+                    mode = "text"
+                    delivery_hint = getattr(response, "delivery_hint", None)
+                    if delivery_hint in {"text", "audio"}:
+                        mode = delivery_hint
+                    elif self.response_mode_store is not None and atlas_user_id:
+                        mode = resolve_delivery_mode(
+                            configured_mode=self.response_mode_store.get(atlas_user_id),
+                            incoming_media_type=message.media_type,
+                            audio_available=bool(self.voice_renderer and self.voice_renderer.is_available()),
+                        )
+                    if mode == "audio" and self.voice_renderer is not None and atlas_user_id:
+                        rendered = None
+                        try:
+                            rendered = self.voice_renderer.render(response.text, user_id=atlas_user_id)
+                            stages.update(rendered.timings_ms)
+                            if rendered.success and rendered.ogg_path is not None:
+                                upload_started = perf_counter()
+                                with self._send_lock:
+                                    self.client.send_voice(chat_id=message.user.chat_id, path=rendered.ogg_path)
+                                stages["telegram.upload"] = round((perf_counter() - upload_started) * 1000, 3)
+                                sent_audio = True
+                        except (TelegramClientError, OSError, RuntimeError, ValueError):
+                            sent_audio = False
+                        finally:
+                            if rendered is not None:
+                                self.voice_renderer.cleanup(rendered)
+                    if not sent_audio:
+                        send_started = perf_counter()
+                        self._send_chunks(message.user.chat_id, response.text, response.parse_mode)
+                        stages["telegram_send"] = round((perf_counter() - send_started) * 1000, 3)
                     audit = getattr(self.gateway, "audit", None)
                     if audit is not None:
                         audit.record(
