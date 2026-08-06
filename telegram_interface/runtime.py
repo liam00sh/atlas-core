@@ -214,6 +214,7 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         media_ttl_hours=config.media_ttl_hours,
         voice_renderer=voice_renderer,
         response_mode_store=response_modes,
+        audio_max_duration_seconds=stt_config.max_audio_seconds,
     )
     return TelegramRuntime(config, storage, linker, sessions, gateway, poller, lifecycle)
 

@@ -54,6 +54,7 @@ class TelegramPoller:
         wall_clock: Callable[[], float] = wall_time,
         voice_renderer=None,
         response_mode_store=None,
+        audio_max_duration_seconds: float = 180.0,
     ) -> None:
         self.client = client
         self.gateway = gateway
@@ -81,6 +82,7 @@ class TelegramPoller:
         self.wall_clock = wall_clock
         self.voice_renderer = voice_renderer
         self.response_mode_store = response_mode_store
+        self.audio_max_duration_seconds = float(audio_max_duration_seconds)
         if media_limits is not None:
             limits = media_limits
         elif media_max_bytes is not None:
@@ -161,6 +163,12 @@ class TelegramPoller:
     def _prepare_media(self, message: TelegramMessage) -> TelegramMessage:
         if not message.media_type or not message.file_id:
             return message
+        if (
+            message.media_type in {"voice", "audio"}
+            and message.media_duration_seconds is not None
+            and message.media_duration_seconds > self.audio_max_duration_seconds
+        ):
+            return replace(message, media_status="audio_too_long")
         try:
             self.media_pipeline.downloader.client = self.client
             envelope = self.media_pipeline.receive(

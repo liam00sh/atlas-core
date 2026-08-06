@@ -8,6 +8,8 @@ from time import perf_counter
 import os
 import re
 import unicodedata
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+import shutil
 
 from telegram_interface.analyzers import (
     AnalysisError,
@@ -39,6 +41,7 @@ class TelegramMultimediaProcessor:
         document_analyzer: DocumentAnalyzerProtocol | None = None,
         work_dir: str | Path | None = None,
         face_service=None,
+        analysis_timeout_seconds: float = 45.0,
     ) -> None:
         self.stt = stt
         self.language_resolver = language_resolver or (lambda _user: None)
@@ -47,6 +50,7 @@ class TelegramMultimediaProcessor:
         self.document_analyzer = document_analyzer
         self.work_dir = Path(work_dir) if work_dir is not None else Path("data/telegram_media/analysis")
         self.face_service = face_service
+        self.analysis_timeout_seconds = float(analysis_timeout_seconds)
 
     def process(self, message: TelegramMessage, context: TelegramRequestContext, core) -> MultimediaResult | None:
         if message.media_type == "photo" or (
@@ -125,9 +129,13 @@ class TelegramMultimediaProcessor:
             if self.image_analyzer is None or not self.image_analyzer.is_available():
                 return MultimediaResult("No puedo analizar esta imagen porque no hay un proveedor de visión local configurado.")
             started = perf_counter()
-            analysis = self.image_analyzer.analyze(
-                clean_path,
-                ImageAnalysisRequest(question=" ".join(message.text.split())[:1000]),
+            analysis = self._run_analyzer(
+                lambda: self.image_analyzer.analyze(
+                    clean_path,
+                    ImageAnalysisRequest(question=" ".join(message.text.split())[:1000]),
+                ),
+                timeout_code="image_timeout",
+                cleanup_path=clean_path,
             )
             timing = {"image.analyze": round((perf_counter() - started) * 1000, 3)}
             details = [f"Descripción visual: {analysis.summary}"]
@@ -147,6 +155,7 @@ class TelegramMultimediaProcessor:
             messages = {
                 "image_corrupt": "La imagen está dañada o no se puede normalizar.",
                 "image_normalizer_unavailable": "No está disponible el normalizador seguro de imágenes.",
+                "image_timeout": "El análisis de imagen ha agotado el tiempo configurado.",
             }
             return MultimediaResult(messages.get(exc.code, "No he podido analizar la imagen de forma segura."))
         finally:
@@ -158,9 +167,16 @@ class TelegramMultimediaProcessor:
             return MultimediaResult("No hay un extractor local disponible para este tipo de documento.")
         if not message.local_path:
             return MultimediaResult("El documento no está disponible en la cuarentena segura.")
+        self.work_dir.mkdir(parents=True, exist_ok=True)
+        local_copy = self.work_dir / f"document_{os.urandom(16).hex()}.quarantine"
         try:
+            shutil.copyfile(message.local_path, local_copy)
             started = perf_counter()
-            result = self.document_analyzer.extract(message.local_path, mime)
+            result = self._run_analyzer(
+                lambda: self.document_analyzer.extract(local_copy, mime),
+                timeout_code="document_timeout",
+                cleanup_path=local_copy,
+            )
             timing = {"document.extract": round((perf_counter() - started) * 1000, 3)}
             request = " ".join(message.text.split())[:1000] or "Resume el documento de forma breve y factual."
             prompt = (
@@ -175,8 +191,13 @@ class TelegramMultimediaProcessor:
                 "document_too_many_pages": "El documento supera el máximo seguro de páginas.",
                 "document_encrypted": "El documento está cifrado y no se puede analizar.",
                 "document_corrupt": "El documento está dañado o no se puede extraer.",
+                "document_timeout": "La extracción del documento ha agotado el tiempo configurado.",
             }
             return MultimediaResult(messages.get(exc.code, "No he podido analizar el documento de forma segura."))
+        except OSError:
+            return MultimediaResult("No he podido preparar una copia temporal segura del documento.")
+        finally:
+            self._safe_unlink(local_copy)
 
     @staticmethod
     def _safe_unlink(path: Path) -> None:
@@ -194,3 +215,17 @@ class TelegramMultimediaProcessor:
             "quien aparece", "quien es esta persona", "reconoce a esta persona",
             "reconocimiento facial", "identifica este rostro",
         }
+
+    def _run_analyzer(self, callback, *, timeout_code: str, cleanup_path: Path):
+        executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="atlas-media-analysis")
+        future = executor.submit(callback)
+        try:
+            result = future.result(timeout=self.analysis_timeout_seconds)
+        except FutureTimeout as exc:
+            future.cancel()
+            future.add_done_callback(lambda _future: self._safe_unlink(cleanup_path))
+            executor.shutdown(wait=False, cancel_futures=True)
+            raise AnalysisError(timeout_code, "El analizador agotó el tiempo.") from exc
+        else:
+            executor.shutdown(wait=True)
+            return result

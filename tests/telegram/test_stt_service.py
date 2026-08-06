@@ -10,6 +10,7 @@ import pytest
 from voice.stt import AudioConverter, BaseSTTProvider, STTConfig, STTError, STTResult, STTService
 from telegram_interface.multimedia import TelegramMultimediaProcessor
 from tests.telegram.conftest import link_user, make_message
+from telegram_interface.models import TelegramMessage
 
 
 class FakeProvider(BaseSTTProvider):
@@ -190,3 +191,16 @@ def test_language_hint_and_core_context_are_isolated_between_users(tmp_path):
         ("User-A", "telegram:1:1"),
         ("User-B", "telegram:2:2"),
     ]
+
+
+def test_telegram_audio_duration_metadata_is_parsed_without_trusting_filename():
+    parsed = TelegramMessage.from_update({
+        "update_id": 9,
+        "message": {
+            "message_id": 10, "date": 1,
+            "from": {"id": 1}, "chat": {"id": 2, "type": "private"},
+            "voice": {"file_id": "opaque", "duration": 181, "file_size": 100},
+        },
+    })
+    assert parsed is not None
+    assert parsed.media_duration_seconds == 181.0

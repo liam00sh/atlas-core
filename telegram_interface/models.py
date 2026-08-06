@@ -44,6 +44,7 @@ class TelegramMessage:
     media_byte_size: int | None = None
     media_sha256: str | None = field(default=None, repr=False)
     media_timings_ms: dict[str, float] = field(default_factory=dict)
+    media_duration_seconds: float | None = None
 
     @classmethod
     def from_update(cls, update: dict[str, Any]) -> TelegramMessage | None:
@@ -95,6 +96,7 @@ class TelegramMessage:
             file_name=_optional_text(media.get("file_name")) if media else None,
             mime_type=_optional_text(media.get("mime_type")) if media else None,
             file_size=int(media.get("file_size") or 0) if media and media.get("file_size") else None,
+            media_duration_seconds=_optional_float(media.get("duration")) if media else None,
         )
 
 
@@ -125,3 +127,11 @@ class GatewayResponse:
 def _optional_text(value: object) -> str | None:
     text = str(value).strip() if value is not None else ""
     return text or None
+
+
+def _optional_float(value: object) -> float | None:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return result if result >= 0 else None

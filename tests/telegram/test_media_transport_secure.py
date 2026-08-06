@@ -6,6 +6,8 @@ import zipfile
 import pytest
 
 from telegram_interface.config import TelegramConfig
+from telegram_interface.models import TelegramMessage, TelegramUser
+from telegram_interface.polling import TelegramPoller
 from telegram_interface.media import (
     TelegramMediaDownloader,
     TelegramMediaEnvelope,
@@ -113,3 +115,21 @@ def test_media_limits_are_typed_configuration_without_secret_content():
     assert config.media_voice_max_bytes == 4096
     assert config.media_ttl_hours == 6
     assert config.safe_summary()["media_limits_bytes"]["voice"] == 4096
+
+
+def test_audio_over_duration_limit_is_rejected_before_telegram_download(tmp_path, storage):
+    client = _Client(b"OggS" + b"\x00" * 20)
+    gateway = type("Gateway", (), {})()
+    poller = TelegramPoller(
+        client=client, gateway=gateway, storage=storage,
+        media_root=tmp_path / "quarantine", audio_max_duration_seconds=30,
+    )
+    try:
+        message = TelegramMessage(
+            1, 1, TelegramUser("external", "chat"), "", media_type="voice",
+            file_id="opaque", file_size=24, media_duration_seconds=31,
+        )
+        assert poller._prepare_media(message).media_status == "audio_too_long"
+        assert client.downloads == 0
+    finally:
+        poller.stop()

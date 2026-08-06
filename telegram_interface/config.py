@@ -37,6 +37,7 @@ class TelegramConfig:
     media_photo_max_bytes: int = 12 * 1024 * 1024
     media_document_max_bytes: int = 20 * 1024 * 1024
     media_ttl_hours: int = 24
+    media_audio_max_seconds: float = 180.0
 
     @property
     def token_present(self) -> bool:
@@ -68,6 +69,7 @@ class TelegramConfig:
             media_photo_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_PHOTO_MAX_BYTES", 12 * 1024 * 1024, 1024, 100 * 1024 * 1024),
             media_document_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_DOCUMENT_MAX_BYTES", 20 * 1024 * 1024, 1024, 100 * 1024 * 1024),
             media_ttl_hours=_parse_int(values, "ATLAS_TELEGRAM_MEDIA_TTL_HOURS", 24, 1, 168),
+            media_audio_max_seconds=_parse_float(values, "ATLAS_STT_MAX_AUDIO_SECONDS", 180.0, 1.0, 3600.0),
         )
         config.validate()
         return config
@@ -96,6 +98,7 @@ class TelegramConfig:
                 "document": self.media_document_max_bytes,
             },
             "media_ttl_hours": self.media_ttl_hours,
+            "media_audio_max_seconds": self.media_audio_max_seconds,
         }
 
 

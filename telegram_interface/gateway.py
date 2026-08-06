@@ -234,6 +234,8 @@ class TelegramGateway:
             return GatewayResponse("El archivo supera el límite seguro configurado y no se ha descargado.")
         if message.media_status == "rejected_type":
             return GatewayResponse("Ese formato no está permitido por la política multimedia segura de Atlas.")
+        if message.media_status == "audio_too_long":
+            return GatewayResponse("El audio supera la duración segura configurada y no se ha descargado.")
         if message.media_status and message.media_status != "quarantined":
             return GatewayResponse("He recibido el archivo, pero no he podido descargarlo de forma segura. No se ha guardado permanentemente.")
         if gateway is not None and gateway.media_processor is not None and context is not None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from pathlib import Path
+import time
 
 import pytest
 
@@ -126,3 +127,19 @@ def test_invalid_json_and_unsupported_document_do_not_reach_core(tmp_path):
     result = processor.process(item, context(), core)
     assert "No hay un extractor" in result.text
     assert core.calls == []
+
+
+def test_slow_image_analyzer_times_out_and_temporary_copy_is_eventually_cleaned(tmp_path):
+    class SlowAnalyzer(Analyzer):
+        def analyze(self, path, request):
+            time.sleep(0.04)
+            return super().analyze(path, request)
+
+    processor = TelegramMultimediaProcessor(
+        image_analyzer=SlowAnalyzer(), image_normalizer=Normalizer(),
+        work_dir=tmp_path / "analysis", analysis_timeout_seconds=0.002,
+    )
+    result = processor.process(message(tmp_path), context(), Core())
+    assert "agotado el tiempo" in result.text
+    time.sleep(0.06)
+    assert not list((tmp_path / "analysis").glob("*"))
