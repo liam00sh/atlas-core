@@ -69,8 +69,23 @@ class TelegramMediaValidator:
         },
     }
     EXECUTABLE_SIGNATURES = (b"MZ", b"\x7fELF", b"#!", b"\xcf\xfa\xed\xfe", b"\xfe\xed\xfa\xcf")
+    GENERIC_MIMES = frozenset({"application/octet-stream", "binary/octet-stream"})
+    DECLARED_MIME_ALIASES = {
+        "audio/ogg": frozenset({"audio/ogg", "audio/opus", "audio/x-ogg", "application/ogg"}),
+        "audio/wav": frozenset({"audio/wav", "audio/wave", "audio/x-wav"}),
+        "audio/mpeg": frozenset({"audio/mpeg", "audio/mp3"}),
+        "audio/mp4": frozenset({"audio/mp4", "audio/x-m4a"}),
+    }
+    _OGG_CRC_TABLE: tuple[int, ...] | None = None
 
-    def validate(self, path: str | Path, *, media_type: str, max_bytes: int) -> tuple[str, int, str]:
+    def validate(
+        self,
+        path: str | Path,
+        *,
+        media_type: str,
+        max_bytes: int,
+        declared_mime: str | None = None,
+    ) -> tuple[str, int, str]:
         target = Path(path)
         size = target.stat().st_size
         if size <= 0:
@@ -80,11 +95,14 @@ class TelegramMediaValidator:
         data = target.read_bytes()
         if data.startswith(self.EXECUTABLE_SIGNATURES):
             raise TelegramMediaError("media_executable", "Contenido ejecutable rechazado.")
-        if any(marker in data[1:4096] for marker in self.EXECUTABLE_SIGNATURES):
-            raise TelegramMediaError("media_polyglot", "Archivo políglota rechazado.")
         mime = self._detect(data, target)
         if mime not in self.ALLOWED_BY_TYPE.get(media_type, set()):
             raise TelegramMediaError("rejected_type", "La firma real no corresponde a un formato permitido.")
+        declared = str(declared_mime or "").split(";", 1)[0].strip().casefold()
+        if declared and declared not in self.GENERIC_MIMES:
+            aliases = self.DECLARED_MIME_ALIASES.get(mime, frozenset({mime}))
+            if declared not in aliases:
+                raise TelegramMediaError("mime_mismatch", "El MIME declarado contradice la firma real.")
         self._validate_structure(data, target, mime)
         return mime, size, hashlib.sha256(data).hexdigest()
 
@@ -122,6 +140,8 @@ class TelegramMediaValidator:
             return "text/markdown" if path.suffix.casefold() in {".md", ".markdown"} else "text/plain"
 
     def _validate_structure(self, data: bytes, path: Path, mime: str) -> None:
+        if mime == "audio/ogg":
+            self._validate_ogg(data)
         if mime == "image/jpeg" and not data.rstrip().endswith(b"\xff\xd9"):
             raise TelegramMediaError("media_corrupt", "JPEG incompleto.")
         if mime == "image/png":
@@ -139,6 +159,136 @@ class TelegramMediaValidator:
                 raise TelegramMediaError("media_active_content", "PDF con contenido activo rechazado.")
         if mime.endswith("wordprocessingml.document"):
             self._validate_docx(path)
+
+    @classmethod
+    def _validate_ogg(cls, data: bytes) -> None:
+        """Valida páginas, CRC, secuencias y cabeceras Opus/Vorbis."""
+        streams: dict[int, dict[str, object]] = {}
+        offset = 0
+        while offset < len(data):
+            remaining = len(data) - offset
+            if data[offset : offset + 4] != b"OggS":
+                if data[offset:].startswith(cls.EXECUTABLE_SIGNATURES):
+                    raise TelegramMediaError("media_polyglot", "Contenido añadido tras el OGG.")
+                raise TelegramMediaError("media_corrupt", "Captura OggS ausente entre páginas.")
+            if remaining < 27:
+                raise TelegramMediaError("media_corrupt", "Página OGG truncada.")
+            if data[offset + 4] != 0:
+                raise TelegramMediaError("media_corrupt", "Versión de bitstream OGG no admitida.")
+            flags = data[offset + 5]
+            if flags & ~0x07:
+                raise TelegramMediaError("media_corrupt", "Flags de página OGG no válidos.")
+            segment_count = data[offset + 26]
+            header_end = offset + 27 + segment_count
+            if header_end > len(data):
+                raise TelegramMediaError("media_corrupt", "Tabla de segmentos OGG truncada.")
+            lacing = data[offset + 27 : header_end]
+            body_end = header_end + sum(lacing)
+            if body_end > len(data):
+                raise TelegramMediaError("media_corrupt", "Contenido de página OGG truncado.")
+            page = bytearray(data[offset:body_end])
+            expected_crc = int.from_bytes(page[22:26], "little")
+            page[22:26] = b"\x00\x00\x00\x00"
+            if cls._ogg_crc(page) != expected_crc:
+                raise TelegramMediaError("media_corrupt", "CRC de página OGG no válido.")
+
+            serial = int.from_bytes(data[offset + 14 : offset + 18], "little")
+            sequence = int.from_bytes(data[offset + 18 : offset + 22], "little")
+            bos = bool(flags & 0x02)
+            continued = bool(flags & 0x01)
+            eos = bool(flags & 0x04)
+            state = streams.get(serial)
+            if state is None:
+                if not bos or continued or sequence != 0:
+                    raise TelegramMediaError("media_corrupt", "Flujo OGG sin página inicial válida.")
+                state = {
+                    "sequence": sequence,
+                    "partial": bytearray(),
+                    "packets": [],
+                    "packet_count": 0,
+                    "eos": False,
+                }
+                streams[serial] = state
+            else:
+                if bos or bool(state["eos"]):
+                    raise TelegramMediaError("media_corrupt", "Secuencia de páginas OGG incoherente.")
+                expected_sequence = (int(state["sequence"]) + 1) & 0xFFFFFFFF
+                if sequence != expected_sequence:
+                    raise TelegramMediaError("media_corrupt", "Falta una página OGG o está desordenada.")
+                if continued != bool(state["partial"]):
+                    raise TelegramMediaError("media_corrupt", "Continuación de paquete OGG incoherente.")
+                state["sequence"] = sequence
+
+            partial = state["partial"]
+            packets = state["packets"]
+            assert isinstance(partial, bytearray) and isinstance(packets, list)
+            cursor = header_end
+            for length in lacing:
+                partial.extend(data[cursor : cursor + length])
+                cursor += length
+                if len(partial) > 1024 * 1024:
+                    raise TelegramMediaError("media_corrupt", "Paquete OGG excesivamente grande.")
+                if length < 255:
+                    if len(packets) < 4:
+                        packets.append(bytes(partial))
+                    state["packet_count"] = int(state["packet_count"]) + 1
+                    partial.clear()
+            if eos:
+                if partial:
+                    raise TelegramMediaError("media_corrupt", "OGG termina con un paquete incompleto.")
+                state["eos"] = True
+            offset = body_end
+
+        if not streams or any(bool(state["partial"]) for state in streams.values()):
+            raise TelegramMediaError("media_corrupt", "Flujo OGG termina con un paquete incompleto.")
+        for state in streams.values():
+            packets = state["packets"]
+            assert isinstance(packets, list)
+            cls._validate_ogg_codec(packets, int(state["packet_count"]))
+
+    @classmethod
+    def _ogg_crc(cls, data: bytes | bytearray) -> int:
+        if cls._OGG_CRC_TABLE is None:
+            table = []
+            for value in range(256):
+                register = value << 24
+                for _ in range(8):
+                    register = ((register << 1) ^ 0x04C11DB7) & 0xFFFFFFFF if register & 0x80000000 else (register << 1) & 0xFFFFFFFF
+                table.append(register)
+            cls._OGG_CRC_TABLE = tuple(table)
+        crc = 0
+        for value in data:
+            crc = ((crc << 8) & 0xFFFFFFFF) ^ cls._OGG_CRC_TABLE[((crc >> 24) & 0xFF) ^ value]
+        return crc
+
+    @staticmethod
+    def _validate_ogg_codec(packets: list[bytes], packet_count: int) -> None:
+        if not packets:
+            raise TelegramMediaError("media_corrupt", "OGG no contiene cabecera de códec.")
+        identification = packets[0]
+        if identification.startswith(b"OpusHead"):
+            if len(identification) < 19 or identification[8] == 0 or identification[9] == 0:
+                raise TelegramMediaError("media_corrupt", "Cabecera OpusHead no válida.")
+            mapping_family = identification[18]
+            if mapping_family == 0 and (identification[9] > 2 or len(identification) != 19):
+                raise TelegramMediaError("media_corrupt", "Mapeo de canales Opus incoherente.")
+            if mapping_family != 0 and len(identification) < 21 + identification[9]:
+                raise TelegramMediaError("media_corrupt", "Tabla de canales Opus truncada.")
+            if len(packets) < 3 or not packets[1].startswith(b"OpusTags") or packet_count < 3:
+                raise TelegramMediaError("media_corrupt", "Cabeceras obligatorias Opus incompletas.")
+            return
+        if identification.startswith(b"\x01vorbis"):
+            if len(identification) != 30 or int.from_bytes(identification[7:11], "little") != 0:
+                raise TelegramMediaError("media_corrupt", "Cabecera de identificación Vorbis no válida.")
+            channels = identification[11]
+            sample_rate = int.from_bytes(identification[12:16], "little")
+            blocksize = identification[28]
+            if not channels or not sample_rate or not (6 <= (blocksize & 0x0F) <= (blocksize >> 4) <= 13) or not (identification[29] & 1):
+                raise TelegramMediaError("media_corrupt", "Parámetros Vorbis no válidos.")
+            if len(packets) < 4 or not packets[1].startswith(b"\x03vorbis") or not packets[2].startswith(b"\x05vorbis") or packet_count < 4:
+                raise TelegramMediaError("media_corrupt", "Cabeceras obligatorias Vorbis incompletas.")
+            return
+        raise TelegramMediaError("rejected_type", "El OGG no contiene audio Opus o Vorbis permitido.")
 
     @staticmethod
     def _validate_docx(path: Path) -> None:
@@ -238,7 +388,12 @@ class TelegramMediaDownloader:
             self.quarantine.secure(path)
             downloaded_ms = round((perf_counter() - download_started) * 1000, 3)
             validation_started = perf_counter()
-            mime, size, digest = self.validator.validate(path, media_type=envelope.media_type, max_bytes=limit)
+            mime, size, digest = self.validator.validate(
+                path,
+                media_type=envelope.media_type,
+                max_bytes=limit,
+                declared_mime=envelope.declared_mime,
+            )
             validation_ms = round((perf_counter() - validation_started) * 1000, 3)
             final = path.with_suffix(self.validator.EXTENSIONS[mime])
             os.replace(path, final)
