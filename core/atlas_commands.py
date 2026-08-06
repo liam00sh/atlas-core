@@ -8,7 +8,7 @@ Descripción:
 ===============================================================================
 """
 
-from assistant_identity.mode import CLASSIC_MODE, EMPATHETIC_MODE, FUN_MODE, WORK_MODE
+from assistant_identity.mode import CLASSIC_MODE, EMPATHETIC_MODE, FUN_MODE, MODE_LABELS, WORK_MODE
 
 from console.command_help import handle_command_help_request, render_help_for_user
 from console.command_manager import COMMANDS
@@ -19,6 +19,11 @@ from core.log_manager import info
 
 class AtlasCommandsMixin:
     """Añade a Atlas la resolución y ejecución de comandos."""
+
+    def _active_guest_session(self):
+        manager = getattr(self, "guest_sessions", None)
+        getter = getattr(manager, "get", None)
+        return getter() if callable(getter) else None
 
     def _handle_command(
         self,
@@ -147,6 +152,11 @@ class AtlasCommandsMixin:
             "modo predeterminado", "restaura el modo", "restaura el modo predeterminado",
             "libera el modo y vuelve al predeterminado",
         }:
+            guest = self._active_guest_session()
+            if guest is not None:
+                guest.mode_name = CLASSIC_MODE
+                print(f"\nHe vuelto al modo {MODE_LABELS[CLASSIC_MODE]} en esta sesión invitada.")
+                return True
             self.identity_manager.return_to_default_mode()
             print(f"\nHe vuelto al modo {self.identity_manager.get_active_mode_label()}.")
             return True
@@ -156,6 +166,9 @@ class AtlasCommandsMixin:
             "permite cambios automaticos", "deja que cambies de modo",
             "puedes volver a cambiar de modo solo", "puedes cambiar de modo automaticamente",
         }:
+            if self._active_guest_session() is not None:
+                print("\nEl modo invitado ya es temporal y no altera la preferencia del propietario.")
+                return True
             self.identity_manager.unlock_manual_mode()
             print("\nHe liberado el modo actual. Ya puedo volver a cambiarlo automáticamente.")
             return True
@@ -171,6 +184,9 @@ class AtlasCommandsMixin:
             "mantente en este modo": False, "modo automatico desactivado": False,
         }
         if normalized_text in automatic_commands:
+            if self._active_guest_session() is not None:
+                print("\nEl cambio automático no modifica preferencias desde una sesión invitada.")
+                return True
             automatic = automatic_commands[normalized_text]
             self.identity_manager.set_automatic_mode(automatic)
             state = "activado" if automatic else "desactivado"
@@ -228,6 +244,11 @@ class AtlasCommandsMixin:
         return next((mode for mode, commands in mode_commands.items() if normalized_text in commands), None)
 
     def _change_assistant_identity(self, identity_name: str, original_text: str) -> bool:
+        guest = self._active_guest_session()
+        if guest is not None:
+            guest.assistant_name = identity_name.capitalize()
+            print(f"\nIdentidad {guest.assistant_name} activada para esta sesión invitada.")
+            return True
         previous = self.identity_manager.get_active_display_name()
         if not self.identity_manager.change_identity(identity_name):
             print(f"\nNo existe ninguna identidad llamada «{identity_name}».")
@@ -238,6 +259,11 @@ class AtlasCommandsMixin:
         return True
 
     def _change_assistant_mode(self, mode_name: str, original_text: str) -> bool:
+        guest = self._active_guest_session()
+        if guest is not None:
+            guest.mode_name = mode_name
+            print(f"\nModo {MODE_LABELS[mode_name]} activado para esta sesión invitada.")
+            return True
         previous = self.identity_manager.get_active_mode_name()
         changed = self.identity_manager.set_mode(
             mode_name=mode_name,
@@ -253,10 +279,19 @@ class AtlasCommandsMixin:
         return True
 
     def _show_active_assistant_identity(self) -> None:
+        guest = self._active_guest_session()
+        if guest is not None:
+            print(f"\nAhora estás hablando con {guest.assistant_name} en una sesión invitada.")
+            return
         identity = self.identity_manager.get_active_identity()
         print(f"\nAhora estás hablando con {identity.display_name}.\n\n{identity.description}")
 
     def _show_active_assistant_mode(self) -> None:
+        guest = self._active_guest_session()
+        if guest is not None:
+            label = MODE_LABELS.get(guest.mode_name, guest.mode_name)
+            print(f"\nModo activo de la sesión invitada: {label}.")
+            return
         automatic = "activado" if self.identity_manager.is_automatic_mode_enabled() else "desactivado"
         manual = "sí" if self.identity_manager.is_manual_mode_locked() else "no"
         temporary = "sí" if self.identity_manager.is_temporary_mode_active() else "no"
