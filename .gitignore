@@ -101,6 +101,8 @@ data/integrations/telegram/audit.jsonl
 data/integrations/telegram/pending_messages.json
 data/integrations/telegram/quarantine/
 data/integrations/telegram/downloads/
+data/telegram_media/
+data/voice/stt/
 
 # Estado cotidiano y ubicación temporal por usuario (datos locales privados)
 data/daily_life/state.json

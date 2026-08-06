@@ -13,10 +13,12 @@ from telegram_interface.identity_linker import TelegramIdentityLinker
 from telegram_interface.interuser_delivery import TelegramDeliveryDispatcher, TelegramDeliveryQueue
 from telegram_interface.polling import TelegramPoller
 from telegram_interface.media import TelegramMediaLimits
+from telegram_interface.multimedia import TelegramMultimediaProcessor
 from telegram_interface.progress import build_progress_message
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.storage import TelegramStorage
+from voice.stt import AudioConverter, FasterWhisperSTTProvider, STTConfig, STTService
 
 
 def _display_assistant_name(name: str) -> str:
@@ -89,6 +91,15 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         except Exception:
             pass
     sessions = TelegramSessionManager(storage, ttl_seconds=config.session_ttl_seconds)
+    stt_config = STTConfig.from_env()
+    media_processor = TelegramMultimediaProcessor(
+        stt=STTService(
+            FasterWhisperSTTProvider(stt_config),
+            AudioConverter(timeout_seconds=min(30.0, stt_config.timeout_seconds)),
+            config=stt_config,
+            work_dir=config.data_dir / "quarantine" / "stt",
+        )
+    )
     gateway = TelegramGateway(
         config=config,
         linker=linker,
@@ -97,6 +108,7 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         audit=TelegramAuditLogger(config.data_dir / "audit.jsonl"),
         rate_limiter=TelegramRateLimiter(config.rate_limit_per_minute),
         permission_resolver=lambda user: _telegram_permissions(atlas, user),
+        media_processor=media_processor,
     )
     def progress_message(message) -> str:
         account = linker.get_account(message.user.telegram_user_id)
