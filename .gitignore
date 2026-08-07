@@ -176,6 +176,11 @@ reports/local/
 *.msi
 
 # Pytest runtime local
-.pytest_runtime/
+.pytest_runtime*/
 
 .pytest_run_*/
+
+# Atlas Dataset Studio: proyectos, rutas y resultados locales
+.atlas_dataset_studio/
+*.atlas-dataset-project.json
+dataset_studio_exports/

@@ -1,0 +1,6 @@
+{
+  "id": "daxter_es",
+  "display_name": "Daxter (español)",
+  "emotions": ["neutral", "sonriente", "picaro", "sorprendido", "pensativo", "emocionado", "asustado", "enfadado", "curioso", "confiado", "risa", "cansado", "sonoliento", "determinado", "travieso"],
+  "source_games": ["jak1", "jak2", "jak3", "jakx"]
+}
