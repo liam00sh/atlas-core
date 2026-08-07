@@ -170,6 +170,8 @@ class DatasetProject:
     def statistics(self) -> dict[str, Any]:
         total = len(self.samples)
         reviewed = [s for s in self.samples if s.review_status in REVIEWED_STATUS]
+        now = datetime.now(UTC)
+        today = now.date().isoformat()
         return {
             "total": total,
             "duration_seconds": sum(s.duration_seconds for s in self.samples),
@@ -188,6 +190,9 @@ class DatasetProject:
             "personality_candidates": sum(s.personality_usable for s in self.samples),
             "iconic": sum(s.personality_strength == "iconica" for s in self.samples),
             "reviewed_this_session": len(self.reviewed_this_session),
+            "reviewed_today": sum(bool(s.reviewed_at) and s.reviewed_at[:10] == today for s in self.samples),
+            "session_duration_seconds": max(0.0, (now - self.session_started).total_seconds()),
+            "last_sample": self.current.sample_id if self.samples else "",
         }
 
     def _session_path(self) -> Path:

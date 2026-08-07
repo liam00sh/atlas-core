@@ -33,6 +33,7 @@ def test_search_filters_navigation_and_history(dataset_fixture):
         assert project.search(pending_only=True) == [0, 1, 2]
         assert project.find_index("daxter_0002") == 1
         project.navigate(2); assert project.current.sample_id == "daxter_0003"; assert project.navigation_history
+        stats = project.statistics(); assert stats["last_sample"] == "daxter_0003"; assert stats["session_duration_seconds"] >= 0
     finally: project.close()
 
 

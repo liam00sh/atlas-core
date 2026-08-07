@@ -360,7 +360,16 @@ class MainWindow(QMainWindow):
 
     def _update_progress(self) -> None:
         if not self.project: return
-        stats = self.project.statistics(); value = int(stats["completion_percent"] * 10); self.review_progress.setValue(value); self.progress_label.setText(f"{stats['completion_percent']:.1f} % · {stats['reviewed']} / {stats['total']} · sesión {stats['reviewed_this_session']}")
+        stats = self.project.statistics(); value = int(stats["completion_percent"] * 10); self.review_progress.setValue(value)
+        self.progress_label.setText(
+            f"{stats['completion_percent']:.1f} % · Revisadas {stats['reviewed']} / {stats['total']} · "
+            f"Audio {self._duration(stats['reviewed_duration_seconds'])} / {self._duration(stats['duration_seconds'])} · "
+            f"Hoy {stats['reviewed_today']} · Sesión {stats['reviewed_this_session']} en {self._duration(stats['session_duration_seconds'])}"
+        )
+
+    @staticmethod
+    def _duration(seconds: float) -> str:
+        total = max(0, int(seconds)); return f"{total // 3600:d}h {(total % 3600) // 60:02d}m {total % 60:02d}s"
 
     def _check_external(self) -> None:
         if self.project and self.project.external_changes_detected(): self.statusBar().showMessage("Cambios externos detectados: guardado bloqueado", 5000)
