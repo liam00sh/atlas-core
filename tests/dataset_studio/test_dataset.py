@@ -124,4 +124,3 @@ def test_invalid_schema(tmp_path, content, message):
 def test_corrupt_jsonl(tmp_path):
     path = tmp_path / "bad.jsonl"; path.write_text('{"sample_id":', encoding="utf-8")
     with pytest.raises(ValueError, match="JSONL corrupto"): read_samples(path)
-

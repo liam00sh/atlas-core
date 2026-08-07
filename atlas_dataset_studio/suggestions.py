@@ -62,4 +62,3 @@ class OllamaSuggestionProvider(DatasetSuggestionProvider):
 
     def suggest(self, sample: Sample) -> Suggestion:
         raise RuntimeError("Ollama está desactivado en Atlas Dataset Studio v1")
-

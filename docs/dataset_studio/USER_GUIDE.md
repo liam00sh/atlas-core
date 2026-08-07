@@ -43,4 +43,3 @@ Los cambios relevantes activan autosave tras una pausa breve. `accepted_with_not
 ## Exportación
 
 **Dataset > Exportar** genera `metadata.csv`, `metadata.jsonl`, `manifest.json`, `tts_dataset.jsonl`, `personality_dataset.jsonl`, `review_queue.csv` y `DATASET_VALIDATION_REPORT.md`. El dataset no se declara cerrado mientras existan errores o muestras pendientes.
-

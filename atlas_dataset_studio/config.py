@@ -39,4 +39,3 @@ def last_project() -> Path | None:
         return path if path.is_file() else None
     except (OSError, KeyError, ValueError, json.JSONDecodeError):
         return None
-

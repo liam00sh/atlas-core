@@ -87,4 +87,3 @@ def validate_dataset(config: ProjectConfig, samples: list[Sample], full_hash: bo
     if any(sample.review_status == "pending_review" for sample in samples):
         result.warnings.append("El dataset no puede cerrarse: quedan muestras pending_review")
     return result
-

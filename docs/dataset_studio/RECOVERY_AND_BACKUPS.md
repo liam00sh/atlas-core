@@ -23,4 +23,3 @@ Se conservan cinco snapshots por defecto. La cantidad es configurable en el proy
 - **Segunda instancia**: se rechaza escritura; el modo lectura no crea ni elimina locks.
 
 Las copias están en `%LOCALAPPDATA%\AtlasDatasetStudio\projects\<id>`. Para una recuperación manual, cierre todas las instancias, copie el metadato actual a un lugar seguro y reemplace únicamente con un snapshot validado.
-

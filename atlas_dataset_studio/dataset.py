@@ -208,4 +208,3 @@ class DatasetProject:
             "reviewed_this_session": sorted(self.reviewed_this_session),
             "closed_at": datetime.now(UTC).isoformat(),
         }, ensure_ascii=False, indent=2))
-

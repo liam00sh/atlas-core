@@ -17,4 +17,3 @@ Active `personality_usable` cuando la frase aporte un patrón de carácter, voca
 El dataset de partida está limpio, pero la escucha humana decide calidad y utilidad. `tts_usable=true` no equivale a aceptada: la exportación TTS exige además `accepted` o `accepted_with_notes`. Use `excluded` para material que no deba entrenarse y documente el motivo.
 
 Nunca corrija silenciosamente `text`. Una falta o adaptación se registra en `normalized_text`, dejando visible la transcripción verificada.
-

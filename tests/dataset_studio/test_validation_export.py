@@ -43,4 +43,3 @@ def test_corrupt_wav(dataset_fixture):
     project = DatasetProject.open(dataset_fixture, read_only=True)
     try: assert any("WAV corrupto" in error for error in validate_dataset(dataset_fixture, project.samples).errors)
     finally: project.close()
-

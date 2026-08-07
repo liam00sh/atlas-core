@@ -50,4 +50,3 @@ CORE_FIELDS = (
     "review_status", "review_notes", "needs_human_review", "text_modified",
     "updated_at", "reviewed_at",
 )
-

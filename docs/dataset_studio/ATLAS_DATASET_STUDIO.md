@@ -38,4 +38,3 @@ Al abrir un dataset se eligen los metadatos (`.csv` o `.jsonl`) y la carpeta WAV
 - un cambio externo bloquea el guardado;
 - una segunda instancia solo puede abrir con seguridad en modo lectura;
 - ninguna exportación contiene rutas absolutas.
-

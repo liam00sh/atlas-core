@@ -36,4 +36,3 @@ Las listas controladas se definen en `constants.py` y en el preset `daxter_es`.
 - `updated_at`, `reviewed_at`: marcas temporales UTC.
 
 Solo `accepted` y `accepted_with_notes` con `tts_usable=true` entran en `tts_dataset.jsonl`. Solo `personality_usable=true` entra en `personality_dataset.jsonl`.
-
