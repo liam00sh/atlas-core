@@ -60,8 +60,8 @@ de forma que STT, Telegram y TTS no conocen modelos físicos.
 
 - Línea base anterior a la consolidación: tres errores de colección por el
   contrato antiguo de monitorización.
-- Suite final: 1.172 pruebas aprobadas, 1 omitida y 2.324 subpruebas aprobadas
-  en 159,91 segundos.
+- Suite final: 1.173 pruebas aprobadas, 1 omitida y 2.324 subpruebas aprobadas
+  en 160,18 segundos.
 - Regresión operativa enfocada: 67 pruebas aprobadas.
 - Benchmark del router: 16/16.
 - Conversación controlada: 17/17.
