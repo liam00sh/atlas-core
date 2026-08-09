@@ -72,7 +72,8 @@ class _FakeStorage:
         return None
 
 
-def test_progress_is_delivered_before_final_response() -> None:
+def test_progress_is_delivered_before_final_response(monkeypatch) -> None:
+    monkeypatch.setattr("telegram_interface.polling.progress_delay_for", lambda *_args: 0.01)
     client = _FakeClient()
     poller = TelegramPoller(
         client=client,

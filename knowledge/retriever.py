@@ -17,6 +17,9 @@ class KnowledgeSource(Protocol):
 
 
 SOURCE_PRIORITY = {
+    "tool_state": 1.20,
+    "verified_personal": 1.10,
+    "authenticated_identity": 1.05,
     "relationship": 1.00,
     "person": 0.95,
     "memory": 0.90,
@@ -26,6 +29,8 @@ SOURCE_PRIORITY = {
     "drive_document": 0.75,
     "semantic_chunk": 0.65,
     "conversation_context": 0.45,
+    "authorized_web": 0.40,
+    "model_inference": 0.10,
 }
 
 

@@ -47,7 +47,7 @@ class TelegramVoiceRenderer:
             volume=preferences.speech_volume,
             play_audio=False,
         )
-        timings["tts.synthesize"] = round((perf_counter() - started) * 1000, 3)
+        timings.update(result.timings_ms)
         wav_path = Path(result.output_path) if result.output_path is not None else None
         if wav_path is not None:
             try:
@@ -63,6 +63,7 @@ class TelegramVoiceRenderer:
             str(self.ffmpeg_path), "-nostdin", "-v", "error", "-y", "-i", str(wav_path),
             "-c:a", "libopus", "-b:a", "48k", "-vbr", "on", "-application", "voip", str(ogg_path),
         ]
+        conversion_started = perf_counter()
         try:
             completed = subprocess.run(
                 command,
@@ -81,6 +82,10 @@ class TelegramVoiceRenderer:
         if completed.returncode != 0 or not ogg_path.is_file():
             self._unlink(ogg_path)
             return TelegramVoiceResult(False, None, "FFmpeg no pudo preparar la nota de voz.", timings)
+        timings["tts.convert"] = round(
+            (perf_counter() - conversion_started) * 1000, 3
+        )
+        timings["tts.total"] = round((perf_counter() - started) * 1000, 3)
         try:
             ogg_path.chmod(0o600)
         except OSError:

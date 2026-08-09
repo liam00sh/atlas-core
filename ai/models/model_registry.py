@@ -10,6 +10,7 @@ from dataclasses import dataclass
 from typing import Iterable
 
 import config
+from ai.models.roles import ModelRole, ModelRoleRegistry
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,7 +30,7 @@ class ModelDefinition:
 class ModelRegistry:
     """Resuelve modelos conocidos sin acoplar el núcleo a un proveedor."""
 
-    DEFAULT_MODEL_NAME = "qwen2.5:7b"
+    DEFAULT_MODEL_NAME = ModelRoleRegistry.DEFAULT_MODELS[ModelRole.FAST]
     DEFAULT_PROVIDER_NAME = "ollama"
 
     def __init__(

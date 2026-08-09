@@ -13,9 +13,9 @@ def test_social_messages_have_no_progress():
     assert progress_delay_for("¡Muchas gracias!") < 0
 
 
-def test_non_trivial_progress_waits_four_seconds():
-    assert progress_delay_for("Busca en Internet el tiempo") == 4.0
-    assert progress_delay_for("Traduce este texto") == 4.0
+def test_non_trivial_progress_waits_until_latency_is_perceptible():
+    assert progress_delay_for("Busca en Internet el tiempo") == 4.5
+    assert progress_delay_for("Traduce este texto") == 4.5
 
 
 def test_owner_wins_equal_cost_but_not_over_quick_other_user():

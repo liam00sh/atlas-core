@@ -4,6 +4,9 @@ from __future__ import annotations
 import random
 import re
 import unicodedata
+from conversation.event_messages import ContextualMessageGenerator
+
+_MESSAGE_GENERATOR = ContextualMessageGenerator()
 
 
 def _plain(text: str) -> str:
@@ -29,7 +32,7 @@ def classify_progress(text: str) -> str:
     return classify_operation(text)
 
 
-def progress_delay_for(text: str, default: float = 4.0) -> float:
+def progress_delay_for(text: str, default: float = 4.5) -> float:
     """Calcula cuándo mostrar progreso según el tipo de petición."""
 
     normalized = _plain(text)
@@ -42,73 +45,26 @@ def progress_delay_for(text: str, default: float = 4.0) -> float:
     if normalized in social_exact:
         return -1.0
 
-    memory_markers = (
-        "que sabes sobre mi",
-        "que sabes de mi",
-        "dime que sabes sobre mi",
-        "dime todo lo que sabes de mi",
-    )
-    if any(marker in normalized for marker in memory_markers):
-        return 0.5
-
-    operation = classify_operation(text)
-    if operation == "drive_index":
-        return 0.0
-
-    if operation == "internet":
-        # Algunas consultas conocidas muestran progreso inmediato para mantener
-        # compatibilidad con el comportamiento de Atlas.
-        if "habitantes de" in normalized:
-            return 0.0
-        if "poblacion de REDACTED_fddd19092a14" in normalized:
-            return 0.0
-
-        # El resto de búsquedas en Internet conserva el retraso estándar.
-        return float(default)
-
-    return float(default)
+    # Nunca se anuncia espera antes de que exista latencia perceptible real.
+    # Las órdenes directas suelen terminar antes de este umbral y no muestran nada.
+    return max(4.5, float(default))
 
 
 def build_progress_message(text: str, personality: str) -> str:
-    personality = str(personality or "Daxter").casefold()
     operation = classify_operation(text)
-    daxter = {
-        "internet": (
-            "Me pongo el sombrero de explorador web. Un segundo 🌍",
-            "Déjame rebuscar por Internet; vuelvo con algo verificable 🔎",
-            "Voy a rastrear la red sin caer en la inventicia. Dame un momento 🧭",
-        ),
-        "drive_index": (
-            "Estoy poniendo el índice de Drive en formación. Puede tardar un poco 🗂️",
-            "Revisando Drive documento por documento. Esto lleva unos segundos 📚",
-        ),
-        "translation": (
-            "Estoy afinando la traducción; que no se escape ningún matiz 🗣️",
-        ),
-        "generic": (
-            "Dame un momento, estoy conectando los cables mentales ⚡",
-            "Estoy ordenando la información para responderte bien 🧠",
-        ),
-    }
-    coco = {
-        "internet": (
-            "Dame un momento, voy a buscar una fuente fiable 🔎",
-            "Estoy navegando para comprobarlo bien 🌍",
-        ),
-        "drive_index": (
-            "Estoy revisando y actualizando el índice de Drive 📚",
-            "Un momento, estoy ordenando los documentos de Drive 🗂️",
-        ),
-        "translation": (
-            "Estoy cuidando la traducción para que suene natural ✨",
-        ),
-        "generic": (
-            "Un momento, estoy preparando una respuesta clara ✨",
-            "Estoy revisándolo con calma para responderte bien 🙂",
-        ),
-    }
-    catalog = coco if personality == "coco" else daxter
-    return random.choice(catalog[operation])
+    situation = {
+        "internet": "comprobando fuentes web autorizadas",
+        "drive_index": "revisando el índice de Drive",
+        "translation": "cuidando la traducción",
+        "generic": "ordenando la respuesta",
+    }[operation]
+    return _MESSAGE_GENERATOR.generate(
+        "progress",
+        user="usuario",
+        assistant=str(personality or "Daxter").title(),
+        channel="telegram",
+        situation=situation,
+    )
 
 
 def append_response_time(text: str, elapsed_seconds: float, personality: str) -> str:

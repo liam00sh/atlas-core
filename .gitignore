@@ -109,11 +109,22 @@ data/biometrics/
 
 # Estado cotidiano y ubicación temporal por usuario (datos locales privados)
 data/daily_life/state.json
+data/conversation/continuity.json
+data/knowledge/personal_memory_semantic.json
+data/launcher/*_status.json
+data/monitoring/health_history.json
+data/monitoring/incidents.json
+data/monitoring/supervisor_status.json
+data/voice/status.json
+runtime/voice/*.wav
 
 # -----------------------------------------------------------------------------
 # Datos privados de usuarios
 # -----------------------------------------------------------------------------
 data/users/
+identity/data/people.json
+identity/data/animals.json
+identity/data/relationships.json
 
 memory/data/memories.json
 memory/data/legacy/
@@ -185,4 +196,5 @@ reports/local/
 .pytest_runtime/
 
 .pytest_run_*/
+.pytest_run/
 .pytest_round_b_*/

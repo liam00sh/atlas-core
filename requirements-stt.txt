@@ -1,0 +1,3 @@
+# Dependencias opcionales para reconocimiento de voz local.
+# FFmpeg, CUDA Toolkit y cuDNN son componentes del sistema y no se instalan aquí.
+faster-whisper>=1.2,<2.0

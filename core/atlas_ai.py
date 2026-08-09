@@ -25,6 +25,8 @@ import unicodedata
 from difflib import SequenceMatcher
 
 from ai.context.context_manager import AIContextManager
+from ai.routing.router import RoutingRequest
+from ai.routing.validator import ValidationContext
 
 from core.log_manager import info
 from core.request_timing import measure_stage
@@ -1178,16 +1180,13 @@ class AtlasAIMixin:
                 ]
             return self._choose_factual_variant(f"origin:{profile.person}", variants)
 
-        if profile.summer_residence and self._is_summer_period():
-            variants = [
-                f"{name} normalmente vive en {profile.habitual_residence}, pero ahora está pasando el verano en {profile.summer_residence}.",
-                f"Ahora mismo {name} está en {profile.summer_residence} por el verano; el resto del año vive en {profile.habitual_residence}.",
-            ]
-        else:
-            variants = [
-                f"{name} vive en {profile.habitual_residence}.",
-                f"Ahora {name} vive en {profile.habitual_residence}.",
-            ]
+        # «Dónde vive» pregunta por domicilio habitual. La ubicación actual o
+        # estacional se resuelve por el gestor conversacional y nunca sustituye
+        # este dato verificado.
+        variants = [
+            f"{name} vive habitualmente en {profile.habitual_residence}.",
+            f"El domicilio habitual de {name} está en {profile.habitual_residence}.",
+        ]
         return self._choose_factual_variant(f"residence:{profile.person}", variants)
 
     def _answer_household_query(
@@ -1359,6 +1358,26 @@ class AtlasAIMixin:
 
         # Relación directa con el interlocutor: «¿Quién es REDACTED_d296a64095dd para mí?».
         if len(mentioned) == 1 and any(marker in normalized for marker in ("para mi", "conmigo", "respecto a mi")):
+            entity_type, entity = mentioned[0]
+            speaker = self.people_manager.find_person_by_name(
+                self._get_current_conversation_user()
+            )
+            if speaker is not None and entity_type == "person" and entity.id != speaker.id:
+                label = self.relationship_engine.infer_relationship_label(
+                    source_entity_id=entity.id,
+                    source_entity_type="person",
+                    target_entity_id=speaker.id,
+                    target_entity_type="person",
+                )
+                if label:
+                    clean_label = str(label).strip().rstrip(".")
+                    return f"{self._short_person_name(entity)} es tu {clean_label}."
+
+        direct_self_relation = re.fullmatch(
+            r"que relacion tengo con (?P<subject>.+)",
+            normalized.strip(" .?!¡¿"),
+        )
+        if direct_self_relation and len(mentioned) == 1:
             entity_type, entity = mentioned[0]
             speaker = self.people_manager.find_person_by_name(
                 self._get_current_conversation_user()
@@ -2542,6 +2561,9 @@ class AtlasAIMixin:
         context,
         user_message: str,
         conversation_user: str,
+        *,
+        initial_response: str | None = None,
+        generator=None,
     ) -> str:
         """Evita repetir respuestas recientes o respuestas del mismo tema."""
 
@@ -2558,11 +2580,12 @@ class AtlasAIMixin:
         topic_history = list(history.get(topic_key, []))[-4:]
         forbidden = [*recent, *topic_history]
 
-        with measure_stage("model_call"):
-            response = self._ensure_spanish_response(
-                self.ai_provider.generate(prompt),
-                prompt,
-            )
+        generate = generator or self.ai_provider.generate
+        if initial_response is None:
+            with measure_stage("model_call"):
+                response = self._ensure_spanish_response(generate(prompt), prompt)
+        else:
+            response = str(initial_response).strip()
 
         def is_repeated(candidate: str) -> bool:
             return any(
@@ -2587,7 +2610,7 @@ class AtlasAIMixin:
             )
             with measure_stage("model_call"):
                 alternative = self._ensure_spanish_response(
-                    self.ai_provider.generate(variation_prompt),
+                    generate(variation_prompt),
                     variation_prompt,
                 )
             if alternative.strip() and not is_repeated(alternative):
@@ -2596,6 +2619,59 @@ class AtlasAIMixin:
         history.setdefault(topic_key, []).append(response)
         history[topic_key] = history[topic_key][-5:]
         return response
+
+    def _build_routing_request(
+        self,
+        message: str,
+        *,
+        context_messages: int,
+        retrieved_items: int,
+    ) -> RoutingRequest:
+        normalized = self._normalize_entity_text(message)
+        relationship = bool(re.search(r"\b(familia|primo|prima|tio|tia|madre|padre|hermano|pareja|relacion)\b", normalized))
+        memory = bool(re.search(r"\b(recuerda|memoria|sabes de mi|te dije|hablamos|acabo de decir|turno anterior)\b", normalized))
+        temporal = bool(re.search(r"\b(ahora|antes|despues|ayer|hoy|mañana|unos dias|este mes)\b", normalized))
+        tools = bool(re.search(r"\b(busca|consulta|envia|apaga|enciende|abre|herramienta)\b", normalized))
+        technical = bool(re.search(r"\b(arquitectura|codigo|depura|analiza|contradiccion|planifica)\b", normalized))
+        critical = 2 if re.search(r"\b(borra|elimina|apaga el ordenador|cerradura|alarma|pago)\b", normalized) else 0
+        return RoutingRequest(
+            message=message,
+            intent="technical_analysis" if technical else "conversation",
+            context_messages=context_messages,
+            retrieved_items=retrieved_items,
+            memory_required=memory,
+            relationship_reasoning=relationship,
+            tools_required=tools,
+            temporal_reasoning=temporal,
+            operation_criticality=critical,
+            deterministic_possible=False,
+            has_contradictions="contradic" in normalized,
+            override=(
+                self.conversation_manager.get_ai_override()
+                if getattr(self, "conversation_manager", None) is not None
+                else "auto"
+            ),
+        )
+
+    @staticmethod
+    def _apply_literal_response_constraints(user_message: str, response: str) -> str:
+        """Hace cumplir peticiones explícitas de brevedad tras la generación."""
+
+        normalized = " ".join(str(user_message).casefold().split())
+        if not re.search(r"\b(frase corta|respuesta corta|muy breve|en una frase)\b", normalized):
+            return response
+        value = " ".join(str(response).split()).strip()
+        value = re.sub(
+            r"^¡?(?:ey|hola|buenas)\b[^.!?]{0,45}[.!?]+\s*",
+            "",
+            value,
+            flags=re.IGNORECASE,
+        )
+        sentence = re.split(r"(?<=[.!?])\s+", value, maxsplit=1)[0].strip()
+        words = sentence.split()
+        if len(words) > 24:
+            sentence = " ".join(words[:24]).rstrip(" ,;:") + "."
+        return sentence or value
 
     @classmethod
     def _requires_external_verification(cls, user_message: str) -> bool:
@@ -2631,6 +2707,8 @@ class AtlasAIMixin:
             "numero de habitantes", "datos actuales", "actualmente", "hoy",
         )
         if any(marker in normalized for marker in current_or_numeric_markers):
+            return True
+        if re.search(r"\bpoblacion\b.*\b(?:actual|de)\b|\b(?:actual|hoy)\b.*\bpoblacion\b", normalized):
             return True
 
         # Preguntas directas de hechos externos. Las preguntas personales y
@@ -3174,6 +3252,12 @@ class AtlasAIMixin:
         if callable(executive_context_getter):
             prompt += "\n\n" + executive_context_getter(original_text)
 
+        conversation_manager = getattr(self, "conversation_manager", None)
+        if conversation_manager is not None:
+            structured_conversation = conversation_manager.prompt_context()
+            if structured_conversation:
+                prompt += "\n\n" + structured_conversation
+
         prompt += (
             "\n\nREGLA DE FIABILIDAD OBLIGATORIA\n"
             "No inventes nombres, cifras, fechas, lugares ni hechos. "
@@ -3187,13 +3271,48 @@ class AtlasAIMixin:
         )
 
         try:
-
-            response = self._generate_varied_response(
-                prompt,
-                current_ai_context,
-                original_text,
-                conversation_user,
-            )
+            runtime = getattr(self, "ai_runtime", None)
+            if runtime is None:
+                response = self._generate_varied_response(
+                    prompt,
+                    current_ai_context,
+                    original_text,
+                    conversation_user,
+                )
+                self.last_ai_trace = None
+            else:
+                context_messages = current_ai_context.count_messages()
+                route_request = self._build_routing_request(
+                    original_text,
+                    context_messages=context_messages,
+                    retrieved_items=len(relevant_memories),
+                )
+                validation_context = ValidationContext(
+                    question=original_text,
+                    structured_facts_available=bool(
+                        relevant_memories or referenced_entities_context
+                    ),
+                    tool_executed=False,
+                    missing_required_data=False,
+                    recent_responses=tuple(
+                        self._recent_assistant_responses(current_ai_context)
+                    ),
+                )
+                with measure_stage("model_call"):
+                    execution, selected_provider = runtime.generate(
+                        prompt,
+                        route_request,
+                        validation_context,
+                    )
+                self.last_ai_trace = execution
+                response = self._generate_varied_response(
+                    prompt,
+                    current_ai_context,
+                    original_text,
+                    conversation_user,
+                    initial_response=execution.response,
+                    generator=selected_provider.generate,
+                )
 
         except (
             RuntimeError,
@@ -3211,6 +3330,11 @@ class AtlasAIMixin:
             )
 
             return True
+
+        response = self._apply_literal_response_constraints(
+            original_text,
+            response,
+        )
 
         current_ai_context.add_message(
             role="user",
@@ -3232,13 +3356,19 @@ class AtlasAIMixin:
             except OSError:
                 pass
 
-        info(
-            f"Respuesta generada por IA local. "
-            f"Proveedor: "
-            f"{self.ai_provider.get_provider_name()}. "
-            f"Modelo: "
-            f"{self.ai_provider.get_model_name()}."
-        )
+        trace = getattr(self, "last_ai_trace", None)
+        if trace is None:
+            info(
+                f"Respuesta generada por IA local. "
+                f"Proveedor: {self.ai_provider.get_provider_name()}. "
+                f"Modelo: {self.ai_provider.get_model_name()}."
+            )
+        else:
+            info(
+                "Respuesta generada por IA local. "
+                f"Proveedor: {trace.provider}. Modelo: {trace.model}. "
+                f"Rol: {trace.final_role.value}."
+            )
 
         print()
         print(response)

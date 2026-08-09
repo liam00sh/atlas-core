@@ -34,6 +34,13 @@ class AtlasCommandsMixin:
         Resuelve y ejecuta comandos simples o comandos con argumentos.
         """
 
+        if normalized_text in {
+            "vuelve a ia automatica", "volver a ia automatica",
+            "vuelve a ia automatico", "volver a ia automatico",
+        }:
+            from commands import ai_model
+            return ai_model.execute("auto")
+
         identity_result = self._handle_assistant_identity_command(
             original_text,
             normalized_text,

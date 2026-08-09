@@ -48,3 +48,4 @@ class SynthesisResult:
     requested_voice_id: str | None = None
     fallback_used: bool = False
     selection_reason: str | None = None
+    timings_ms: Mapping[str, float] = field(default_factory=dict)

@@ -9,8 +9,8 @@ def test_social_messages_do_not_show_progress():
     assert progress_delay_for("¡Gracias!") < 0
 
 
-def test_nontrivial_message_uses_four_seconds():
-    assert progress_delay_for("Explícame cómo exportar a PDF desde Excel") == 4.0
+def test_nontrivial_message_uses_perceptible_threshold():
+    assert progress_delay_for("Explícame cómo exportar a PDF desde Excel") == 4.5
 
 
 def test_profile_essentials_are_detected():

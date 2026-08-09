@@ -171,10 +171,27 @@ class HelpEntry:
 
 CATEGORY_ORDER = (
     "General", "Usuarios", "Telegram", "Comunicación", "Memoria", "Organización",
+    "Inteligencia artificial",
     "Hogar y Home Assistant", "Identidad y modos",
     "Clima", "Internet y fuentes", "Documentos y Drive", "Redacción",
     "Windows", "Monitorización", "Sistema y administración",
 )
+
+CATEGORY_ICONS = {
+    "General": "📘", "Usuarios": "👤", "Telegram": "💬",
+    "Comunicación": "📨", "Memoria": "🧠", "Organización": "🗓️",
+    "Inteligencia artificial": "🤖", "Hogar y Home Assistant": "🏠",
+    "Identidad y modos": "🎭", "Clima": "🌦️", "Internet y fuentes": "🌐",
+    "Documentos y Drive": "📄", "Redacción": "✍️", "Windows": "🖥️",
+    "Monitorización": "📊", "Sistema y administración": "🔧", "Voz": "🔊",
+}
+
+CATEGORY_ALIASES = {
+    "ia": "Inteligencia artificial",
+    "modelo": "Inteligencia artificial",
+    "modelo ia": "Inteligencia artificial",
+    "inteligencia artificial": "Inteligencia artificial",
+}
 
 # Operaciones que viven en mixins y servicios, no necesariamente como módulos
 # commands/*.py. Se mantienen aquí para que la ayuda describa el Atlas real.
@@ -628,9 +645,11 @@ def render_help(
         allowed_categories=allowed_categories,
         allowed_entry_names=allowed_entry_names,
     )
+    if _norm(topic) in {"todo", "completo", "catalogo completo"}:
+        topic = ""
     if topic:
         normalized = _norm(topic)
-        category = next((cat for cat in CATEGORY_ORDER if _norm(cat) == normalized), None)
+        category = CATEGORY_ALIASES.get(normalized) or next((cat for cat in CATEGORY_ORDER if _norm(cat) == normalized), None)
         matches = [e for e in entries if category and _norm(e.category) == _norm(category)]
         if not matches:
             exact = next((e for e in entries if _norm(e.name) == normalized or normalized in {_norm(a) for a in e.aliases}), None)
@@ -645,27 +664,46 @@ def render_help(
             return f"No he encontrado comandos relacionados con «{topic}». Prueba con «ayuda» o «buscar comandos <tema>»."
         if len(matches) == 1:
             return _entry_detail(matches[0])
-        rendered = "\n".join(f"• {e.name}: {e.description}" for e in matches)
+        rendered = "\n\n".join(f"• {e.name}\n  {e.description}" for e in matches)
         if normalized == "telegram" and "generar codigo telegram" not in _norm(rendered):
             rendered += "\n• generar código Telegram: Genera un código temporal para vincular una cuenta."
-        return "Comandos relacionados con «{}»:\n\n{}".format(topic, rendered)
+        heading = f"{CATEGORY_ICONS.get(category or '', '📘')} {(category or 'Comandos relacionados').upper()}"
+        return "{}\n\n{}".format(heading, rendered)
 
     grouped: dict[str, list[HelpEntry]] = {}
     for entry in entries:
         grouped.setdefault(entry.category, []).append(entry)
-    lines = ["=" * 34, "AYUDA DE ATLAS — FUNCIONES DISPONIBLES", "=" * 34]
+    lines = ["📘 AYUDA DE ATLAS", "", "Catálogo completo de funciones disponibles."]
     categories = list(CATEGORY_ORDER) + sorted(set(grouped) - set(CATEGORY_ORDER))
     for category in categories:
         items = grouped.get(category)
         if not items:
             continue
-        lines.extend(("", category.upper(), ""))
+        lines.extend(("", f"{CATEGORY_ICONS.get(category, '•')} {category.upper()}", ""))
         for entry in sorted(items, key=lambda e: _norm(e.name)):
-            lines.append(f"• {entry.name}: {entry.description}")
+            lines.extend((f"• {entry.name}", f"  {entry.description}", ""))
     lines.extend((
         "",
         "Para ver más detalle: «ayuda <categoría o comando>».",
         "Para buscar por intención: «buscar comandos <tema>».",
+    ))
+    return "\n".join(lines)
+
+
+def render_help_index(*, context: HelpAccessContext) -> str:
+    """Portada breve: las capacidades siguen filtradas por la misma fuente."""
+    categories = {
+        entry.category for entry in visible_entries(context=context)
+    }
+    ordered = list(CATEGORY_ORDER) + sorted(categories - set(CATEGORY_ORDER))
+    lines = ["📘 AYUDA DE ATLAS", "", "Categorías disponibles:", ""]
+    for category in ordered:
+        if category in categories:
+            lines.append(f"{CATEGORY_ICONS.get(category, '•')} {category}")
+    lines.extend((
+        "", "Escribe «ayuda <categoría>», por ejemplo: ayuda ia, ayuda telegram o ayuda voz.",
+        "Escribe «ayuda todo» para ver el catálogo completo.",
+        "Usa «buscar comandos <tema>» para buscar por intención.",
     ))
     return "\n".join(lines)
 
@@ -806,8 +844,7 @@ def handle_command_help_request(
         "ayuda", "help", "comandos", "lista de comandos", "listar comandos",
         "mostrar comandos", "ver comandos", "que comandos hay", "menu", "menú",
     }:
-        return render_help(
-            context=context or build_help_access_context(
+        effective_context = context or build_help_access_context(
                 channel="unknown",
                 authenticated_user=None,
                 profile_exists=False,
@@ -816,7 +853,7 @@ def handle_command_help_request(
                 guest_session=None,
                 permissions=frozenset(),
             )
-        )
+        return render_help_index(context=effective_context)
 
     # Una orden exacta registrada debe ejecutarse, no convertirse en una
     # sugerencia de ayuda. Antes, «salir» quedaba interceptado aquí porque la

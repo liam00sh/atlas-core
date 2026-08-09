@@ -20,10 +20,11 @@ from telegram_interface.response_modes import (
     TelegramResponseModeStore,
     confirmation_text,
     detect_response_mode_directive,
+    is_response_mode_status_query,
+    status_text,
 )
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.progress import append_response_time
-from telegram_interface.response_modes import confirmation_text, detect_response_mode_directive
 import traceback
 
 
@@ -54,13 +55,11 @@ class TelegramGateway:
         self.permission_resolver = permission_resolver or (lambda _user: frozenset({"telegram.use"}))
         self.rate_limiter = rate_limiter or TelegramRateLimiter(config.rate_limit_per_minute)
         self.media_processor = media_processor
-        self.response_mode_store = response_mode_store
         self.clock = clock
         storage = getattr(linker, "storage", None)
-        self.response_modes = (
-            TelegramResponseModeStore(storage)
-            if storage is not None
-            else None
+        self.response_mode_store = (
+            response_mode_store
+            or (TelegramResponseModeStore(storage) if storage is not None else None)
         )
         self._processing_errors: dict[tuple[str, str], tuple[int, float]] = {}
         self._executor = ThreadPoolExecutor(max_workers=config.max_concurrent_operations, thread_name_prefix="atlas-telegram")
@@ -92,16 +91,26 @@ class TelegramGateway:
                 if atlas_user_id else None
             )
             if (
+                atlas_user_id is not None
+                and self.response_mode_store is not None
+                and is_response_mode_status_query(message.text)
+            ):
+                response = GatewayResponse(
+                    status_text(self.response_mode_store.get(atlas_user_id)),
+                    delivery_hint="text",
+                )
+            elif (
                 mode_directive is not None
-                and self.response_modes is not None
+                and self.response_mode_store is not None
                 and atlas_user_id is not None
             ):
-                self.response_modes.set(
+                self.response_mode_store.set(
                     atlas_user_id,
                     mode_directive,
                 )
                 response = GatewayResponse(
-                    confirmation_text(mode_directive)
+                    confirmation_text(mode_directive),
+                    delivery_hint="text",
                 )
             elif command:
                 response = self._handle_command(command, argument, message, state, atlas_user_id)
@@ -126,9 +135,6 @@ class TelegramGateway:
                 )
                 if "telegram.use" not in {item.casefold() for item in permissions}:
                     response = GatewayResponse("Tu usuario no tiene permiso para utilizar el sistema desde Telegram.")
-                elif self.response_mode_store is not None and (mode := detect_response_mode_directive(message.text)) is not None:
-                    self.response_mode_store.set(atlas_user_id, mode)
-                    response = GatewayResponse(confirmation_text(mode), delivery_hint="text")
                 elif (
                     not message.media_type
                     and self.media_processor is not None

@@ -18,3 +18,14 @@ Estado: concluida y validada.
 ## Siguiente trabajo
 
 Antes de continuar con nuevas funciones domésticas se integrarán los usuarios amigos y se corregirán pequeños problemas de comunicación.
+
+## Mejora de IA previa a continuar la Fase 6
+
+- Roles locales `fast`, `reasoning` y `deep`; `external` deshabilitado.
+- Router explicable, override manual, validación y fallback ascendente.
+- Estado conversacional compartido por CLI, Telegram y futura voz.
+- Separación estructural de identidad, domicilio, ubicación y presencia.
+- Jerarquía explícita de fuentes y contrato decisión/redacción.
+- Mensajes contextuales, deduplicación de eventos y espera tras 4,5 s reales.
+- Benchmark y regresiones de REDACTED_bc04a68d9192 en `tests/ai_benchmark/`.
+- La Fase 6 de voz sigue abierta y el laboratorio Daxter no se modifica.

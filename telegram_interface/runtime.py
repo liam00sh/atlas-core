@@ -180,8 +180,12 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
             storage_path=Path("data/voice/user_preferences.json"),
             user_provider=lambda: "",
         )
+        voice_service = VoiceService()
+        warm_up = getattr(voice_service.provider, "warm_up_async", None)
+        if callable(warm_up):
+            warm_up()
         voice_renderer = TelegramVoiceRenderer(
-            voice_service=VoiceService(),
+            voice_service=voice_service,
             preference_resolver=voice_preferences.get,
             personality_resolver=gateway.core.active_personality,
             output_dir=config.data_dir / "quarantine" / "tts",

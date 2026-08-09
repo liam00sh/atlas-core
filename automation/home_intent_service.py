@@ -23,6 +23,8 @@ class HomeIntentResponse:
     requires_confirmation: bool = False
     automation_id: str | None = None
     raw_result: Any = None
+    authorized: bool | None = None
+    execution_confirmed: bool = False
 
 
 class HomeIntentService:
@@ -129,7 +131,10 @@ class HomeIntentService:
             self._last_guest_absent_message,
         )
         self._last_guest_absent_message = message
-        return message
+        return (
+            "No puedo realizar esa acción porque tu presencia en la vivienda "
+            "no está verificada. " + message
+        )
 
     def _permission_denied_message(self) -> str:
         message = self._pick_non_repeating(
@@ -137,7 +142,10 @@ class HomeIntentService:
             self._last_permission_denied_message,
         )
         self._last_permission_denied_message = message
-        return message
+        return (
+            "No puedo realizar esa acción porque tu perfil no tiene el permiso "
+            "doméstico necesario. " + message
+        )
 
     def _guest_presence_is_not_verified(self, user_id: str) -> bool:
         """Aplica denegación segura si la presencia doméstica falla o no consta."""
@@ -254,6 +262,8 @@ class HomeIntentService:
                     f"He encendido {target_name} durante "
                     f"{duration_minutes} minutos."
                 ),
+                authorized=True,
+                execution_confirmed=True,
             )
 
         if intent.intent_type in (
@@ -285,6 +295,8 @@ class HomeIntentService:
                             + intent.parameters["end_time"][:5]
                             + "."
                         ),
+                        authorized=True,
+                        execution_confirmed=True,
                     )
 
                 if intent.intent_type == HomeIntentType.ENABLE_SCHEDULE:
@@ -292,12 +304,16 @@ class HomeIntentService:
                     return HomeIntentResponse(
                         handled=True,
                         message="He activado el horario del acuario.",
+                        authorized=True,
+                        execution_confirmed=True,
                     )
 
                 self.environment.adapter.disable_schedule(entity_id=entity_id)
                 return HomeIntentResponse(
                     handled=True,
                     message="He desactivado la programación de la luz.",
+                    authorized=True,
+                    execution_confirmed=True,
                 )
             except Exception as exc:
                 return HomeIntentResponse(
@@ -328,6 +344,7 @@ class HomeIntentService:
                 return HomeIntentResponse(
                     handled=True,
                     message=self._guest_absent_message(),
+                    authorized=False,
                 )
 
             results = []
@@ -356,6 +373,7 @@ class HomeIntentService:
                     return HomeIntentResponse(
                         handled=True,
                         message=self._permission_denied_message(),
+                        authorized=False,
                     )
 
                 result = self.environment.manager.execute(
@@ -417,6 +435,7 @@ class HomeIntentService:
             return HomeIntentResponse(
                 handled=True,
                 message=self._guest_absent_message(),
+                authorized=False,
             )
 
         entity_id = intent.parameters.get("entity_id", "")
@@ -441,6 +460,7 @@ class HomeIntentService:
             return HomeIntentResponse(
                 handled=True,
                 message=self._permission_denied_message(),
+                authorized=False,
             )
 
         result = self.environment.manager.execute(

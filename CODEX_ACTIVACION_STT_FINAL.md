@@ -218,7 +218,7 @@ No se creó commit, no se hizo merge y no se hizo push. El repositorio original 
 Después de que REDACTED_2c7b6821719d proporcione o descargue el modelo por un procedimiento separado y expresamente autorizado:
 
 ```powershell
-cd C:\Proyectos\Atlas\atlas_core_stt_final
+cd C:\Proyectos\Atlas\atlas_core
 python -m pip install -r requirements-stt.txt
 $env:ATLAS_STT_DEVICE='cpu'
 $env:ATLAS_STT_COMPUTE_TYPE='int8'
@@ -233,7 +233,7 @@ python scripts/check_stt_config.py --live 'C:\Proyectos\Atlas\pruebas\voz_REDACT
 ### Opción GPU
 
 ```powershell
-cd C:\Proyectos\Atlas\atlas_core_stt_final
+cd C:\Proyectos\Atlas\atlas_core
 python scripts/guide_stt_cuda_install.py
 where.exe cublas64_12.dll
 where.exe cudnn64_9.dll

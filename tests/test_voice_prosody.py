@@ -5,7 +5,9 @@ def test_comma_adds_short_pause() -> None:
     segments = segment_text("Hola, REDACTED_2c7b6821719d.")
 
     assert len(segments) == 2
-    assert segments[0].text == "Hola,"
+    # La pausa se conserva como metadato, pero la coma no se entrega al
+    # tokenizador TTS para impedir que algunas voces la vocalicen.
+    assert segments[0].text == "Hola"
     assert segments[0].pause_after_ms == 150
     assert segments[1].text == "REDACTED_2c7b6821719d."
     assert segments[1].pause_after_ms == 0

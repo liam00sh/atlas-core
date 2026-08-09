@@ -94,6 +94,7 @@ def pytest_configure(config):
         "ATLAS_IDENTITY_DATA_DIR": str(identity_data),
         "ATLAS_USER_DATA_DIR": str(user_data),
         "ATLAS_TELEGRAM_DATA_DIR": str(sandbox_root / "telegram"),
+        "ATLAS_KNOWLEDGE_DATA_DIR": str(sandbox_root / "knowledge"),
         "ATLAS_INCIDENTS_PATH": str(sandbox_root / "monitoring" / "incidents.json"),
         "ATLAS_SUPERVISOR_STATUS_PATH": str(
             sandbox_root / "monitoring" / "supervisor_status.json"
@@ -123,6 +124,7 @@ def isolate_persistent_data(tmp_path, monkeypatch):
     monkeypatch.setenv("ATLAS_IDENTITY_DATA_DIR", str(identity_data))
     monkeypatch.setenv("ATLAS_USER_DATA_DIR", str(user_data))
     monkeypatch.setenv("ATLAS_TELEGRAM_DATA_DIR", str(tmp_path / "telegram"))
+    monkeypatch.setenv("ATLAS_KNOWLEDGE_DATA_DIR", str(tmp_path / "knowledge"))
     monkeypatch.setenv(
         "ATLAS_INCIDENTS_PATH",
         str(monitoring_data / "incidents.json"),

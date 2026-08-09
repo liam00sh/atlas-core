@@ -19,9 +19,9 @@ def test_irrelevant_location_source_is_rejected():
     assert _source_is_relevant(right, "REDACTED_a77d7bb7adbf")
 
 
-def test_progress_is_early_for_known_slow_work_and_has_elapsed_footer():
+def test_progress_requires_real_latency_and_has_elapsed_footer():
     assert classify_operation("Busca en Internet la población de REDACTED_a77d7bb7adbf") == "internet"
-    assert progress_delay_for("Busca en Internet la población de REDACTED_a77d7bb7adbf") < 2.0
+    assert progress_delay_for("Busca en Internet la población de REDACTED_a77d7bb7adbf") >= 4.5
     assert "4,2 s" in append_response_time("Respuesta", 4.2, "Daxter")
 
 

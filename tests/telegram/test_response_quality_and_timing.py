@@ -73,7 +73,10 @@ def _message(text="consulta compleja"):
     )
 
 
-def test_progress_is_once_after_threshold_and_adds_no_artificial_delay():
+def test_progress_is_once_after_threshold_and_adds_no_artificial_delay(monkeypatch):
+    # La política de producción espera 4,5 s; aquí se reduce solo el reloj del
+    # test para comprobar emisión única sin ralentizar la suite.
+    monkeypatch.setattr("telegram_interface.polling.progress_delay_for", lambda *_args: 0.005)
     client = _Client()
     artificial_sleeps = []
     poller = TelegramPoller(

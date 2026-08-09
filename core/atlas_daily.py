@@ -460,6 +460,13 @@ class AtlasDailyMixin:
             return True
 
         if plain in {"donde estoy", "donde estoy ahora", "cual es mi ubicacion actual", "cual es mi ubicacion"}:
+            conversation_state = getattr(getattr(self, "conversation_manager", None), "current", lambda: None)()
+            if conversation_state is not None and conversation_state.temporary_location:
+                self._print(
+                    f"Ahora mismo estás temporalmente en {conversation_state.temporary_location}. "
+                    "Eso no cambia tu domicilio habitual ni tus permisos."
+                )
+                return True
             location, source = self._resolve_user_location(owner)
             if location:
                 self._print(f"Tu ubicación operativa es {location} ({source}).")
@@ -469,17 +476,44 @@ class AtlasDailyMixin:
 
         if re.match(r"^(?:he venido|estoy)\s+(?:a|en)\s+casa\s+de\s+.+", plain):
             state["pending_temporary_location"] = True
-            self._print("Entendido. ¿En qué localidad estás ahora? Así usaré esa ubicación para el tiempo.")
+            conversation_state = getattr(getattr(self, "conversation_manager", None), "current", lambda: None)()
+            contextual = getattr(conversation_state, "temporary_location", None)
+            if contextual:
+                self._print(
+                    f"Entendido: estás temporalmente en {contextual}. "
+                    "No cambiaré tu identidad, domicilio ni permisos. "
+                    "Si quieres que use el lugar para el tiempo, dime también la localidad."
+                )
+            else:
+                self._print("Entendido. ¿En qué localidad estás ahora? Así usaré esa ubicación para el tiempo.")
             return True
 
+        # El domicilio habitual pertenece a identidad verificada y se resuelve
+        # después en atlas_ai; nunca es la respuesta a una localidad pendiente.
+        if plain in {"donde vivo", "cual es mi domicilio", "cual es mi residencia habitual"}:
+            return False
+
         if state.get("pending_temporary_location"):
-            candidate = re.sub(r"^(?:si|sí)[, ]+|^(?:estoy|es)\s+en\s+", "", plain).strip()
-            if candidate and len(candidate.split()) <= 4 and candidate not in {"si", "no", "no se"}:
+            explicit_location = re.match(r"^(?:(?:si|sí)[, ]+)?(?:estoy|es)\s+en\s+(.+)$", plain)
+            candidate = explicit_location.group(1).strip() if explicit_location else plain
+            if (
+                candidate
+                and (explicit_location is not None or len(candidate.split()) <= 3)
+                and candidate not in {"si", "no", "no se"}
+                and not candidate.startswith(("donde ", "cual ", "que ", "quien "))
+            ):
                 self._set_temporary_location(owner, candidate)
+                manager = getattr(self, "conversation_manager", None)
+                if manager is not None:
+                    manager.set_temporary_location(candidate)
                 state.pop("pending_temporary_location", None)
                 stored, _ = self._resolve_user_location(owner)
                 self._print(f"Entendido. Usaré {stored} como tu ubicación temporal durante estos días.")
                 return True
+            # Una aclaración contextual no debe capturar peticiones posteriores
+            # no relacionadas. El usuario puede volver a declarar la ubicación
+            # de forma explícita cuando la conozca.
+            state.pop("pending_temporary_location", None)
 
         patterns = (
             r"^ahora\s+estoy\s+en\s+(.+)$",
@@ -509,6 +543,9 @@ class AtlasDailyMixin:
             return True
         days = 4 if "fin de semana" in plain else 14
         self._set_temporary_location(owner, place, days=days)
+        manager = getattr(self, "conversation_manager", None)
+        if manager is not None:
+            manager.set_temporary_location(place)
         state.pop("pending_temporary_location", None)
         stored, _ = self._resolve_user_location(owner)
         self._print(f"Entendido. Usaré {stored} como tu ubicación temporal durante estos días.")

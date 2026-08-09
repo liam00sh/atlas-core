@@ -30,9 +30,7 @@ def _silence(duration_ms: int) -> np.ndarray:
     return np.zeros(frames, dtype=np.float32)
 
 
-def main() -> int:
-    payload = json.load(sys.stdin)
-
+def synthesize(payload: dict, pipeline: KPipeline) -> dict:
     text = str(payload["text"]).strip()
     voice = str(payload["voice"]).strip()
     output_path = Path(payload["output_path"])
@@ -42,7 +40,6 @@ def main() -> int:
     if not text:
         raise ValueError("El texto no puede estar vacío.")
 
-    pipeline = KPipeline(lang_code="e")
     final_parts: list[np.ndarray] = []
 
     for segment in segment_text(text):
@@ -79,16 +76,33 @@ def main() -> int:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     sf.write(output_path, audio, SAMPLE_RATE)
 
-    print(
-        json.dumps(
-            {
-                "success": True,
-                "output_path": str(output_path),
-                "voice": voice,
-            },
-            ensure_ascii=False,
-        )
-    )
+    return {
+        "success": True,
+        "output_path": str(output_path),
+        "voice": voice,
+        "request_id": str(payload.get("request_id", "")),
+    }
+
+
+def main() -> int:
+    pipeline = KPipeline(lang_code="e")
+    if "--server" in sys.argv:
+        for line in sys.stdin:
+            payload: dict = {}
+            try:
+                payload = json.loads(line)
+                response = synthesize(payload, pipeline)
+            except Exception as exc:
+                response = {
+                    "success": False,
+                    "error": f"{type(exc).__name__}: {exc}",
+                    "request_id": str(payload.get("request_id", "")),
+                }
+            print(json.dumps(response, ensure_ascii=False), flush=True)
+        return 0
+
+    response = synthesize(json.load(sys.stdin), pipeline)
+    print(json.dumps(response, ensure_ascii=False))
     return 0
 
 

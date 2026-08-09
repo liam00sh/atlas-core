@@ -71,6 +71,16 @@ def test_ambiguous_house_reference_is_not_persisted(tmp_path, capsys):
     assert atlas._resolve_user_location("Nora") == ("Puerto Azul", "ubicación temporal")
 
 
+def test_pending_locality_does_not_capture_an_unrelated_request(tmp_path, capsys):
+    atlas = _LocationAtlas(tmp_path / "state.json", {"Nora": {"location": "Villa Norte"}})
+    assert atlas._handle_user_location("He venido a casa de Teo unos días")
+    capsys.readouterr()
+
+    assert not atlas._handle_user_location("Analiza estas contradicciones complejas")
+    assert atlas._temporary_location_record("Nora") is None
+    assert "pending_temporary_location" not in atlas._daily_state_for("Nora")
+
+
 def test_weather_priority_and_origin_explanation_do_not_repeat_tool_call(tmp_path, monkeypatch, capsys):
     atlas = _LocationAtlas(tmp_path / "state.json", {"Nora": {"location": "Villa Norte"}})
     atlas._set_temporary_location("Nora", "Puerto Azul")

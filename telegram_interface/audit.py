@@ -17,7 +17,8 @@ _TIMING_STAGES = frozenset({
     "telegram_send", "total",
     "media.download", "media.validation", "audio.convert", "stt.transcribe",
     "image.analyze", "face.detect", "face.compare", "document.extract",
-    "tts.synthesize", "telegram.upload",
+    "tts.prepare", "tts.synthesize", "tts.convert", "tts.playback",
+    "tts.total", "telegram.upload",
 })
 
 

@@ -5,7 +5,7 @@ Fecha: 2026-08-06
 Rama: `feature/telegram-multimedia-stt-vision`
 
 Base exacta: `daebe6bd` (`origin/main`)
-Worktree seguro: `C:\Proyectos\Atlas\atlas_core_multimedia`
+Copia operativa consolidada: `C:\Proyectos\Atlas\atlas_core`
 
 ## 1. Inventario inicial
 
@@ -283,7 +283,7 @@ Recomendación: revisar esta rama completa y abrir un pull request. Los commits 
 Siguiente comprobación, sin publicar:
 
 ```powershell
-Set-Location C:\Proyectos\Atlas\atlas_core_multimedia
+Set-Location C:\Proyectos\Atlas\atlas_core
 git status -sb
 git log --oneline origin/main..HEAD
 git diff --stat origin/main...HEAD

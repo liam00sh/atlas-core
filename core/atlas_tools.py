@@ -40,6 +40,7 @@ from ai.prompts.tool_prompt import build_tool_response_prompt
 from pathlib import Path
 
 from core.log_manager import info
+from commands.admin_policy import require_admin_user
 
 from knowledge.conversation import KnowledgeIntentRecognizer
 
@@ -248,8 +249,13 @@ class AtlasToolsMixin:
         current_user = self.get_user()
 
         # La confirmación solo puede resolverla quien inició la acción.
-        if not self.confirmations.belongs_to_user(
-            current_user
+        request_context = getattr(self, "channel_request_context", None)
+        current_channel = getattr(request_context, "channel", None) or "cli"
+        current_session = getattr(request_context, "session_id", None) or getattr(self, "session_id", None) or "local"
+        if not self.confirmations.belongs_to_context(
+            user=current_user,
+            channel=current_channel,
+            session_id=str(current_session),
         ):
 
             print()
@@ -299,7 +305,11 @@ class AtlasToolsMixin:
         # CONFIRMACIÓN
         # -------------------------------------------------------------
 
-        if normalized_text in CONFIRMATION_ACCEPTED:
+        accepted_phrases = {
+            str(item).strip().casefold()
+            for item in confirmation.get("accepted_phrases", ())
+        }
+        if normalized_text in CONFIRMATION_ACCEPTED or normalized_text in accepted_phrases:
 
             # Eliminamos primero la confirmación para impedir
             # que pueda reutilizarse aunque la ejecución falle.
@@ -341,6 +351,16 @@ class AtlasToolsMixin:
         action_type = confirmation.get(
             "action_type"
         )
+
+        if action_type == "administrative_command":
+            action_name = str(confirmation.get("action_name", ""))
+            if action_name != "restart_telegram":
+                print("\nLa acción administrativa pendiente no es válida.")
+                return True
+            from commands import restart_telegram
+            if not require_admin_user():
+                return True
+            return restart_telegram.execute_confirmed()
 
         if action_type == "home_automation":
             automation_id = confirmation.get("arguments", {}).get(
@@ -659,12 +679,16 @@ class AtlasToolsMixin:
         # En esta primera versión no ejecutamos automáticamente
         # herramientas que necesiten confirmación.
         if tool.requires_confirmation:
-
+            request_context = getattr(self, "channel_request_context", None)
+            confirmation_channel = getattr(request_context, "channel", None) or "cli"
+            confirmation_session = getattr(request_context, "session_id", None) or getattr(self, "session_id", None) or "local"
             self.confirmations.create_confirmation(
                 user=self.get_user(),
                 action_type="tool",
                 action_name=selection.tool_name,
                 arguments=selection.arguments,
+                channel=confirmation_channel,
+                session_id=str(confirmation_session),
             )
 
             print()

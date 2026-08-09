@@ -6,6 +6,10 @@
 
 Atlas Core es el núcleo local en Python del Proyecto Atlas. Coordina usuarios, identidad conversacional, memoria, capacidades, herramientas, inteligencia artificial local y las identidades del asistente **Daxter** y **Coco**.
 
+La IA local usa roles `fast`, `reasoning` y `deep` detrás de un router común;
+`external` existe solo como contrato futuro y permanece deshabilitado. Atlas
+Core conserva la autoridad sobre verdad, permisos y acciones.
+
 El proyecto está diseñado para crecer por fases sin mezclar responsabilidades ni conceder capacidades que no estén realmente disponibles.
 
 ## Requisitos
@@ -90,6 +94,8 @@ atlas_core/
 - **Identidad separada del modo:** Daxter y Coco conservan su personalidad; los modos solo ajustan temporalmente su comportamiento.
 - **Persistencia idempotente:** los inicializadores pueden ejecutarse varias veces sin duplicar entidades ni relaciones.
 - **Arquitectura modular:** cada módulo mantiene una responsabilidad concreta.
+- **Gobierno del núcleo:** la IA interpreta y razona; Atlas decide la verdad,
+  los permisos y las acciones verificadas.
 
 ## Estado actual
 
@@ -119,6 +125,13 @@ Pytest utiliza el directorio temporal seguro del sistema. Los fixtures redirigen
 datos persistentes, Telegram, monitorización y servicios externos a dobles o a
 `tmp_path`; la suite no debe cambiar `people.json`, `animals.json` ni
 `relationships.json`.
+
+Benchmark del router y las regresiones conversacionales:
+
+```bash
+python -m pytest tests/ai_benchmark -q
+python scripts/run_ai_benchmark.py
+```
 
 Documentación técnica afectada:
 

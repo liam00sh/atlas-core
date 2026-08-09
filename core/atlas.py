@@ -42,6 +42,7 @@ Flujo principal:
 
 
 from pathlib import Path
+import os
 import re
 
 
@@ -54,6 +55,7 @@ from ai.context.context_manager import AIContextManager
 from ai.models.model_registry import ModelRegistry
 from ai.prompts.builder import PromptBuilder
 from ai.providers.base_provider import BaseAIProvider
+from ai.routing.runtime import AIModelRuntime
 from ai.tools.tool_registry import ToolRegistry as LegacyToolRegistry
 from ai.tools.tool_selector import ToolSelector
 
@@ -103,6 +105,7 @@ from core.atlas_utils import AtlasUtilsMixin
 from core.atlas_windows import AtlasWindowsMixin
 
 from core.confirmation_manager import ConfirmationManager
+from core.decisions import AtlasDecision, DecisionStatus
 from core.log_manager import info
 from core.request_timing import measure_stage
 from core.user_manager import UserManager
@@ -135,6 +138,7 @@ from memory.long_term import LongTermMemoryService
 from memory.workflow.conversation import MemoryWorkflowConversation
 from memory.workflow.service import MemoryWorkflowService
 from conversation.continuity_store import ConversationContinuityStore
+from conversation.manager import ConversationManager
 
 from knowledge.retriever import KnowledgeRetriever
 from knowledge.service import KnowledgeService
@@ -240,6 +244,7 @@ class Atlas(AtlasAIMixin,
     def __init__(
         self,
         ai_provider: BaseAIProvider | None = None,
+        ai_runtime: AIModelRuntime | None = None,
     ) -> None:
         """
         Inicializa el núcleo principal de Atlas.
@@ -432,6 +437,14 @@ class Atlas(AtlasAIMixin,
         # ---------------------------------------------------------------------
 
         self.ai_provider = ai_provider
+        self.ai_runtime = (
+            ai_runtime
+            if ai_runtime is not None
+            else AIModelRuntime.single(ai_provider)
+            if ai_provider is not None
+            else None
+        )
+        self.last_ai_trace = None
 
         self.model_registry = ModelRegistry()
 
@@ -543,9 +556,14 @@ class Atlas(AtlasAIMixin,
             )
         )
 
+        knowledge_data_dir = Path(
+            os.environ.get(
+                "ATLAS_KNOWLEDGE_DATA_DIR",
+                str(Path(__file__).resolve().parent.parent / "data" / "knowledge"),
+            )
+        )
         self.personal_memory_semantic_index = PersonalMemorySemanticIndex(
-            Path(__file__).resolve().parent.parent
-            / "data" / "knowledge" / "personal_memory_semantic.json",
+            knowledge_data_dir / "personal_memory_semantic.json",
             self.memory,
             build_embedding_client_from_provider(self.ai_provider),
         )
@@ -706,6 +724,7 @@ class Atlas(AtlasAIMixin,
             Path(__file__).resolve().parents[1]
             / "data" / "conversation" / "continuity.json"
         )
+        self.conversation_manager = ConversationManager()
 
         info(
             "Atlas Core inicializado."
@@ -727,6 +746,58 @@ class Atlas(AtlasAIMixin,
             if any(marker in normalized_text for marker in markers):
                 return capability
         return None
+
+    @staticmethod
+    def _home_decision(response) -> AtlasDecision:
+        raw = getattr(response, "raw_result", None)
+        results = raw if isinstance(raw, list) else [raw] if raw is not None else []
+        successes = [bool(getattr(item, "success", False)) for item in results]
+        error_codes = [str(getattr(item, "error_code", "") or "") for item in results]
+        message = str(getattr(response, "message", ""))
+        if getattr(response, "execution_confirmed", False):
+            status = DecisionStatus.EXECUTED
+            authorized = True
+            executed = True
+            reason = None
+        elif getattr(response, "authorized", None) is False:
+            status = DecisionStatus.DENIED
+            authorized = False
+            executed = False
+            reason = "permiso o presencia insuficiente"
+        elif getattr(response, "requires_confirmation", False):
+            status = DecisionStatus.PENDING
+            authorized = True
+            executed = False
+            reason = "falta confirmación"
+        elif successes and all(successes):
+            status = DecisionStatus.EXECUTED
+            authorized = True
+            executed = True
+            reason = None
+        elif any(code in {"permission_denied", "presence_required"} for code in error_codes) or message.startswith("No puedo realizar esa acción porque"):
+            status = DecisionStatus.DENIED
+            authorized = False
+            executed = False
+            reason = "permiso o presencia insuficiente"
+        elif results and not all(successes):
+            status = DecisionStatus.FAILED
+            authorized = True
+            executed = False
+            reason = "el componente doméstico no confirmó la operación"
+        else:
+            status = DecisionStatus.ANSWERED
+            authorized = True
+            executed = False
+            reason = None
+        return AtlasDecision(
+            action="home_assistant",
+            status=status,
+            authorized=authorized,
+            executed=executed,
+            entity=getattr(response, "automation_id", None),
+            reason=reason,
+            data={"message": message},
+        )
 
     def _handle_guest_security(
         self,
@@ -909,6 +980,40 @@ class Atlas(AtlasAIMixin,
             COMMANDS.keys(),
         )
 
+        request_context = getattr(self, "channel_request_context", None)
+        request_channel = getattr(request_context, "channel", None) or "cli"
+        request_session = getattr(request_context, "session_id", None) or getattr(self, "session_id", None) or "local"
+        try:
+            conversation_user = self._get_current_conversation_user()
+        except (AttributeError, ValueError):
+            conversation_user = self.get_user()
+        self.conversation_manager.begin_turn(
+            channel=request_channel,
+            session_id=str(request_session),
+            authenticated_identity=self.get_user(),
+            conversational_identity=conversation_user,
+        )
+        try:
+            profile = self.users.get_effective_profile(conversation_user) or {}
+            habitual = (
+                profile.get("residence")
+                or profile.get("home_location")
+                or profile.get("location")
+            )
+            self.conversation_manager.set_habitual_residence(
+                habitual,
+                verified=bool(habitual),
+            )
+        except (AttributeError, KeyError, TypeError):
+            pass
+        try:
+            self.conversation_manager.set_home_presence(
+                self.get_effective_help_user().get("presence", "unknown")
+            )
+        except (AttributeError, KeyError, TypeError):
+            self.conversation_manager.set_home_presence("unknown")
+        self.conversation_manager.observe_user_message(original_text)
+
         if normalized_text == "":
             # Los mensajes formados solo por emojis se quedan vacíos tras la
             # normalización textual. Deben pasar por la conversación social
@@ -959,6 +1064,14 @@ class Atlas(AtlasAIMixin,
             if blocked is not None:
                 return blocked
 
+        # Una confirmación pendiente pertenece al núcleo, no al LLM. Se
+        # resuelve antes de autoconocimiento, comandos y conversación para que
+        # ni la frase reforzada ni una cancelación puedan desviarse de sesión.
+        if self.confirmations.has_pending_confirmation():
+            confirmation_result = self._handle_pending_confirmation(normalized_text)
+            if confirmation_result is not None:
+                return confirmation_result
+
         # Conocimiento determinista sobre Atlas, identidades, modos, memoria y vinculación.
         # Debe resolverse antes de la IA para impedir invenciones sobre el propio sistema.
         if self._handle_self_knowledge(original_text):
@@ -1002,24 +1115,6 @@ class Atlas(AtlasAIMixin,
         if self._handle_pending_internet_lookup(original_text):
             return True
 
-        # ---------------------------------------------------------------------
-        # 1. CONFIRMACIÓN PENDIENTE
-        # ---------------------------------------------------------------------
-
-        # Una respuesta como «sí» o «no» no debe provocar
-        # un cambio automático de personalidad antes de
-        # resolver la confirmación.
-        if self.confirmations.has_pending_confirmation():
-
-            confirmation_result = (
-                self._handle_pending_confirmation(
-                    normalized_text
-                )
-            )
-
-            if confirmation_result is not None:
-                return confirmation_result
-
         # Sprint 18: la vinculación local de Telegram es determinista.
         # Nunca debe llegar al modelo de IA, que podría inventar una web o
         # instrucciones inexistentes para introducir el código.
@@ -1045,6 +1140,18 @@ class Atlas(AtlasAIMixin,
             channel=request_channel,
         )
         if home_response.handled:
+            home_decision = self._home_decision(home_response)
+            manager = getattr(self, "conversation_manager", None)
+            if manager is not None:
+                manager.record_action(
+                    {
+                        "action": home_decision.action,
+                        "status": home_decision.status.value,
+                        "authorized": home_decision.authorized,
+                        "executed": home_decision.executed,
+                        "entity": home_decision.entity,
+                    }
+                )
             if home_response.requires_confirmation:
                 self.confirmations.create_confirmation(
                     user=self.get_user(),
@@ -1054,6 +1161,8 @@ class Atlas(AtlasAIMixin,
                         "automation_id": home_response.automation_id,
                         "channel": request_channel,
                     },
+                    channel=request_channel,
+                    session_id=str(request_session),
                 )
             print()
             print(home_response.message)

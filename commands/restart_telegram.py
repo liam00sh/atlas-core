@@ -24,7 +24,7 @@ COMMAND = {
     ],
 }
 
-_CONFIRMATIONS = {
+CONFIRMATIONS = {
     "confirmo reiniciar telegram",
     "confirmar reinicio telegram",
     "si reinicia telegram",
@@ -60,22 +60,34 @@ def _start_restart_script() -> None:
     )
 
 
-def _is_confirmed() -> bool:
-    atlas = getattr(context, "atlas", None)
-    text = str(getattr(atlas, "last_original_text", "")).strip().casefold()
-    return text in _CONFIRMATIONS
-
-
 def execute():
     if not require_admin_user():
         return True
 
-    if not _is_confirmed():
-        print()
-        print("Este reinicio afecta al bot de Telegram y requiere confirmación reforzada.")
-        print("Escribe exactamente: confirmo reiniciar telegram")
+    atlas = getattr(context, "atlas", None)
+    if atlas is None:
+        print("No encuentro la instancia activa de Atlas.")
         return True
+    request_context = getattr(atlas, "channel_request_context", None)
+    channel = getattr(request_context, "channel", None) or "cli"
+    session_id = getattr(request_context, "session_id", None) or getattr(atlas, "session_id", None) or "local"
+    atlas.confirmations.create_confirmation(
+        user=atlas.get_user(),
+        action_type="administrative_command",
+        action_name="restart_telegram",
+        arguments={},
+        channel=channel,
+        session_id=str(session_id),
+        accepted_phrases=tuple(CONFIRMATIONS),
+    )
+    print()
+    print("Este reinicio afecta al bot de Telegram y requiere confirmación reforzada.")
+    print("Escribe exactamente: confirmo reiniciar telegram")
+    return True
 
+
+def execute_confirmed() -> bool:
+    """Ejecuta el reinicio después de que Atlas haya consumido la confirmación."""
     print()
     print("De acuerdo. Voy a reiniciar únicamente el bot de Telegram.")
     print("El supervisor lo levantará de nuevo en unos segundos.")

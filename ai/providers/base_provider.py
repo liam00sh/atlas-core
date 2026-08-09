@@ -83,7 +83,7 @@ class BaseAIProvider(ABC):
         Devuelve el nombre del modelo configurado.
 
         Ejemplo:
-            qwen2.5:7b
+            modelo-local-configurado
         """
 
         raise NotImplementedError

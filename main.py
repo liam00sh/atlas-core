@@ -27,6 +27,8 @@ el núcleo desacoplado de Ollama.
 
 # Registro que contiene los modelos conocidos por Atlas.
 from ai.models.model_registry import ModelRegistry
+from ai.models.roles import ModelRole, ModelRoleRegistry
+from ai.routing.runtime import AIModelRuntime
 
 # Proveedor que permite comunicarse con la instalación local de Ollama.
 from ai.providers.ollama_provider import OllamaProvider
@@ -62,6 +64,13 @@ def build_atlas() -> Atlas:
     model_registry = ModelRegistry()
     default_model = model_registry.get_default_model_name()
 
+    role_registry = ModelRoleRegistry()
+    # Se crean objetos ligeros; Ollama carga cada modelo únicamente al usarlo.
+    deep_definition = role_registry.resolve(ModelRole.DEEP)
+    reasoning_definition = role_registry.resolve(ModelRole.REASONING)
+    deep_provider = OllamaProvider(model_name=str(deep_definition.model), timeout=900)
+    reasoning_provider = OllamaProvider(model_name=str(reasoning_definition.model), timeout=240)
+
     ai_provider = OllamaProvider(
         model_name=default_model,
         timeout=180,
@@ -70,6 +79,15 @@ def build_atlas() -> Atlas:
     atlas = Atlas(
         ai_provider=ai_provider
     )
+    atlas.ai_runtime = AIModelRuntime(
+        providers={
+            ModelRole.FAST: ai_provider,
+            ModelRole.REASONING: reasoning_provider,
+            ModelRole.DEEP: deep_provider,
+        },
+        registry=role_registry,
+    )
+    atlas.model_role_registry = role_registry
 
     context.atlas = atlas
     return atlas

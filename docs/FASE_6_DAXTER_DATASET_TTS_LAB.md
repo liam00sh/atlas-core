@@ -96,6 +96,9 @@ El laboratorio `voice_lab_round_b` incluye `BLIND_LISTENING_PLAYER.html`, 136 co
 - Los scripts no integran aún ningún motor en Atlas y no cambian su fallback de voz.
 - No se aceptaron en nombre del usuario licencias o términos adicionales; por ello XTTS-v2 no se ejecutó.
 - No se declara ganador de Ronda B ni cierre global de la Fase 6.
+- Atlas Core incorpora un router local `fast`/`reasoning`/`deep`, transparente
+  para STT y TTS. La voz continúa enviando texto al mismo núcleo y no conoce el
+  modelo físico seleccionado; el fallback de voz no repite la acción del Core.
 - El intento inicial contra `04_normalizados` se conserva separado como evidencia de raíz inválida; sus hashes no correspondían al maestro de 48 kHz.
 
 ## Verificación del código

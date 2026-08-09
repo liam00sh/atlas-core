@@ -85,6 +85,9 @@ class ConfirmationManager:
         action_type: str,
         action_name: str,
         arguments: dict,
+        channel: str = "cli",
+        session_id: str = "local",
+        accepted_phrases: tuple[str, ...] = (),
     ) -> None:
         """
         Registra una nueva confirmación pendiente.
@@ -99,6 +102,16 @@ class ConfirmationManager:
             "action_name": action_name,
 
             "arguments": arguments,
+
+            "channel": str(channel or "cli").strip().casefold(),
+
+            "session_id": str(session_id or "local").strip().casefold(),
+
+            "accepted_phrases": tuple(
+                str(item).strip().casefold()
+                for item in accepted_phrases
+                if str(item).strip()
+            ),
 
             "created_at": datetime.now(),
 
@@ -157,6 +170,25 @@ class ConfirmationManager:
         return (
             confirmation["user"].casefold()
             == user.casefold()
+        )
+
+    def belongs_to_context(
+        self,
+        *,
+        user: str,
+        channel: str,
+        session_id: str,
+    ) -> bool:
+        """Valida usuario, canal y sesión de una confirmación pendiente."""
+        confirmation = self.get_confirmation()
+        if confirmation is None:
+            return False
+        return (
+            str(confirmation.get("user", "")).casefold() == str(user).casefold()
+            and str(confirmation.get("channel", "cli")).casefold()
+            == str(channel or "cli").casefold()
+            and str(confirmation.get("session_id", "local")).casefold()
+            == str(session_id or "local").casefold()
         )
 
     def _remove_if_expired(

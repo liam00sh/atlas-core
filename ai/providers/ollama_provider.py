@@ -412,6 +412,8 @@ class OllamaProvider(BaseAIProvider):
             )
 
 
+        thinking_model = self.model_name.casefold().startswith("qwen3")
+
         response = self._request_json(
             path="/api/generate",
             method="POST",
@@ -420,6 +422,9 @@ class OllamaProvider(BaseAIProvider):
                 "prompt": prompt,
                 "stream": False,
                 "keep_alive": "5m",
+                # Ollama separa `thinking` de `response`. Atlas ignora el
+                # primero y solo entrega la respuesta final; nunca lo registra.
+                "think": thinking_model,
                 "options": {"temperature": 0.7},
             },
         )

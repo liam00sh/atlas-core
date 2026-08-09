@@ -139,6 +139,9 @@ def segment_text(text: str) -> list[SpeechSegment]:
         buffer.append(char)
 
         if char == ",":
+            # La pausa se representa como silencio; no enviamos el nombre del
+            # signo al motor porque algunos tokenizadores llegan a vocalizarlo.
+            buffer.pop()
             flush(
                 PAUSE_DURATIONS_MS[
                     PauseKind.COMMA
@@ -146,6 +149,7 @@ def segment_text(text: str) -> list[SpeechSegment]:
             )
 
         elif char in {";", ":"}:
+            buffer.pop()
             flush(
                 PAUSE_DURATIONS_MS[
                     PauseKind.SEMICOLON
