@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from time import monotonic, perf_counter
+from core.request_timing import RequestTiming, bind_request_timing, reset_request_timing
 from telegram_interface.audit import TelegramAuditLogger
 from telegram_interface.config import TelegramConfig
 from telegram_interface.core_adapter import AtlasCoreAdapter
@@ -22,6 +23,7 @@ from telegram_interface.response_modes import (
 )
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.progress import append_response_time
+from telegram_interface.response_modes import confirmation_text, detect_response_mode_directive
 import traceback
 
 
@@ -40,6 +42,8 @@ class TelegramGateway:
         audit: TelegramAuditLogger,
         permission_resolver=None,
         rate_limiter: TelegramRateLimiter | None = None,
+        media_processor=None,
+        response_mode_store=None,
         clock=monotonic,
     ) -> None:
         self.config = config
@@ -49,6 +53,8 @@ class TelegramGateway:
         self.audit = audit
         self.permission_resolver = permission_resolver or (lambda _user: frozenset({"telegram.use"}))
         self.rate_limiter = rate_limiter or TelegramRateLimiter(config.rate_limit_per_minute)
+        self.media_processor = media_processor
+        self.response_mode_store = response_mode_store
         self.clock = clock
         storage = getattr(linker, "storage", None)
         self.response_modes = (
@@ -64,6 +70,10 @@ class TelegramGateway:
 
     def handle(self, message: TelegramMessage) -> GatewayResponse:
         started = perf_counter()
+        timing = RequestTiming()
+        for stage, milliseconds in message.media_timings_ms.items():
+            if isinstance(milliseconds, (int, float)) and milliseconds >= 0:
+                timing.add_ms(stage, float(milliseconds))
         audit_result = "ok"
         audit_error: str | None = None
         if message.chat_type != "private":
@@ -102,10 +112,44 @@ class TelegramGateway:
             else:
                 permissions = frozenset(self.permission_resolver(atlas_user_id))
                 assistant_name = self.core.active_personality(atlas_user_id).capitalize()
+                context = TelegramRequestContext(
+                    channel="telegram",
+                    atlas_user_id=atlas_user_id,
+                    session_id=f"telegram:{message.user.telegram_user_id}:{message.user.chat_id}",
+                    telegram_user_id=message.user.telegram_user_id,
+                    chat_id=message.user.chat_id,
+                    message_id=message.message_id,
+                    timestamp=message.timestamp,
+                    active_personality=self.core.active_personality(atlas_user_id),
+                    authentication_state=state,
+                    permissions=permissions,
+                )
                 if "telegram.use" not in {item.casefold() for item in permissions}:
                     response = GatewayResponse("Tu usuario no tiene permiso para utilizar el sistema desde Telegram.")
+                elif self.response_mode_store is not None and (mode := detect_response_mode_directive(message.text)) is not None:
+                    self.response_mode_store.set(atlas_user_id, mode)
+                    response = GatewayResponse(confirmation_text(mode), delivery_hint="text")
+                elif (
+                    not message.media_type
+                    and self.media_processor is not None
+                    and (
+                        pending_stt := self.media_processor.process_text_followup(
+                            message.text, context, self.core
+                        )
+                    ) is not None
+                ):
+                    response = GatewayResponse(
+                        pending_stt.text,
+                        stage_timings_ms=pending_stt.timings_ms,
+                    )
                 elif message.media_type:
-                    response = self._handle_media_message(message, atlas_user_id=atlas_user_id)
+                    token = bind_request_timing(timing)
+                    try:
+                        response = self._handle_media_message(
+                            message, atlas_user_id=atlas_user_id, context=context
+                        )
+                    finally:
+                        reset_request_timing(token)
                 elif not message.text.strip():
                     response = GatewayResponse(f"Escribe un mensaje para hablar con {assistant_name}.")
                 else:
@@ -140,19 +184,16 @@ class TelegramGateway:
                             )
                             return GatewayResponse(f"{assistant_name} ha detectado varios errores. Espera unos segundos.")
                         personality = self.core.active_personality(atlas_user_id)
-                        context = TelegramRequestContext(
-                            channel="telegram",
-                            atlas_user_id=atlas_user_id,
-                            session_id=f"telegram:{message.user.telegram_user_id}:{message.user.chat_id}",
-                            telegram_user_id=message.user.telegram_user_id,
-                            chat_id=message.user.chat_id,
-                            message_id=message.message_id,
-                            timestamp=message.timestamp,
-                            active_personality=personality,
-                            authentication_state=state,
-                            permissions=permissions,
-                        )
-                        future = self._executor.submit(self.core.process, message.text, context)
+                        timing.add("receive_validation_linking", perf_counter() - started)
+
+                        def process_with_timing():
+                            token = bind_request_timing(timing)
+                            try:
+                                return self.core.process(message.text, context)
+                            finally:
+                                reset_request_timing(token)
+
+                        future = self._executor.submit(process_with_timing)
                         try:
                             result = future.result(timeout=self.config.processing_timeout_seconds)
                             self._processing_errors.pop(error_key, None)
@@ -172,6 +213,9 @@ class TelegramGateway:
                                 "No he podido procesar ese mensaje por un error interno. "
                                 "El detalle se ha registrado para poder corregirlo."
                             )
+            for stage, milliseconds in response.stage_timings_ms.items():
+                if isinstance(milliseconds, (int, float)) and milliseconds >= 0:
+                    timing.add_ms(stage, float(milliseconds))
             elapsed_seconds = perf_counter() - started
             if command is None and response.text and elapsed_seconds >= 2.5:
                 current_personality = (
@@ -182,7 +226,17 @@ class TelegramGateway:
                     append_response_time(response.text, elapsed_seconds, current_personality),
                     parse_mode=response.parse_mode,
                     close_session=response.close_session,
+                    stage_timings_ms=response.stage_timings_ms,
+                    delivery_hint=response.delivery_hint,
                 )
+            timing.add("total", perf_counter() - started)
+            response = GatewayResponse(
+                response.text,
+                parse_mode=response.parse_mode,
+                close_session=response.close_session,
+                stage_timings_ms=timing.snapshot(),
+                delivery_hint=response.delivery_hint,
+            )
             self.audit.record(
                 action=command or "message",
                 result=audit_result,
@@ -192,6 +246,7 @@ class TelegramGateway:
                 personality=self.core.active_personality(atlas_user_id) if atlas_user_id else None,
                 duration_ms=round((perf_counter() - started) * 1000, 3),
                 error_code=audit_error,
+                stage_timings_ms=response.stage_timings_ms,
             )
             return response
 
@@ -200,6 +255,7 @@ class TelegramGateway:
         message: TelegramMessage | None = None,
         *,
         atlas_user_id: str | None = None,
+        context: TelegramRequestContext | None = None,
     ) -> GatewayResponse:
         """Gestiona medios en cuarentena y mantiene compatibilidad histórica."""
         if message is None:
@@ -218,8 +274,14 @@ class TelegramGateway:
             return GatewayResponse("El archivo supera el límite seguro configurado y no se ha descargado.")
         if message.media_status == "rejected_type":
             return GatewayResponse("Ese formato no está permitido por la política multimedia segura de Atlas.")
+        if message.media_status == "audio_too_long":
+            return GatewayResponse("El audio supera la duración segura configurada y no se ha descargado.")
         if message.media_status and message.media_status != "quarantined":
             return GatewayResponse("He recibido el archivo, pero no he podido descargarlo de forma segura. No se ha guardado permanentemente.")
+        if gateway is not None and gateway.media_processor is not None and context is not None:
+            processed = gateway.media_processor.process(message, context, gateway.core)
+            if processed is not None:
+                return GatewayResponse(processed.text, stage_timings_ms=processed.timings_ms)
         analyzer = getattr(getattr(gateway, "core", None), "analyze_media", None)
         if callable(analyzer) and message.local_path:
             try:

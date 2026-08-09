@@ -104,6 +104,7 @@ from core.atlas_windows import AtlasWindowsMixin
 
 from core.confirmation_manager import ConfirmationManager
 from core.log_manager import info
+from core.request_timing import measure_stage
 from core.user_manager import UserManager
 from core.version import ASSISTANT_NAME
 from core.version import PROJECT_NAME
@@ -1080,7 +1081,13 @@ class Atlas(AtlasAIMixin,
 
         # Consultas meteorológicas: siempre se resuelven automáticamente y no
         # pasan por la confirmación genérica de Internet.
-        if self._handle_weather(original_text):
+        # La ubicación operativa es determinista y aislada antes del tiempo/IA.
+        if self._handle_user_location(original_text):
+            return True
+
+        with measure_stage("tool_selection"):
+            weather_handled = self._handle_weather(original_text)
+        if weather_handled:
             return True
 
         # Resumen de inicio y cierre del día, compartido por todas las interfaces.

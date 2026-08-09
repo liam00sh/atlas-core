@@ -27,6 +27,7 @@ from difflib import SequenceMatcher
 from ai.context.context_manager import AIContextManager
 
 from core.log_manager import info
+from core.request_timing import measure_stage
 from core.system_info import format_system_info_for_ai
 from core.system_info import get_system_info
 from core.household_data import find_household
@@ -2557,10 +2558,11 @@ class AtlasAIMixin:
         topic_history = list(history.get(topic_key, []))[-4:]
         forbidden = [*recent, *topic_history]
 
-        response = self._ensure_spanish_response(
-            self.ai_provider.generate(prompt),
-            prompt,
-        )
+        with measure_stage("model_call"):
+            response = self._ensure_spanish_response(
+                self.ai_provider.generate(prompt),
+                prompt,
+            )
 
         def is_repeated(candidate: str) -> bool:
             return any(
@@ -2583,10 +2585,11 @@ class AtlasAIMixin:
                   "y el cierre. No copies frases completas ni añadas datos.\n"
                 + f"Redacciones que debes evitar:\n{avoided_text}"
             )
-            alternative = self._ensure_spanish_response(
-                self.ai_provider.generate(variation_prompt),
-                variation_prompt,
-            )
+            with measure_stage("model_call"):
+                alternative = self._ensure_spanish_response(
+                    self.ai_provider.generate(variation_prompt),
+                    variation_prompt,
+                )
             if alternative.strip() and not is_repeated(alternative):
                 response = alternative
 
@@ -3063,21 +3066,17 @@ class AtlasAIMixin:
             )
         )
 
-        relevant_memories = (
-            self.memory_retriever.find(
+        with measure_stage("context_memory"):
+            relevant_memories = self.memory_retriever.find(
                 query=original_text,
                 owner=memory_owner,
                 viewer=memory_viewer,
                 viewer_profile=viewer_profile,
                 limit=5,
             )
-        )
-
-        relevant_memories_text = (
-            self.memory_retriever.format_for_prompt(
+            relevant_memories_text = self.memory_retriever.format_for_prompt(
                 relevant_memories
             )
-        )
 
         if relevant_memories:
 
@@ -3105,6 +3104,15 @@ class AtlasAIMixin:
             self.identity_manager
             .build_prompt_context()
         )
+
+        guest_session = getattr(getattr(self, "guest_sessions", None), "get", lambda: None)()
+        if guest_session is not None:
+            assistant_identity_context += (
+                "\n\nSESIÓN INVITADA TEMPORAL\n"
+                f"Asistente: {guest_session.assistant_name}.\n"
+                f"Modo de estilo: {guest_session.mode_name}.\n"
+                "Estas preferencias solo valen durante la sesión invitada."
+            )
 
         active_assistant_name = (
             self.identity_manager

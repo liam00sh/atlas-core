@@ -97,9 +97,18 @@ data/integrations/telegram/supervisor_status.json
 # Telegram: cuentas, sesiones y datos privados
 # -----------------------------------------------------------------------------
 data/integrations/telegram/state.json
+data/integrations/telegram/audit.jsonl
 data/integrations/telegram/pending_messages.json
 data/integrations/telegram/quarantine/
 data/integrations/telegram/downloads/
+data/integrations/telegram/outbox/
+data/telegram_media/
+data/voice/stt/
+data/face/
+data/biometrics/
+
+# Estado cotidiano y ubicación temporal por usuario (datos locales privados)
+data/daily_life/state.json
 
 # -----------------------------------------------------------------------------
 # Datos privados de usuarios
@@ -138,6 +147,12 @@ data/faiss/
 # Modelos y archivos grandes descargados
 # -----------------------------------------------------------------------------
 /models/
+/datasets/
+/checkpoints/
+/outputs/
+/voice_lab/
+/voice_lab_round_b/
+/training_dataset_chatterbox/
 *.gguf
 *.ggml
 *.bin
@@ -168,3 +183,6 @@ reports/local/
 
 # Pytest runtime local
 .pytest_runtime/
+
+.pytest_run_*/
+.pytest_round_b_*/

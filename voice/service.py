@@ -27,7 +27,7 @@ class VoiceService:
 
     def speak(self, text: str, *, identity, requested_voice_id=None,
               preferences=None, speed=1.0, volume=1.0,
-              play_audio: bool = True) -> SynthesisResult:
+              play_audio=True) -> SynthesisResult:
         identity = AssistantIdentity(identity)
         clean_text = self.clean_console_text(text)
         requested = requested_voice_id or self.preferred_voice(identity, preferences)

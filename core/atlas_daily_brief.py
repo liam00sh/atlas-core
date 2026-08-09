@@ -7,15 +7,24 @@ actual del dispositivo, REDACTED_a77d7bb7adbf (REDACTED_4cde1bf18b9c) como resid
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
+from copy import deepcopy
 import json
 import os
 import re
+import threading
+from time import monotonic
 import unicodedata
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from core.log_manager import error, info
+from core.request_timing import measure_stage
+
+
+_WEATHER_CACHE_TTL_SECONDS = 300.0
+_WEATHER_CACHE: dict[str, tuple[float, dict, str]] = {}
+_WEATHER_CACHE_LOCK = threading.Lock()
 
 
 def _norm(text: str) -> str:
@@ -35,7 +44,7 @@ def _home_location() -> str:
 
 
 
-def _requested_location(text: str) -> str:
+def _explicit_requested_location(text: str) -> str | None:
     """Extrae una ubicación explícita; si no existe, usa el domicilio configurado."""
     normalized = _norm(text).strip(" .!¡?¿")
     stop_words = {
@@ -71,7 +80,12 @@ def _requested_location(text: str) -> str:
             and not candidate_norm.startswith(temporal_starts)
         ):
             return candidate
-    return _home_location()
+    return None
+
+
+def _requested_location(text: str) -> str:
+    """Compatibilidad: usa el domicilio solo si no hay lugar explícito."""
+    return _explicit_requested_location(text) or _home_location()
 
 def _weather_code(code: int | None) -> str:
     labels = {
@@ -107,6 +121,12 @@ def _coordinates(location: str) -> tuple[float, float, str]:
 
 
 def _forecast(location: str) -> tuple[dict, str]:
+    cache_key = _norm(location)
+    now = monotonic()
+    with _WEATHER_CACHE_LOCK:
+        cached = _WEATHER_CACHE.get(cache_key)
+        if cached and now - cached[0] <= _WEATHER_CACHE_TTL_SECONDS:
+            return deepcopy(cached[1]), cached[2]
     latitude, longitude, label = _coordinates(location)
     params = {
         "latitude": latitude,
@@ -141,7 +161,15 @@ def _forecast(location: str) -> tuple[dict, str]:
         forecast["air_quality"] = air.get("current") or {}
     except Exception as exc:
         info(f"Tiempo: calidad del aire no disponible: {exc}")
+    with _WEATHER_CACHE_LOCK:
+        _WEATHER_CACHE[cache_key] = (now, deepcopy(forecast), label)
     return forecast, label
+
+
+def _clear_weather_cache() -> None:
+    """Vacía la caché en pruebas o tras un cambio de configuración."""
+    with _WEATHER_CACHE_LOCK:
+        _WEATHER_CACHE.clear()
 
 
 def _daily_value(daily: dict, key: str, index: int):
@@ -434,11 +462,56 @@ class AtlasDailyBriefMixin:
                 return value
         return _home_location()
 
+    def _resolve_weather_location(self, text: str) -> tuple[str | None, str]:
+        """Resuelve la localidad y conserva el origen que justificó elegirla."""
+        explicit = _explicit_requested_location(text)
+        if explicit:
+            return explicit, "petición explícita"
+        resolver = getattr(self, "_resolve_user_location", None)
+        if callable(resolver):
+            location, source = resolver(self._conversation_user())
+            if location:
+                return str(location), str(source)
+        profile = self._weather_profile_location()
+        if profile and profile != _home_location():
+            return profile, "domicilio habitual"
+        default = _home_location()
+        return (default, "ubicación predeterminada de la casa") if default else (None, "sin ubicación")
+
+    def _handle_weather_location_explanation(self, text: str) -> bool:
+        normalized = _norm(text).strip(" .!¡?¿")
+        if not re.search(r"\bpor que\b.*\b(?:tiempo|clima)\b", normalized):
+            return False
+        state_getter = getattr(self, "_daily_state_for", None)
+        state = state_getter(self._conversation_user()) if callable(state_getter) else {}
+        previous = state.get("last_weather_resolution", {}) if isinstance(state, dict) else {}
+        location = previous.get("location") if isinstance(previous, dict) else None
+        source = previous.get("source") if isinstance(previous, dict) else None
+        if not location:
+            location, source = self._resolve_weather_location("")
+        mentioned = _explicit_requested_location(text)
+        if location:
+            mismatch = mentioned and _norm(mentioned) != _norm(str(location))
+            correction = f" No fue {mentioned}." if mismatch else ""
+            print(
+                f"Estaba usando {location} por este origen: {source}.{correction} "
+                "Si no es correcto, dime «estoy en [localidad] unos días» "
+                "o «borra mi ubicación temporal»."
+            )
+        else:
+            print("No tengo una ubicación válida para ti. ¿En qué localidad estás ahora?")
+        return True
+
     def _handle_weather(self, text: str) -> bool:
+        if self._handle_weather_location_explanation(text):
+            return True
         try:
-            explicit = _requested_location(text)
-            location = explicit if explicit != _home_location() else self._weather_profile_location()
-            answer = _weather_answer(text, location)
+            location, _source = self._resolve_weather_location(text)
+            if not location:
+                print("¿En qué localidad estás ahora?")
+                return True
+            with measure_stage("weather_call"):
+                answer = _weather_answer(text, location)
         except (HTTPError, URLError, TimeoutError, ValueError, KeyError, json.JSONDecodeError) as exc:
             error(f"Tiempo: consulta fallida: {type(exc).__name__}: {exc}")
             print("No he podido consultar el tiempo ahora mismo. Prueba de nuevo en unos minutos.")
@@ -449,6 +522,13 @@ class AtlasDailyBriefMixin:
             return True
         if answer is None:
             return False
+        state_getter = getattr(self, "_daily_state_for", None)
+        if callable(state_getter):
+            state_getter(self._conversation_user())["last_weather_resolution"] = {
+                "location": location,
+                "source": _source,
+                "updated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+            }
         info(f"Tiempo consultado automáticamente para {location}")
         print(answer)
         return True
@@ -460,7 +540,8 @@ class AtlasDailyBriefMixin:
         if not morning and not night:
             return False
 
-        location = _home_location()
+        location, _source = self._resolve_weather_location("")
+        location = location or _home_location()
         user = getattr(self, "get_user", lambda: "")()
         name = str(user or "").strip()
         if morning:

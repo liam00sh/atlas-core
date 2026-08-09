@@ -21,6 +21,7 @@ import unicodedata
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from telegram_interface.interuser_delivery import InteruserRequest, TelegramDeliveryQueue
+from core.request_timing import measure_stage
 
 
 @dataclass(frozen=True, slots=True)
@@ -377,6 +378,141 @@ class AtlasDailyMixin:
     def _print(self, text: str) -> None:
         print()
         print(text)
+
+    def _location_profile_value(self, owner: str) -> str | None:
+        try:
+            profile = self.users.get_profile(owner)
+        except Exception:
+            profile = {}
+        if not isinstance(profile, dict):
+            return None
+        for key in ("location", "home_location", "locality", "city"):
+            value = str(profile.get(key, "") or "").strip()
+            if value:
+                return value
+        return None
+
+    def _temporary_location_record(self, owner: str) -> dict[str, Any] | None:
+        self._daily_bootstrap()
+        record = self.daily_storage.snapshot().get("users", {}).get(
+            owner.casefold(), {}
+        ).get("temporary_location")
+        if not isinstance(record, dict) or not str(record.get("place", "")).strip():
+            return None
+        expires_at = record.get("expires_at")
+        if expires_at:
+            try:
+                if datetime.fromisoformat(str(expires_at)) <= datetime.now().astimezone():
+                    return None
+            except (TypeError, ValueError):
+                return None
+        return record
+
+    def _resolve_user_location(self, owner: str) -> tuple[str | None, str]:
+        """Prioridad personal: temporal, actual confirmada y domicilio habitual."""
+        self._daily_bootstrap()
+        user_data = self.daily_storage.snapshot().get("users", {}).get(owner.casefold(), {})
+        temporary = self._temporary_location_record(owner)
+        if temporary:
+            return str(temporary["place"]), "ubicación temporal"
+        current = user_data.get("current_location") if isinstance(user_data, dict) else None
+        if isinstance(current, dict) and str(current.get("place", "")).strip():
+            return str(current["place"]), "ubicación actual confirmada"
+        habitual = self._location_profile_value(owner)
+        if habitual:
+            return habitual, "domicilio habitual"
+        return None, "sin ubicación personal"
+
+    def _set_temporary_location(self, owner: str, place: str, *, days: int = 14) -> None:
+        now = datetime.now().astimezone()
+        clean_place = " ".join(place.strip(" .,!¡!¿?").split()).title()
+
+        def mutate(data: dict[str, Any]) -> None:
+            user = data.setdefault("users", {}).setdefault(owner.casefold(), {"display_name": owner})
+            user["temporary_location"] = {
+                "place": clean_place,
+                "updated_at": now.isoformat(timespec="seconds"),
+                "expires_at": (now + timedelta(days=max(1, days))).isoformat(timespec="seconds"),
+            }
+
+        self.daily_storage.update(mutate)
+
+    def _clear_temporary_location(self, owner: str) -> bool:
+        def mutate(data: dict[str, Any]) -> bool:
+            user = data.setdefault("users", {}).setdefault(owner.casefold(), {"display_name": owner})
+            return user.pop("temporary_location", None) is not None
+
+        return bool(self.daily_storage.update(mutate))
+
+    def _handle_user_location(self, original_text: str) -> bool:
+        """Gestiona declaraciones y consultas de ubicación sin recurrir a IA."""
+        self._daily_bootstrap()
+        text = " ".join(original_text.strip().split())
+        plain = self._plain(text)
+        owner = self._conversation_user()
+        state = self._daily_state_for(owner)
+
+        if plain in {"borra mi ubicacion temporal", "elimina mi ubicacion temporal", "ya he vuelto a casa", "he vuelto a casa"}:
+            self._clear_temporary_location(owner)
+            location = self._location_profile_value(owner)
+            suffix = f" Volveré a usar {location}." if location else ""
+            self._print("He borrado tu ubicación temporal." + suffix)
+            return True
+
+        if plain in {"donde estoy", "donde estoy ahora", "cual es mi ubicacion actual", "cual es mi ubicacion"}:
+            location, source = self._resolve_user_location(owner)
+            if location:
+                self._print(f"Tu ubicación operativa es {location} ({source}).")
+            else:
+                self._print("No tengo una ubicación actual confirmada para ti. ¿En qué localidad estás ahora?")
+            return True
+
+        if re.match(r"^(?:he venido|estoy)\s+(?:a|en)\s+casa\s+de\s+.+", plain):
+            state["pending_temporary_location"] = True
+            self._print("Entendido. ¿En qué localidad estás ahora? Así usaré esa ubicación para el tiempo.")
+            return True
+
+        if state.get("pending_temporary_location"):
+            candidate = re.sub(r"^(?:si|sí)[, ]+|^(?:estoy|es)\s+en\s+", "", plain).strip()
+            if candidate and len(candidate.split()) <= 4 and candidate not in {"si", "no", "no se"}:
+                self._set_temporary_location(owner, candidate)
+                state.pop("pending_temporary_location", None)
+                stored, _ = self._resolve_user_location(owner)
+                self._print(f"Entendido. Usaré {stored} como tu ubicación temporal durante estos días.")
+                return True
+
+        patterns = (
+            r"^ahora\s+estoy\s+en\s+(.+)$",
+            r"^estoy\s+otra\s+vez\s+en\s+(.+)$",
+            r"^estoy\s+en\s+(.+?)\s+(?:unos?|algunos?)\s+dias$",
+            r"^estoy\s+en\s+(.+?)\s+un\s+tiempo$",
+            r"^he\s+venido\s+a\s+(.+?)(?:\s+(?:unos?|algunos?)\s+dias|\s+un\s+tiempo)?$",
+            r"^estoy\s+pasando\s+(?:unos?|algunos?)\s+dias\s+en\s+(.+)$",
+            r"^este\s+fin\s+de\s+semana\s+estoy\s+en\s+(.+)$",
+        )
+        place = None
+        for pattern in patterns:
+            match = re.match(pattern, plain)
+            if match:
+                place = match.group(1).strip()
+                break
+        if not place:
+            return False
+        if place in {"casa", "aqui", "alli", "mi casa"} or place.startswith("casa de "):
+            state["pending_temporary_location"] = True
+            self._print("¿En qué localidad estás ahora?")
+            return True
+        habitual = self._location_profile_value(owner)
+        if habitual and self._plain(place) == self._plain(habitual) and "otra vez" in plain:
+            self._clear_temporary_location(owner)
+            self._print(f"Entendido. Has vuelto a {habitual}; usaré tu domicilio habitual.")
+            return True
+        days = 4 if "fin de semana" in plain else 14
+        self._set_temporary_location(owner, place, days=days)
+        state.pop("pending_temporary_location", None)
+        stored, _ = self._resolve_user_location(owner)
+        self._print(f"Entendido. Usaré {stored} como tu ubicación temporal durante estos días.")
+        return True
 
     def _handle_daily_life(self, original_text: str) -> bool:
         self._daily_bootstrap()
@@ -958,7 +1094,8 @@ class AtlasDailyMixin:
         if provider is None:
             return fallback
         try:
-            generated = str(provider.generate(prompt)).strip()
+            with measure_stage("model_call"):
+                generated = str(provider.generate(prompt)).strip()
             return generated or fallback
         except Exception:
             return fallback

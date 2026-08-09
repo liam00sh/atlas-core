@@ -12,13 +12,23 @@ from telegram_interface.gateway import TelegramGateway
 from telegram_interface.identity_linker import TelegramIdentityLinker
 from telegram_interface.interuser_delivery import TelegramDeliveryDispatcher, TelegramDeliveryQueue
 from telegram_interface.polling import TelegramPoller
+from telegram_interface.media import TelegramMediaLimits
+from telegram_interface.multimedia import TelegramMultimediaProcessor
+from telegram_interface.response_modes import TelegramResponseModeStore
 from telegram_interface.progress import build_progress_message
 from telegram_interface.rate_limiter import TelegramRateLimiter
 from telegram_interface.session_manager import TelegramSessionManager
 from telegram_interface.storage import TelegramStorage
-from telegram_interface.response_modes import TelegramResponseModeStore
+from voice.stt import AudioConverter, FasterWhisperSTTProvider, STTConfig, STTService
+from voice.config import VOICE_ENABLED
+from voice.preferences.manager import VoicePreferenceManager
+from voice.service import VoiceService
 from telegram_interface.voice_delivery import TelegramVoiceRenderer
+from telegram_interface.analyzers import PillowImageNormalizer, SafeLocalDocumentAnalyzer
 from pathlib import Path
+from telegram_interface.outbound import TelegramOutboundMediaService
+from tools.telegram_media import build_telegram_media_tools
+from tools.exceptions import ToolRegistrationError
 
 
 def _display_assistant_name(name: str) -> str:
@@ -47,6 +57,11 @@ TELEGRAM_CHANNEL_ALLOWED_PERMISSIONS = frozenset(
         # conceder administración al resto de cuentas.
         "telegram.admin_link",
         "telegram.admin_revoke",
+        # Solo atraviesan el canal si un resolvedor central externo los ha
+        # concedido de forma explícita; el resolvedor predeterminado no lo hace.
+        "face.enroll", "face.recognize", "face.revoke", "face.status",
+        "telegram.send_photo", "telegram.send_voice",
+        "telegram.send_audio", "telegram.send_document",
     }
 )
 
@@ -91,6 +106,19 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         except Exception:
             pass
     sessions = TelegramSessionManager(storage, ttl_seconds=config.session_ttl_seconds)
+    response_modes = TelegramResponseModeStore(storage)
+    stt_config = STTConfig.from_env()
+    media_processor = TelegramMultimediaProcessor(
+        stt=STTService(
+            FasterWhisperSTTProvider(stt_config),
+            AudioConverter(timeout_seconds=min(30.0, stt_config.timeout_seconds)),
+            config=stt_config,
+            work_dir=config.data_dir / "quarantine" / "stt",
+        ),
+        image_normalizer=PillowImageNormalizer(),
+        document_analyzer=SafeLocalDocumentAnalyzer(),
+        work_dir=config.data_dir / "quarantine" / "analysis",
+    )
     gateway = TelegramGateway(
         config=config,
         linker=linker,
@@ -99,6 +127,8 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         audit=TelegramAuditLogger(config.data_dir / "audit.jsonl"),
         rate_limiter=TelegramRateLimiter(config.rate_limit_per_minute),
         permission_resolver=lambda user: _telegram_permissions(atlas, user),
+        media_processor=media_processor,
+        response_mode_store=response_modes,
     )
     def progress_message(message) -> str:
         account = linker.get_account(message.user.telegram_user_id)
@@ -107,6 +137,55 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         return build_progress_message(message.text, personality)
 
     client = TelegramBotClient(config.token)
+    def linked_account(atlas_user_id: str):
+        for account in storage.section("accounts").values():
+            if (
+                isinstance(account, dict)
+                and account.get("state") == "linked"
+                and str(account.get("atlas_user_id", "")).casefold() == atlas_user_id.casefold()
+            ):
+                return account
+        return None
+
+    outbound = TelegramOutboundMediaService(
+        client=client,
+        account_resolver=linked_account,
+        allowed_roots={
+            "outbox": config.data_dir / "outbox",
+            "generated": config.data_dir / "outbox" / "generated",
+        },
+        max_bytes={
+            "photo": config.media_photo_max_bytes,
+            "voice": config.media_voice_max_bytes,
+            "audio": config.media_audio_max_bytes,
+            "document": config.media_document_max_bytes,
+        },
+        audit=lambda kind, size, result: TelegramAuditLogger(config.data_dir / "audit.jsonl").record(
+            action=f"send_{kind}", result=result, telegram_user_id="outbound",
+            chat_id="outbound", duration_ms=None, media_type=kind, byte_size=size,
+        ),
+    )
+    for tool in build_telegram_media_tools(outbound):
+        try:
+            atlas.framework_tool_registry.register(tool)
+        except ToolRegistrationError:
+            # Un runtime reconstruido puede encontrar la herramienta ya
+            # registrada; no se sustituye silenciosamente por otra instancia.
+            existing = atlas.framework_tool_registry.get(tool.tool_id)
+            if not isinstance(existing, type(tool)):
+                raise
+    voice_renderer = None
+    if VOICE_ENABLED:
+        voice_preferences = VoicePreferenceManager(
+            storage_path=Path("data/voice/user_preferences.json"),
+            user_provider=lambda: "",
+        )
+        voice_renderer = TelegramVoiceRenderer(
+            voice_service=VoiceService(),
+            preference_resolver=voice_preferences.get,
+            personality_resolver=gateway.core.active_personality,
+            output_dir=config.data_dir / "quarantine" / "tts",
+        )
     lifecycle = TelegramLifecycleNotifier(
         storage,
         client,
@@ -117,26 +196,25 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         TelegramDeliveryQueue(storage),
         client,
     )
-    response_modes = TelegramResponseModeStore(storage)
-    project_root = Path(__file__).resolve().parents[1]
-    voice_renderer = TelegramVoiceRenderer(
-        project_root=project_root,
-        user_provider=lambda: getattr(voice_renderer, '_current_user', 'REDACTED_2c7b6821719d'),
-        personality_provider=lambda: gateway.core.active_personality(
-            getattr(voice_renderer, '_current_user', 'REDACTED_2c7b6821719d')
-        ),
-    )
     poller = TelegramPoller(
         client=client,
         gateway=gateway,
         storage=storage,
         poll_timeout=config.poll_timeout,
-        progress_delay_seconds=4.0,
+        progress_delay_seconds=config.progress_delay_seconds,
         progress_message_factory=progress_message,
         delivery_dispatcher=delivery_dispatcher,
         owner_user_id="REDACTED_2c7b6821719d",
+        media_limits=TelegramMediaLimits(
+            voice=config.media_voice_max_bytes,
+            audio=config.media_audio_max_bytes,
+            photo=config.media_photo_max_bytes,
+            document=config.media_document_max_bytes,
+        ),
+        media_ttl_hours=config.media_ttl_hours,
         voice_renderer=voice_renderer,
         response_mode_store=response_modes,
+        audio_max_duration_seconds=stt_config.max_audio_seconds,
     )
     return TelegramRuntime(config, storage, linker, sessions, gateway, poller, lifecycle)
 

@@ -119,3 +119,13 @@ def test_console_cleanup_ignores_visual_separators() -> None:
         VoiceService.clean_console_text(text)
         == "Hola, REDACTED_2c7b6821719d.\n\nTodo está bien."
     )
+
+
+def test_synthesis_can_skip_local_playback_for_remote_channels(tmp_path) -> None:
+    player = FakePlayer()
+    service = VoiceService(provider=FakeProvider(), player=player, output_dir=tmp_path)
+    result = service.speak(
+        "Respuesta remota.", identity=AssistantIdentity.DAXTER, play_audio=False
+    )
+    assert result.success is True
+    assert player.played == []

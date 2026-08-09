@@ -26,11 +26,18 @@ class TelegramConfig:
     max_input_characters: int = 8000
     max_concurrent_operations: int = 4
     processing_timeout_seconds: int = 120
+    progress_delay_seconds: float = 4.0
     session_ttl_seconds: int = 86400
     delivery_check_seconds: int = 3
     timezone_name: str = "Europe/Madrid"
     data_dir: Path = Path("data/integrations/telegram")
     debug_content_logging: bool = False
+    media_voice_max_bytes: int = 12 * 1024 * 1024
+    media_audio_max_bytes: int = 25 * 1024 * 1024
+    media_photo_max_bytes: int = 12 * 1024 * 1024
+    media_document_max_bytes: int = 20 * 1024 * 1024
+    media_ttl_hours: int = 24
+    media_audio_max_seconds: float = 180.0
 
     @property
     def token_present(self) -> bool:
@@ -51,11 +58,18 @@ class TelegramConfig:
             max_input_characters=_parse_int(values, "ATLAS_TELEGRAM_MAX_INPUT_CHARACTERS", 8000, 256, 50000),
             max_concurrent_operations=_parse_int(values, "ATLAS_TELEGRAM_MAX_CONCURRENT_OPERATIONS", 4, 1, 32),
             processing_timeout_seconds=_parse_int(values, "ATLAS_TELEGRAM_PROCESSING_TIMEOUT_SECONDS", 120, 5, 600),
+            progress_delay_seconds=_parse_float(values, "ATLAS_TELEGRAM_PROGRESS_DELAY_SECONDS", 4.0, 0.0, 60.0),
             session_ttl_seconds=_parse_int(values, "ATLAS_TELEGRAM_SESSION_TTL_SECONDS", 86400, 300, 604800),
             delivery_check_seconds=_parse_int(values, "ATLAS_TELEGRAM_DELIVERY_CHECK_SECONDS", 3, 1, 60),
             timezone_name=values.get("ATLAS_TELEGRAM_TIMEZONE", "Europe/Madrid").strip() or "Europe/Madrid",
             data_dir=Path(values.get("ATLAS_TELEGRAM_DATA_DIR", "data/integrations/telegram")),
             debug_content_logging=_parse_bool(values.get("ATLAS_TELEGRAM_DEBUG_CONTENT", "false"), "ATLAS_TELEGRAM_DEBUG_CONTENT"),
+            media_voice_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_VOICE_MAX_BYTES", 12 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_audio_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_AUDIO_MAX_BYTES", 25 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_photo_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_PHOTO_MAX_BYTES", 12 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_document_max_bytes=_parse_int(values, "ATLAS_TELEGRAM_DOCUMENT_MAX_BYTES", 20 * 1024 * 1024, 1024, 100 * 1024 * 1024),
+            media_ttl_hours=_parse_int(values, "ATLAS_TELEGRAM_MEDIA_TTL_HOURS", 24, 1, 168),
+            media_audio_max_seconds=_parse_float(values, "ATLAS_STT_MAX_AUDIO_SECONDS", 180.0, 1.0, 3600.0),
         )
         config.validate()
         return config
@@ -74,8 +88,17 @@ class TelegramConfig:
             "link_code_ttl_seconds": self.link_code_ttl_seconds,
             "rate_limit_per_minute": self.rate_limit_per_minute,
             "delivery_check_seconds": self.delivery_check_seconds,
+            "progress_delay_seconds": self.progress_delay_seconds,
             "timezone_name": self.timezone_name,
             "debug_content_logging": self.debug_content_logging,
+            "media_limits_bytes": {
+                "voice": self.media_voice_max_bytes,
+                "audio": self.media_audio_max_bytes,
+                "photo": self.media_photo_max_bytes,
+                "document": self.media_document_max_bytes,
+            },
+            "media_ttl_hours": self.media_ttl_hours,
+            "media_audio_max_seconds": self.media_audio_max_seconds,
         }
 
 
@@ -94,6 +117,17 @@ def _parse_int(values: Mapping[str, str], name: str, default: int, minimum: int,
         value = default if raw is None else int(raw)
     except (TypeError, ValueError) as exc:
         raise TelegramConfigError(f"{name} debe ser un numero entero.") from exc
+    if not minimum <= value <= maximum:
+        raise TelegramConfigError(f"{name} debe estar entre {minimum} y {maximum}.")
+    return value
+
+
+def _parse_float(values: Mapping[str, str], name: str, default: float, minimum: float, maximum: float) -> float:
+    raw = values.get(name)
+    try:
+        value = default if raw is None else float(raw)
+    except (TypeError, ValueError) as exc:
+        raise TelegramConfigError(f"{name} debe ser un número.") from exc
     if not minimum <= value <= maximum:
         raise TelegramConfigError(f"{name} debe estar entre {minimum} y {maximum}.")
     return value

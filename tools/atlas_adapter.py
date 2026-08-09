@@ -120,6 +120,10 @@ class AtlasToolAdapter:
                         {
                             "telegram.admin_link",
                             "telegram.admin_revoke",
+                            "telegram.send_photo",
+                            "telegram.send_voice",
+                            "telegram.send_audio",
+                            "telegram.send_document",
                         }
                     )
 

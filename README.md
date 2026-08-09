@@ -122,6 +122,7 @@ datos persistentes, Telegram, monitorización y servicios externos a dobles o a
 
 Documentación técnica afectada:
 
+- `docs/FASE_6_DAXTER_DATASET_TTS_LAB.md`;
 - `docs/INVENTARIO_CAPACIDADES_ATLAS.md`;
 - `docs/HELP_PERMISSIONS_BY_CONTEXT.md`;
 - `docs/MONITORIZACION_Y_RECUPERACION.md`;
