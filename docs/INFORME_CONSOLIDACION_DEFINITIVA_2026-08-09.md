@@ -60,8 +60,8 @@ de forma que STT, Telegram y TTS no conocen modelos físicos.
 
 - Línea base anterior a la consolidación: tres errores de colección por el
   contrato antiguo de monitorización.
-- Suite final: 1.165 pruebas aprobadas, 1 omitida y 2.324 subpruebas aprobadas
-  en 156,48 segundos.
+- Suite final: 1.172 pruebas aprobadas, 1 omitida y 2.324 subpruebas aprobadas
+  en 159,91 segundos.
 - Regresión operativa enfocada: 67 pruebas aprobadas.
 - Benchmark del router: 16/16.
 - Conversación controlada: 17/17.
@@ -71,6 +71,12 @@ de forma que STT, Telegram y TTS no conocen modelos físicos.
   el modo persistente experimental fue más lento, alrededor de 14,8 s.
 - Los hashes SHA-256 de identidad, continuidad y memoria semántica no cambiaron
   durante la suite completa.
+- El arranque real dejó de registrar falsos encuentros al cambiar de contexto
+  interno en Telegram, y la sincronización semántica sin cambios dejó de
+  reescribir únicamente el sello temporal.
+- La monitorización real resuelve los procesos desde los estados vigentes de
+  Telegram y escritorio; Atlas, Telegram, monitor, widgets, Home Assistant y
+  Ollama quedaron en estado correcto.
 
 Los artefactos reproducibles están en `docs/evidence/` y los ejecutores en
 `scripts/run_ai_benchmark.py`, `scripts/run_controlled_ai_conversation.py`,
