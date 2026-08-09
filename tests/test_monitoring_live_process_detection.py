@@ -62,3 +62,17 @@ def test_telegram_runtime_rejects_stale_or_dead_process(tmp_path, monkeypatch):
     assert result.state is HealthState.ERROR
     assert result.requires_intervention
     assert result.recovery_action_id == "service.telegram.restart"
+
+
+def test_live_pid_wins_over_stale_launcher_running_flag(tmp_path, monkeypatch):
+    status = tmp_path / "launcher.json"
+    status.write_text(
+        json.dumps({"processes": {"monitor_pc": {"running": False, "pid": 44}}}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "_pid_alive", lambda pid: pid == 44)
+
+    result = module._launcher_process_result(status, "monitor_pc")
+
+    assert result.state is HealthState.OK
+    assert result.available

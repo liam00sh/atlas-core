@@ -213,7 +213,7 @@ PY
         if isinstance(temperature, (int, float)):
             if temperature >= 80:
                 critical.append("temperature")
-            elif temperature >= 70:
+            elif temperature >= 75:
                 warnings.append("temperature")
 
         sd = details.get("sd", {})

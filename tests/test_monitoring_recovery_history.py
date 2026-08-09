@@ -101,4 +101,5 @@ def test_raspberry_details_become_uniform_docker_and_temperature_results():
     results = {item.check_id: item for item in _raspberry_resource_results(parent)}
     assert results["docker"].status == "unavailable"
     assert results["docker"].recoverable
-    assert results["temperature"].status == "degraded"
+    assert results["temperature"].status == "unavailable"
+    assert results["temperature"].state is HealthState.CRITICAL

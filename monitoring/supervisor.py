@@ -134,7 +134,9 @@ def _launcher_process_result(
         {},
     )
     pid = process.get("pid")
-    running = bool(process.get("running")) and _pid_alive(pid)
+    # El PID vivo es la evidencia actual. El campo ``running`` puede quedar
+    # desfasado entre dos escrituras atómicas del launcher.
+    running = _pid_alive(pid)
     return HealthCheckResult(
         check_id=process_name,
         display_name=process_name.replace("_", " ").title(),
@@ -301,7 +303,7 @@ def _raspberry_resource_results(result: HealthCheckResult) -> list[HealthCheckRe
         ))
     temperature = details.get("temperature_c")
     if isinstance(temperature, (int, float)):
-        state = HealthState.CRITICAL if temperature >= 85 else HealthState.WARNING if temperature >= 75 else HealthState.OK
+        state = HealthState.CRITICAL if temperature >= 80 else HealthState.WARNING if temperature >= 75 else HealthState.OK
         derived.append(HealthCheckResult(
             check_id="temperature",
             display_name="Temperatura Raspberry",
