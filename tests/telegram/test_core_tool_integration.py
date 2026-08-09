@@ -33,9 +33,11 @@ class FakeAtlas:
         self.user = "REDACTED_2c7b6821719d"
         self.session_id = "cli:default"
         self.identity_manager = FakeIdentityManager(self)
+        self.change_calls = []
     def get_user(self):
         return self.user
-    def change_user(self, user):
+    def change_user(self, user, *, register_encounter=True):
+        self.change_calls.append((user, register_encounter))
         self.user = user
         return True
     def process(self, text):
@@ -51,6 +53,14 @@ def context(user="REDACTED_bc04a68d9192", session_id="telegram:1:2"):
         authentication_state=TelegramAccountState.LINKED,
         permissions=frozenset({"telegram.use"}),
     )
+
+
+def test_internal_personality_lookup_does_not_register_encounters():
+    atlas = FakeAtlas()
+    adapter = AtlasCoreAdapter(atlas)
+
+    assert adapter.active_personality("REDACTED_bc04a68d9192") == "coco"
+    assert atlas.change_calls == [("REDACTED_bc04a68d9192", False), ("REDACTED_2c7b6821719d", False)]
 
 
 def test_core_adapter_uses_normal_process_and_restores_global_state():

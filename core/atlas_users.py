@@ -260,6 +260,8 @@ class AtlasUsersMixin:
     def change_user(
         self,
         user: str,
+        *,
+        register_encounter: bool = True,
     ) -> bool:
         """
         Cambia el usuario activo y sincroniza todos los servicios
@@ -317,9 +319,13 @@ class AtlasUsersMixin:
             conversation_identity.set_authenticated_user(
                 current_user
             )
-            conversation_identity.identify_person(
-                current_user
-            )
+            if register_encounter:
+                conversation_identity.identify_person(current_user)
+            else:
+                conversation_identity.identify_person(
+                    current_user,
+                    register_encounter=False,
+                )
 
         self._get_ai_context_for_user(
             current_user

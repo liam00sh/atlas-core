@@ -35,6 +35,23 @@ class AtlasUsersMixinTests(unittest.TestCase):
         atlas.conversation_identity.identify_person.assert_called_once_with("REDACTED_bc04a68d9192")
         atlas.identity_manager.load_user.assert_called_once_with("REDACTED_bc04a68d9192")
 
+    def test_internal_context_switch_does_not_register_encounter(self):
+        atlas = object.__new__(AtlasUsersMixin)
+        atlas.users = Mock()
+        atlas.users.get_current_user.side_effect = ["REDACTED_2c7b6821719d", "REDACTED_bc04a68d9192"]
+        atlas.confirmations = Mock()
+        atlas.confirmations.has_pending_confirmation.return_value = False
+        atlas.conversation_identity = Mock()
+        atlas.identity_manager = Mock()
+        atlas._get_ai_context_for_user = Mock()
+
+        atlas.change_user("REDACTED_bc04a68d9192", register_encounter=False)
+
+        atlas.conversation_identity.identify_person.assert_called_once_with(
+            "REDACTED_bc04a68d9192",
+            register_encounter=False,
+        )
+
     def test_animal_cannot_become_active_user(self):
         atlas = object.__new__(AtlasUsersMixin)
         atlas.users = Mock()

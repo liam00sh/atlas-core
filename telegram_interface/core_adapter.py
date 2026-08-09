@@ -20,7 +20,12 @@ from voice.stt_policy import STTIntentContext
 
 class AtlasCoreProtocol(Protocol):
     def get_user(self) -> str: ...
-    def change_user(self, user: str) -> bool: ...
+    def change_user(
+        self,
+        user: str,
+        *,
+        register_encounter: bool = True,
+    ) -> bool: ...
     def process(self, text: str) -> bool: ...
 
 
@@ -307,7 +312,10 @@ class AtlasCoreAdapter:
             previous_ai_context = None
             try:
                 if previous_user.casefold() != context.atlas_user_id.casefold():
-                    if not self.atlas.change_user(context.atlas_user_id):
+                    if not self.atlas.change_user(
+                        context.atlas_user_id,
+                        register_encounter=False,
+                    ):
                         raise PermissionError("No se pudo activar el usuario autenticado.")
                 setattr(self.atlas, "session_id", context.session_id)
                 setattr(self.atlas, "channel_request_context", context)
@@ -354,7 +362,10 @@ class AtlasCoreAdapter:
                 else:
                     setattr(self.atlas, "channel_temporary_speaker", previous_temporary_speaker)
                 if self.atlas.get_user().casefold() != previous_user.casefold():
-                    self.atlas.change_user(previous_user)
+                    self.atlas.change_user(
+                        previous_user,
+                        register_encounter=False,
+                    )
                 if confirmations is not None:
                     confirmations.pending_confirmation = previous_confirmation
                 if memory_service is not None:
@@ -380,11 +391,17 @@ class AtlasCoreAdapter:
             previous_user = self.atlas.get_user()
             try:
                 if previous_user.casefold() != atlas_user_id.casefold():
-                    self.atlas.change_user(atlas_user_id)
+                    self.atlas.change_user(
+                        atlas_user_id,
+                        register_encounter=False,
+                    )
                 return self.atlas.identity_manager.get_active_identity_name()
             finally:
                 if self.atlas.get_user().casefold() != previous_user.casefold():
-                    self.atlas.change_user(previous_user)
+                    self.atlas.change_user(
+                        previous_user,
+                        register_encounter=False,
+                    )
 
     def stt_intent_context(self, context: TelegramRequestContext) -> STTIntentContext:
         """Lee contexto temporal de la sesión sin activar usuario ni escribir estado."""
@@ -412,12 +429,18 @@ class AtlasCoreAdapter:
             previous_user = self.atlas.get_user()
             try:
                 if previous_user.casefold() != atlas_user_id.casefold():
-                    if not self.atlas.change_user(atlas_user_id):
+                    if not self.atlas.change_user(
+                        atlas_user_id,
+                        register_encounter=False,
+                    ):
                         return False
                 return self.atlas.identity_manager.change_identity(personality, save_preference=True)
             finally:
                 if self.atlas.get_user().casefold() != previous_user.casefold():
-                    self.atlas.change_user(previous_user)
+                    self.atlas.change_user(
+                        previous_user,
+                        register_encounter=False,
+                    )
 
 
 class CallableCoreAdapter:

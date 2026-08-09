@@ -227,7 +227,10 @@ def _telegram_permissions(atlas, atlas_user_id: str) -> frozenset[str]:
     previous = atlas.get_user()
     try:
         if previous.casefold() != atlas_user_id.casefold():
-            atlas.change_user(atlas_user_id)
+            atlas.change_user(
+                atlas_user_id,
+                register_encounter=False,
+            )
         base = atlas.framework_tool_adapter.permission_resolver(atlas)
         # Interseccion explicita: Telegram solo permite los permisos que ya
         # posee el usuario y el permiso de acceso al canal.
@@ -239,4 +242,7 @@ def _telegram_permissions(atlas, atlas_user_id: str) -> frozenset[str]:
         return frozenset(allowed | {"telegram.use", "telegram.unlink"})
     finally:
         if atlas.get_user().casefold() != previous.casefold():
-            atlas.change_user(previous)
+            atlas.change_user(
+                previous,
+                register_encounter=False,
+            )
