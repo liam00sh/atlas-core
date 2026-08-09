@@ -151,6 +151,8 @@ data/faiss/
 /checkpoints/
 /outputs/
 /voice_lab/
+/voice_lab_round_b/
+/training_dataset_chatterbox/
 *.gguf
 *.ggml
 *.bin
@@ -183,3 +185,4 @@ reports/local/
 .pytest_runtime/
 
 .pytest_run_*/
+.pytest_round_b_*/
