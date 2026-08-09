@@ -147,6 +147,10 @@ data/faiss/
 # Modelos y archivos grandes descargados
 # -----------------------------------------------------------------------------
 /models/
+/datasets/
+/checkpoints/
+/outputs/
+/voice_lab/
 *.gguf
 *.ggml
 *.bin
