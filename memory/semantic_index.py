@@ -99,10 +99,21 @@ class PersonalMemorySemanticIndex:
             for memory in pending:
                 entries.pop(str(memory["id"]), None)
         removed = len(set(previous) - set(entries))
-        self.save({
-            "version": self.VERSION, "updated_at": datetime.now(UTC).isoformat(),
-            "model": getattr(self.embedder, "model_name", None), "entries": entries,
-        })
+        model_name = getattr(self.embedder, "model_name", None)
+        changed = (
+            force
+            or bool(pending)
+            or bool(removed)
+            or data.get("model") != model_name
+            or not self.path.exists()
+        )
+        if changed:
+            self.save({
+                "version": self.VERSION,
+                "updated_at": datetime.now(UTC).isoformat(),
+                "model": model_name,
+                "entries": entries,
+            })
         return {"embedded": len(pending) if self.embedder is not None else 0, "removed": removed, "total": len(entries)}
 
     def on_memory_change(self, action: str, memory: dict) -> None:

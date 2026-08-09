@@ -66,7 +66,9 @@ def test_semantic_sensitive_memory_is_excluded_without_permission(tmp_path):
 def test_incremental_sync_does_not_reembed_unchanged_memories(tmp_path):
     memory, semantic = build(tmp_path)
     memory.remember("REDACTED_2c7b6821719d", "Conduzco un Hyundai", "private")
+    before = semantic.path.read_bytes()
     assert semantic.sync(user_id="REDACTED_2c7b6821719d")["embedded"] == 0
+    assert semantic.path.read_bytes() == before
 
 
 def test_verified_memory_links_and_context_navigation(tmp_path):
