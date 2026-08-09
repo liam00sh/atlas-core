@@ -34,6 +34,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 STATE_DIR = PROJECT_ROOT / "data" / "monitoring"
 STATUS_FILE = STATE_DIR / "supervisor_status.json"
 LAUNCHER_STATE_DIR = PROJECT_ROOT / "data" / "launcher"
+TELEGRAM_STATUS_FILE = (
+    PROJECT_ROOT
+    / "data"
+    / "integrations"
+    / "telegram"
+    / "supervisor_status.json"
+)
 
 
 @dataclass(slots=True, frozen=True)
@@ -61,10 +68,59 @@ def _pid_alive(pid: int | None) -> bool:
     if not pid:
         return False
     try:
+        import psutil
+
+        process = psutil.Process(int(pid))
+        return process.is_running() and process.status() != psutil.STATUS_ZOMBIE
+    except (ImportError, ValueError):
+        pass
+    except Exception:
+        return False
+    try:
         os.kill(pid, 0)
     except OSError:
         return False
     return True
+
+
+def _telegram_runtime_result(
+    check_id: str,
+    display_name: str,
+) -> HealthCheckResult:
+    """Comprueba el núcleo residente y Telegram desde su estado vigente."""
+
+    payload = _read_json(TELEGRAM_STATUS_FILE)
+    bot_pid = payload.get("bot_pid")
+    supervisor_pid = payload.get("supervisor_pid")
+    running = (
+        payload.get("state") == "running"
+        and _pid_alive(bot_pid)
+        and _pid_alive(supervisor_pid)
+    )
+    return HealthCheckResult(
+        check_id=check_id,
+        display_name=display_name,
+        state=HealthState.OK if running else HealthState.ERROR,
+        available=running,
+        message=(
+            "Núcleo activo dentro del servicio Telegram."
+            if running and check_id == "atlas_core"
+            else "Servicio Telegram activo."
+            if running
+            else "Servicio detenido o sin estado vigente."
+        ),
+        details={
+            "managed": True,
+            "pid": bot_pid,
+            "supervisor_pid": supervisor_pid,
+            "heartbeat": payload.get("heartbeat"),
+        },
+        recoverable=True,
+        requires_intervention=not running,
+        recovery_action_id=(
+            f"service.{check_id}.restart" if not running else None
+        ),
+    )
 
 
 def _launcher_process_result(
@@ -345,16 +401,16 @@ class AtlasSupervisor:
             SupervisorProbe("disk", _local_disk_result),
             SupervisorProbe(
                 "atlas_core",
-                lambda: _launcher_process_result(
-                    self.service_status,
+                lambda: _telegram_runtime_result(
                     "atlas_core",
+                    "Atlas Core",
                 ),
             ),
             SupervisorProbe(
                 "telegram",
-                lambda: _launcher_process_result(
-                    self.service_status,
+                lambda: _telegram_runtime_result(
                     "telegram",
+                    "Telegram",
                 ),
             ),
             SupervisorProbe(
