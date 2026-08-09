@@ -343,7 +343,8 @@ class Atlas(AtlasAIMixin,
         # Al comenzar, la persona que habla es el propio
         # usuario autenticado.
         self.conversation_identity.identify_person(
-            self.get_user()
+            self.get_user(),
+            register_encounter=False,
         )
 
         # ---------------------------------------------------------------------

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from assistant_identity.identity_manager import IdentityManager
 from assistant_identity.mode import CLASSIC_MODE, FUN_MODE, WORK_MODE
+from core.atlas import Atlas
 from identity.conversation_identity import ConversationIdentity
 from identity.family_initializer import FamilyInitializer
 from identity.family_service import FamilyService
@@ -14,6 +15,17 @@ from identity.people_manager import PeopleManager
 from identity.relationship_engine import RelationshipEngine
 from identity.visitor_manager import VisitorManager
 from utils.text_normalizer import normalize_text
+
+
+def test_atlas_restarts_do_not_create_false_identity_encounters():
+    first = Atlas(ai_provider=None)
+    first_person = first.people_manager.find_person_by_name(first.get_user())
+    first_count = first_person.encounter_count
+
+    second = Atlas(ai_provider=None)
+    second_person = second.people_manager.find_person_by_name(second.get_user())
+
+    assert second_person.encounter_count == first_count
 
 
 class AtlasSubsystemIntegrationTests(unittest.TestCase):
@@ -38,6 +50,18 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
         self.assertEqual(self.conversation.get_authenticated_user(), "REDACTED_2c7b6821719d")
         self.assertEqual(self.conversation.get_permission_viewer(), "REDACTED_bc04a68d9192")
         self.assertEqual(self.assistant.get_current_user(), "REDACTED_f73137d930c3")
+
+    def test_session_initialization_does_not_register_a_real_encounter(self):
+        person = self.people.find_person_by_name("REDACTED_bc04a68d9192")
+        before = person.encounter_count
+
+        self.conversation.identify_person(
+            "REDACTED_bc04a68d9192",
+            register_encounter=False,
+        )
+
+        stored = self.people.find_person_by_name("REDACTED_bc04a68d9192")
+        self.assertEqual(stored.encounter_count, before)
 
     def test_family_and_identity_survive_reinitialization(self):
         REDACTED_f73137d930c3 = self.people.find_person_by_name("REDACTED_e97345c31916")

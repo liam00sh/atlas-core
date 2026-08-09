@@ -290,12 +290,15 @@ class ConversationIdentity:
     def set_current_person(
         self,
         person: Person,
+        *,
+        register_encounter: bool = True,
     ) -> None:
         """
         Establece la persona que está hablando actualmente.
 
         Si la persona cambia, se registra el encuentro mediante
-        VisitorManager.
+        VisitorManager salvo durante una restauración o inicialización
+        explícita de sesión.
 
         No modifica el usuario autenticado.
         """
@@ -319,15 +322,15 @@ class ConversationIdentity:
 
         self.current_person = person
 
-        # Registramos el encuentro.
-        updated_person = (
-            self.visitor_manager.register_visit(
-                person.id
+        if register_encounter:
+            updated_person = (
+                self.visitor_manager.register_visit(
+                    person.id
+                )
             )
-        )
 
-        if updated_person is not None:
-            self.current_person = updated_person
+            if updated_person is not None:
+                self.current_person = updated_person
 
         if previous_person is None:
 
@@ -347,6 +350,8 @@ class ConversationIdentity:
     def identify_person(
         self,
         name: str,
+        *,
+        register_encounter: bool = True,
     ) -> Person:
         """
         Identifica a una persona por su nombre.
@@ -388,7 +393,8 @@ class ConversationIdentity:
                 )
 
         self.set_current_person(
-            person
+            person,
+            register_encounter=register_encounter,
         )
 
         return self.current_person
