@@ -30,6 +30,7 @@ WINDOW_WIDTH = 430
 WINDOW_HEIGHT = 360
 MARGIN_RIGHT = 20
 MARGIN_TOP = 80
+PC_PANEL_TITLE = "ATLAS · ESTADO DEL PC"
 
 
 def _run(command: list[str], timeout: float = 2.0) -> str:
@@ -248,7 +249,7 @@ def snapshot() -> tuple[str, dict]:
     }
 
     lines = [
-        "ATLAS · ESTADO DEL PC",
+        PC_PANEL_TITLE,
         "",
         (
             f"CPU       {cpu:>5.1f}%   "
@@ -304,7 +305,7 @@ class Overlay:
 
         self.title_label = tk.Label(
             self.root,
-            text="ATLAS · ESTADO DEL PC",
+            text=PC_PANEL_TITLE,
             justify="left",
             anchor="nw",
             font=("Consolas", 12, "bold"),
