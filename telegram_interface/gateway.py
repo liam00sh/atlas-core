@@ -39,6 +39,7 @@ class TelegramGateway:
         rate_limiter: TelegramRateLimiter | None = None,
         media_processor=None,
         response_mode_store=None,
+        response_styler=None,
         clock=monotonic,
     ) -> None:
         self.config = config
@@ -50,6 +51,7 @@ class TelegramGateway:
         self.rate_limiter = rate_limiter or TelegramRateLimiter(config.rate_limit_per_minute)
         self.media_processor = media_processor
         self.response_mode_store = response_mode_store
+        self.response_styler = response_styler
         self.clock = clock
         self._processing_errors: dict[tuple[str, str], tuple[int, float]] = {}
         self._executor = ThreadPoolExecutor(max_workers=config.max_concurrent_operations, thread_name_prefix="atlas-telegram")
@@ -186,6 +188,25 @@ class TelegramGateway:
                                 "No he podido procesar ese mensaje por un error interno. "
                                 "El detalle se ha registrado para poder corregirlo."
                             )
+            if (
+                self.response_styler is not None
+                and atlas_user_id
+                and response.text
+                and str(self.core.active_personality(atlas_user_id)).casefold() == "daxter"
+            ):
+                styled_text = self.response_styler(
+                    response.text,
+                    request_text=message.text,
+                    user=atlas_user_id,
+                    channel="telegram",
+                )
+                response = GatewayResponse(
+                    styled_text,
+                    parse_mode=response.parse_mode,
+                    close_session=response.close_session,
+                    stage_timings_ms=response.stage_timings_ms,
+                    delivery_hint=response.delivery_hint,
+                )
             for stage, milliseconds in response.stage_timings_ms.items():
                 if isinstance(milliseconds, (int, float)) and milliseconds >= 0:
                     timing.add_ms(stage, float(milliseconds))

@@ -29,6 +29,7 @@ from pathlib import Path
 from telegram_interface.outbound import TelegramOutboundMediaService
 from tools.telegram_media import build_telegram_media_tools
 from tools.exceptions import ToolRegistrationError
+from conversation.response_pipeline import DaxterResponsePipeline
 
 
 def _display_assistant_name(name: str) -> str:
@@ -119,6 +120,7 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         document_analyzer=SafeLocalDocumentAnalyzer(),
         work_dir=config.data_dir / "quarantine" / "analysis",
     )
+    response_pipeline = DaxterResponsePipeline()
     gateway = TelegramGateway(
         config=config,
         linker=linker,
@@ -129,6 +131,12 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         permission_resolver=lambda user: _telegram_permissions(atlas, user),
         media_processor=media_processor,
         response_mode_store=response_modes,
+        response_styler=lambda text, **context: response_pipeline.adapt(
+            text,
+            channel=context.get("channel", "telegram"),
+            request_text=context.get("request_text", ""),
+            user=context.get("user", "REDACTED_f73137d930c3"),
+        ).styled_text,
     )
     def progress_message(message) -> str:
         account = linker.get_account(message.user.telegram_user_id)

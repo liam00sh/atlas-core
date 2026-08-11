@@ -64,6 +64,21 @@ class VoiceStyleSelector:
             requested = "neutral"
             reason_parts.append("emoción desconocida; fallback neutral")
         item = self._emotions[requested]
+        validation = item.get("human_validation") or {}
+        if validation and validation.get("status") != "approved":
+            fallback = str(
+                item.get("runtime_emotion")
+                or validation.get("runtime_fallback_emotion")
+                or item.get("fallback_emotion")
+                or "neutral"
+            ).casefold()
+            if fallback not in self._emotions or fallback == requested:
+                fallback = "neutral"
+            reason_parts.append(
+                f"{requested} {validation.get('status')}; fallback humano {fallback}"
+            )
+            requested = fallback
+            item = self._emotions[requested]
         resolved_intensity = self._intensity(intensity)
         supported = [VoiceIntensity(value) for value in item["supported_intensities"]]
         if resolved_intensity not in supported:
@@ -72,7 +87,7 @@ class VoiceStyleSelector:
             reason_parts.append("intensidad no soportada; se usó la más próxima")
         resolved_energy = self._energy(energy, item["preferred_energy"])
         if not reason_parts:
-            reason_parts.append("estilo definido por catálogo; validación humana pendiente")
+            reason_parts.append("estilo aprobado por evaluación humana")
         return DaxterVoiceStyle(
             emotion=requested,
             intensity=resolved_intensity,

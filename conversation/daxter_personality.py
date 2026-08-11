@@ -1,10 +1,15 @@
-"""Adaptador offline y reversible: conserva QUÉ responde Atlas y limita CÓMO se expresa."""
+"""PersonalityAdapter v2: reglas humanas, contexto y validación factual."""
 
 from __future__ import annotations
 
 import hashlib
+import json
+import re
 from dataclasses import dataclass
 from enum import StrEnum
+from pathlib import Path
+
+from conversation.response_models import BaseResponse, FactPreservationValidator, StyledResponse
 
 
 class PersonalityStrength(StrEnum):
@@ -24,79 +29,181 @@ class ResponseStyleContext:
     suggested_emotion: str = "neutral"
     suggested_intensity: str = "media"
     personality_strength: PersonalityStrength = PersonalityStrength.NORMAL
+    previous_styled_text: str = ""
 
 
-@dataclass(frozen=True, slots=True)
-class PersonalityResult:
-    styled_text: str
-    emotion: str
-    intensity: str
-    personality_strength_used: PersonalityStrength
-    reason: str
+PersonalityResult = StyledResponse
 
 
 class ResponseStylePolicy:
-    SERIOUS_TYPES = {"privacy", "security", "emergency", "driving"}
+    FORCED_PLAIN = {"privacy", "security", "emergency", "driving"}
 
-    def resolve_strength(self, context: ResponseStyleContext) -> tuple[PersonalityStrength, str]:
+    def resolve_strength(self, context: ResponseStyleContext) -> tuple[PersonalityStrength, str, bool]:
         request_type = context.request_type.casefold()
-        if request_type == "emergency" or context.risk_level.casefold() == "critical":
-            return PersonalityStrength.LOW, "emergencia: claridad máxima y personalidad mínima"
-        if request_type in {"privacy", "security"} or context.risk_level.casefold() == "high":
-            return PersonalityStrength.LOW, "privacidad/seguridad: contenido sin humor"
+        risk = context.risk_level.casefold()
+        if request_type == "emergency" or risk == "critical":
+            return PersonalityStrength.LOW, "emergencia: claridad máxima", True
+        if request_type in {"privacy", "security"} or risk == "high":
+            return PersonalityStrength.LOW, "privacidad/seguridad: sin humor", True
         if request_type == "driving":
-            return PersonalityStrength.LOW, "conducción: respuesta breve y no distractora"
+            return PersonalityStrength.LOW, "conducción: respuesta breve", True
         if context.night_mode and context.personality_strength == PersonalityStrength.HIGH:
-            return PersonalityStrength.NORMAL, "modo nocturno: intensidad reducida"
-        return context.personality_strength, "nivel solicitado permitido por el contexto"
+            return PersonalityStrength.NORMAL, "modo nocturno: intensidad reducida", False
+        return context.personality_strength, "nivel solicitado permitido por el contexto", False
 
 
 class PersonalityAdapter:
-    """Añade una marca breve original; nunca reescribe ni elimina la respuesta base."""
+    """Planifica movimientos de estilo; no selecciona respuestas completas."""
 
-    PREFIXES = {
-        "success": ("Hecho.", "Misión cumplida.", "Todo en orden."),
-        "error": ("Bueno, esto necesita otra vuelta.", "Tenemos un contratiempo.", "El plan pide revisión."),
-        "casual": ("Te diré una cosa:", "Mi lectura rápida:", "Vamos con ello:"),
-        "greeting": ("¡Aquí estoy!", "¡Buenas!", "Listo para la misión."),
-        "general": ("Vamos al grano:", "Bien, atención:", "Esto es lo importante:"),
+    _MARKERS = {
+        "success": ("Hecho", "Bien", "Perfecto"),
+        "action_result": ("Hecho", "Listo", "Bien"),
+        "error": ("Vaya", "Uf", "Bueno"),
+        "warning": ("Ojo", "Atención", "Eh"),
+        "home_assistant": ("Hecho", "Listo", "Bien"),
+        "greeting": ("Buenas", "Ey", "Hola"),
+        "casual": ("Mira", "Bueno", "A ver"),
+        "general": ("Mira", "Bien", "Ojo"),
     }
-    HIGH_SUFFIXES = (
-        "Ese es el plan; corto, claro y con una cantidad razonable de estilo.",
-        "Y sí, podemos considerarlo una pequeña victoria del equipo.",
-        "Nada mal para una misión que empezó sin explosiones.",
-    )
+    _HIGH_MOVES = {
+        "success": "Una tarea menos; seguimos.",
+        "action_result": "Una misión resuelta; seguimos.",
+        "error": "Toca otra vuelta, pero el estado queda claro.",
+        "casual": "Ese plan sí tiene buena pinta.",
+        "greeting": "Todo listo para movernos.",
+        "general": "Lo importante queda claro; seguimos.",
+    }
+    _LOW_MICRO_IDENTITY_ALLOWED = {
+        "general", "question", "technical", "error", "warning", "home_assistant",
+        "action_result", "success", "casual", "greeting",
+    }
 
-    def __init__(self, policy: ResponseStylePolicy | None = None):
+    def __init__(
+        self,
+        policy: ResponseStylePolicy | None = None,
+        *,
+        rules_path: Path | None = None,
+        validator: FactPreservationValidator | None = None,
+    ) -> None:
         self.policy = policy or ResponseStylePolicy()
+        self.validator = validator or FactPreservationValidator()
+        default_rules = Path(__file__).resolve().parent / "profiles" / "DAXTER_PERSONALITY_RULES_V2.json"
+        selected = Path(rules_path) if rules_path else default_rules
+        self.rules = json.loads(selected.read_text(encoding="utf-8")) if selected.is_file() else {}
 
     @staticmethod
-    def _choice(options: tuple[str, ...], seed: int, key: str) -> str:
+    def _choice(options: tuple[str, ...], seed: int, key: str, previous: str) -> str:
         digest = hashlib.sha256(f"{seed}|{key}".encode("utf-8")).digest()
-        return options[int.from_bytes(digest[:4], "big") % len(options)]
+        start = int.from_bytes(digest[:4], "big") % len(options)
+        for offset in range(len(options)):
+            candidate = options[(start + offset) % len(options)]
+            if not previous or candidate.casefold() not in previous.casefold():
+                return candidate
+        return options[start]
 
-    def adapt(self, base_response: str, context: ResponseStyleContext, *, seed: int = 0) -> PersonalityResult:
-        base = str(base_response).strip()
-        if not base:
-            raise ValueError("La respuesta base no puede estar vacía")
-        strength, reason = self.policy.resolve_strength(context)
-        if strength == PersonalityStrength.LOW:
-            return PersonalityResult(base, "neutral", "baja", strength, reason)
+    @staticmethod
+    def _join_short_clauses(text: str) -> str:
+        parts = [part.strip() for part in re.split(r"(?<=[.!?])\s+", text) if part.strip()]
+        if len(parts) < 2 or len(parts[0]) > 45 or len(parts[1]) > 70:
+            return text
+        first = parts[0].rstrip(".")
+        second = parts[1]
+        if second and second[0].islower():
+            joined = f"{first}, {second}"
+        elif second.split(" ", 1)[0] in {"El", "La", "Los", "Las", "Un", "Una"}:
+            joined = f"{first}, {second[0].lower()}{second[1:]}"
+        else:
+            return text
+        return " ".join((joined, *parts[2:])).strip()
 
-        request_type = context.request_type.casefold()
-        prefix_key = request_type if request_type in self.PREFIXES else "general"
-        prefix = self._choice(self.PREFIXES[prefix_key], seed, f"prefix:{prefix_key}:{base}")
-        styled = f"{prefix} {base}"
-        if strength == PersonalityStrength.HIGH and request_type in {"casual", "greeting", "success", "general"}:
-            suffix = self._choice(self.HIGH_SUFFIXES, seed, f"suffix:{base}")
-            styled = f"{styled} {suffix}"
+    @staticmethod
+    def _request_key(request_type: str) -> str:
+        value = request_type.casefold()
+        if value.startswith("home_assistant"):
+            return "home_assistant"
+        if value.startswith("accion_complet"):
+            return "action_result"
+        if value.startswith("accion_fall") or value.startswith("error"):
+            return "error"
+        if value.startswith("aviso"):
+            return "warning"
+        if value.startswith("saludo"):
+            return "greeting"
+        if value.startswith("casual") or value.startswith("broma"):
+            return "casual"
+        if value in PersonalityAdapter._MARKERS:
+            return value
+        return "general"
+
+    @staticmethod
+    def _lower_common_initial(text: str) -> str:
+        match = re.match(
+            r"^(El|La|Los|Las|Un|Una|Este|Esta|Esto|Queda|Quedan|Hay|Necesito|Podemos|No)\b",
+            text,
+        )
+        if not match:
+            return text
+        return match.group(0).lower() + text[match.end():]
+
+    def adapt(
+        self,
+        base_response: str | BaseResponse,
+        context: ResponseStyleContext,
+        *,
+        seed: int = 0,
+    ) -> StyledResponse:
+        base = base_response if isinstance(base_response, BaseResponse) else BaseResponse.from_text(base_response)
+        strength, reason, forced_plain = self.policy.resolve_strength(context)
+        structured = "\n" in base.text and (
+            len(base.text.splitlines()) >= 3
+            or any(line.lstrip().startswith(("- ", "* ", "1. ", "```")) for line in base.text.splitlines())
+        )
+        if structured:
+            forced_plain = True
+            reason = "contenido estructurado: presentación conservada"
+        if forced_plain:
+            return StyledResponse(
+                base.text, base.text, "neutral", "baja", strength.value, reason, True, ()
+            )
+
+        key = self._request_key(context.request_type)
+        styled = self._join_short_clauses(base.text)
+        use_marker = strength != PersonalityStrength.LOW or key in self._LOW_MICRO_IDENTITY_ALLOWED
+        if use_marker:
+            marker = self._choice(
+                self._MARKERS.get(key, self._MARKERS["general"]),
+                seed,
+                f"marker:{key}:{base.text}",
+                context.previous_styled_text,
+            )
+            punctuation = "!" if key == "warning" and context.suggested_intensity == "alta" else ","
+            styled = (
+                f"¡{marker}! {styled}"
+                if punctuation == "!"
+                else f"{marker}, {self._lower_common_initial(styled)}"
+            )
+
+        if strength == PersonalityStrength.HIGH:
+            move = self._HIGH_MOVES.get(key, self._HIGH_MOVES["general"])
+            if move.casefold() not in context.previous_styled_text.casefold():
+                styled = f"{styled} {move}"
+
         if len(styled) > context.max_length:
-            styled = base
-            reason += "; adorno omitido por límite de longitud"
-        return PersonalityResult(
+            styled = base.text
+            reason += "; movimientos omitidos por límite de longitud"
+
+        preserved, issues = self.validator.validate(base, styled)
+        if not preserved:
+            styled = base.text
+            reason += "; fallback factual determinista"
+            preserved, issues = self.validator.validate(base, styled)
+        return StyledResponse(
+            base_text=base.text,
             styled_text=styled,
             emotion=context.suggested_emotion,
             intensity=context.suggested_intensity,
-            personality_strength_used=strength,
+            personality_strength=strength.value,
             reason=reason,
+            facts_preserved=preserved,
+            validation_issues=issues,
         )

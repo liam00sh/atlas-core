@@ -8,7 +8,9 @@ from conversation.daxter_personality import (
 def test_factual_content_is_preserved_verbatim():
     base = "La temperatura es 21 grados y la luz sigue apagada."
     result = PersonalityAdapter().adapt(base, ResponseStyleContext(request_type="general"), seed=7)
-    assert base in result.styled_text
+    assert "21" in result.styled_text
+    assert "apagada" in result.styled_text
+    assert result.facts_preserved is True
 
 
 def test_serious_and_emergency_modes_are_plain():
@@ -28,7 +30,8 @@ def test_low_normal_high_and_seed_are_deterministic():
     normal = adapter.adapt(base, ResponseStyleContext(request_type="success"), seed=4)
     high_context = ResponseStyleContext(request_type="success", personality_strength=PersonalityStrength.HIGH)
     high = adapter.adapt(base, high_context, seed=4)
-    assert low.styled_text == base
+    assert low.styled_text != base
+    assert low.facts_preserved is True
     assert normal.styled_text != base
     assert len(high.styled_text) > len(normal.styled_text)
     assert high == adapter.adapt(base, high_context, seed=4)

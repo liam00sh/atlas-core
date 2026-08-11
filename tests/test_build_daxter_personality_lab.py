@@ -9,8 +9,14 @@ def test_personality_lab_has_forty_cases_and_required_contexts():
 
 
 def test_every_personality_case_preserves_base_content():
+    from conversation.response_models import BaseResponse, FactPreservationValidator
+
     for case in build_cases():
-        assert case["respuesta_base"] in case["respuesta_daxter"]
+        preserved, issues = FactPreservationValidator().validate(
+            BaseResponse.from_text(case["respuesta_base"]),
+            case["respuesta_daxter"],
+        )
+        assert preserved, issues
 
 
 def test_emergency_and_driving_force_low_strength():
