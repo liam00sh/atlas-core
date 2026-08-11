@@ -91,3 +91,14 @@ class VoiceResolver:
         return self._deduplicate(
             (requested_voice_id, *DEFAULT_FALLBACKS[identity])
         )
+
+    def candidates(
+        self,
+        *,
+        identity: AssistantIdentity | str,
+        requested_voice_id: str,
+        fallback_enabled: bool = True,
+    ) -> tuple[str, ...]:
+        return self._candidate_chain(
+            AssistantIdentity(identity), requested_voice_id, fallback_enabled
+        )

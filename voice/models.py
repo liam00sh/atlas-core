@@ -37,6 +37,10 @@ class SynthesisRequest:
     output_path: Path
     speed: float = 1.0
     volume: float = 1.0
+    emotion: str = "neutral"
+    intensity: str = "media"
+    voice_profile_id: str | None = None
+    profile_version: str | None = None
 
 @dataclass(frozen=True, slots=True)
 class SynthesisResult:
@@ -48,3 +52,7 @@ class SynthesisResult:
     requested_voice_id: str | None = None
     fallback_used: bool = False
     selection_reason: str | None = None
+    cache_hit: bool = False
+    latency_ms: float | None = None
+    emotion: str | None = None
+    intensity: str | None = None

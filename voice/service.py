@@ -1,86 +1,162 @@
-"""Servicio de alto nivel para resolver, sintetizar y reproducir voz."""
+"""Servicio común con B1, fallback local, caché y reproducción cancelable."""
+
 from __future__ import annotations
-import re, time
+
 from pathlib import Path
+import re
+import time
+
 from voice.catalog.voices import VOICE_CATALOG
 from voice.config import COCO_PREFERRED_VOICE, DAXTER_PREFERRED_VOICE, VOICE_OUTPUT_DIR
 from voice.models import AssistantIdentity, SynthesisRequest, SynthesisResult
+from voice.playback_queue import PlaybackQueue
 from voice.player import WavePlayer
-from voice.preferences.voice_preferences import VoicePreferences
+from voice.providers.chatterbox_daxter_provider import ChatterboxDaxterProvider
 from voice.providers.kokoro_provider import KokoroProvider
 from voice.resolver.voice_resolver import VoiceResolver
 
+
 class VoiceService:
-    def __init__(self, *, provider=None, player=None, output_dir=None) -> None:
-        self.provider = provider or KokoroProvider()
+    def __init__(
+        self,
+        *,
+        provider=None,
+        providers=None,
+        player=None,
+        output_dir=None,
+        playback_queue=None,
+    ) -> None:
+        if provider is not None:
+            resolved_providers = [provider]
+        elif providers is not None:
+            resolved_providers = list(providers)
+        else:
+            resolved_providers = [ChatterboxDaxterProvider(), KokoroProvider()]
+        self.providers = {item.provider_id: item for item in resolved_providers}
+        self.provider = resolved_providers[0] if resolved_providers else None
         self.player = player or WavePlayer()
-        self.output_dir = output_dir or VOICE_OUTPUT_DIR
+        self.output_dir = Path(output_dir or VOICE_OUTPUT_DIR)
+        self.playback_queue = playback_queue or PlaybackQueue(self.player)
         self.resolver = VoiceResolver(availability_check=self._is_voice_available)
 
     def is_available(self) -> bool:
-        return self.provider.is_available() and self.player.is_available()
+        return any(provider.is_available() for provider in self.providers.values()) and self.player.is_available()
 
     def preferred_voice(self, identity, preferences=None) -> str:
         if preferences is not None:
             return preferences.preferred_voice_for(identity)
         return COCO_PREFERRED_VOICE if identity is AssistantIdentity.COCO else DAXTER_PREFERRED_VOICE
 
-    def speak(self, text: str, *, identity, requested_voice_id=None,
-              preferences=None, speed=1.0, volume=1.0,
-              play_audio=True) -> SynthesisResult:
+    def speak(
+        self,
+        text: str,
+        *,
+        identity,
+        requested_voice_id=None,
+        preferences=None,
+        speed=1.0,
+        volume=1.0,
+        emotion="neutral",
+        intensity="media",
+        play_audio=True,
+        queue_audio=False,
+    ) -> SynthesisResult:
         identity = AssistantIdentity(identity)
         clean_text = self.clean_console_text(text)
         requested = requested_voice_id or self.preferred_voice(identity, preferences)
         if not clean_text:
-            return SynthesisResult(False, None, requested, "none",
-                                   "No hay texto reproducible.",
-                                   requested_voice_id=requested)
+            return SynthesisResult(False, None, requested, "none", "No hay texto reproducible.", requested_voice_id=requested)
 
-        selection = self.resolver.resolve(
+        fallback_enabled = preferences.fallback_enabled if preferences else True
+        failures: list[str] = []
+        for candidate_id in self.resolver.candidates(
             identity=identity,
             requested_voice_id=requested,
-            fallback_enabled=preferences.fallback_enabled if preferences else True,
+            fallback_enabled=fallback_enabled,
+        ):
+            definition = VOICE_CATALOG.get(candidate_id)
+            if definition is None or definition.identity is not identity:
+                continue
+            provider = self.providers.get(definition.provider_id)
+            if provider is None or not self._is_voice_available(definition):
+                continue
+            output_path = self._build_output_path(definition.voice_id)
+            raw = provider.synthesize(SynthesisRequest(
+                text=clean_text,
+                voice_id=definition.voice_id,
+                provider_voice_id=definition.provider_voice_id,
+                output_path=output_path,
+                speed=speed,
+                volume=volume,
+                emotion=emotion,
+                intensity=intensity,
+                voice_profile_id=definition.provider_voice_id,
+                profile_version=str(definition.metadata.get("profile_version", "1.0.0")),
+            ))
+            if not raw.success:
+                failures.append(f"{definition.voice_id}: {raw.error or 'fallo de síntesis'}")
+                continue
+            result = SynthesisResult(
+                success=True,
+                output_path=raw.output_path,
+                voice_id=definition.voice_id,
+                provider_id=raw.provider_id,
+                error=None,
+                requested_voice_id=requested,
+                fallback_used=definition.voice_id != requested,
+                selection_reason=("voz solicitada disponible" if definition.voice_id == requested else "fallback TTS local"),
+                cache_hit=raw.cache_hit,
+                latency_ms=raw.latency_ms,
+                emotion=raw.emotion or emotion,
+                intensity=raw.intensity or intensity,
+            )
+            if play_audio and result.output_path is not None:
+                if queue_audio:
+                    self.playback_queue.enqueue(result.output_path)
+                elif not self.player.play(result.output_path):
+                    return SynthesisResult(
+                        False, result.output_path, result.voice_id, result.provider_id,
+                        "No se pudo reproducir el WAV.", requested,
+                        result.fallback_used, result.selection_reason,
+                        result.cache_hit, result.latency_ms, result.emotion, result.intensity,
+                    )
+            return result
+        detail = "; ".join(failures) if failures else "ninguna voz local compatible está disponible"
+        return SynthesisResult(
+            False, None, requested, "text", f"{detail}; usar salida textual",
+            requested_voice_id=requested, selection_reason="fallback textual",
+            emotion=emotion, intensity=intensity,
         )
-        if selection.selected_voice_id is None:
-            return SynthesisResult(False, None, requested, "none",
-                                   selection.reason,
-                                   requested_voice_id=requested,
-                                   selection_reason=selection.reason)
-
-        definition = VOICE_CATALOG[selection.selected_voice_id]
-        output_path = self._build_output_path(definition.voice_id)
-        raw = self.provider.synthesize(SynthesisRequest(
-            text=clean_text,
-            voice_id=definition.voice_id,
-            provider_voice_id=definition.provider_voice_id,
-            output_path=output_path,
-            speed=speed,
-            volume=volume,
-        ))
-        result = SynthesisResult(
-            raw.success, raw.output_path, definition.voice_id, raw.provider_id,
-            raw.error, requested, selection.fallback_used, selection.reason,
-        )
-        if play_audio and result.success and result.output_path is not None:
-            if not self.player.play(result.output_path):
-                return SynthesisResult(
-                    False, result.output_path, result.voice_id, result.provider_id,
-                    "No se pudo reproducir el WAV.", requested,
-                    selection.fallback_used, selection.reason,
-                )
-        return result
 
     def _is_voice_available(self, definition) -> bool:
+        provider = self.providers.get(definition.provider_id)
         return bool(
             definition.enabled
-            and definition.provider_id == self.provider.provider_id
-            and self.provider.is_available()
-            and self.provider.supports_voice(definition.provider_voice_id)
+            and provider is not None
+            and provider.is_available()
+            and provider.supports_voice(definition.provider_voice_id)
         )
 
     def _build_output_path(self, voice_id: str) -> Path:
         safe = re.sub(r"[^a-z0-9_-]+", "_", voice_id.casefold())
         return self.output_dir / f"{safe}_{time.time_ns()}.wav"
+
+    def stop_current_audio(self) -> None:
+        self.playback_queue.stop_current_audio()
+        for provider in self.providers.values():
+            cancel = getattr(provider, "cancel_current", None)
+            if callable(cancel):
+                cancel()
+
+    def clear_queue(self) -> int:
+        return self.playback_queue.clear_queue()
+
+    def close(self) -> None:
+        self.playback_queue.close()
+        for provider in self.providers.values():
+            close = getattr(provider, "close", None)
+            if callable(close):
+                close()
 
     @staticmethod
     def clean_console_text(text: str) -> str:

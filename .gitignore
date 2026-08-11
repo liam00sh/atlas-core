@@ -130,6 +130,7 @@ data/monitoring/pc_status.json
 data/incidents/
 data/runtime/
 data/sessions/
+/runtime/
 
 # -----------------------------------------------------------------------------
 # Índices locales, RAG y bases vectoriales
@@ -192,3 +193,5 @@ reports/local/
 .pytest_emotion_lab/
 .pytest_personality_lab/
 .pytest_full_*/
+.pytest_*/
+.pytest_*_results*.xml

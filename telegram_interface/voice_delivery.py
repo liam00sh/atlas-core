@@ -29,8 +29,13 @@ class TelegramVoiceRenderer:
         self.timeout_seconds = timeout_seconds
 
     def is_available(self) -> bool:
-        provider = getattr(self.voice_service, "provider", None)
-        return bool(self.ffmpeg_path and provider is not None and provider.is_available())
+        providers = getattr(self.voice_service, "providers", {})
+        if providers:
+            tts_available = any(provider.is_available() for provider in providers.values())
+        else:
+            provider = getattr(self.voice_service, "provider", None)
+            tts_available = provider is not None and provider.is_available()
+        return bool(self.ffmpeg_path and tts_available)
 
     def render(self, text: str, *, user_id: str) -> TelegramVoiceResult:
         if not self.is_available():
