@@ -20,6 +20,26 @@ if str(ROOT) not in sys.path:
 _MODEL = None
 
 
+def _trim_and_fade(audio, sample_rate: int):
+    """Trim peripheral silence and soften endpoints without touching the center."""
+    import torch
+
+    if audio.ndim == 1:
+        audio = audio.unsqueeze(0)
+    mono_peak = audio.abs().amax(dim=0)
+    active = torch.nonzero(mono_peak > 0.003, as_tuple=False).flatten()
+    if active.numel():
+        padding = int(sample_rate * 0.03)
+        start = max(0, int(active[0]) - padding)
+        end = min(audio.shape[-1], int(active[-1]) + padding + 1)
+        audio = audio[:, start:end]
+    fade = min(int(sample_rate * 0.015), audio.shape[-1] // 2)
+    if fade > 1:
+        audio[:, :fade] *= torch.linspace(0.0, 1.0, fade, device=audio.device)
+        audio[:, -fade:] *= torch.linspace(1.0, 0.0, fade, device=audio.device)
+    return audio
+
+
 def synthesize(payload: dict) -> dict:
     global _MODEL
     import numpy as np
@@ -58,6 +78,8 @@ def synthesize(payload: dict) -> dict:
         min_p=controls["min_p"],
         top_p=controls["top_p"],
     )
+    if payload.get("postprocess", True):
+        audio = _trim_and_fade(audio, _MODEL.sr)
     torchaudio.save(str(output), audio.cpu(), _MODEL.sr, encoding="PCM_S", bits_per_sample=16)
     return {"success": True, "emotion": style.emotion, "intensity": style.intensity.value}
 

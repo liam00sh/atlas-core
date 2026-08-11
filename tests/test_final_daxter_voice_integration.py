@@ -11,6 +11,8 @@ from voice.end_to_end import ManualVoiceSession
 from voice.models import SynthesisRequest, SynthesisResult
 from voice.providers.chatterbox_daxter_provider import ChatterboxDaxterProvider
 from voice.style import VoiceStyleSelector
+from voice.stt import STTConfidence, STTError, STTResult
+from voice.text_normalizer import ContextualTranscriptNormalizer, SpeechTextNormalizer
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -146,5 +148,41 @@ def test_manual_turn_reuses_common_stt_personality_and_tts_without_continuous_li
     assert result.transcript == "Enciende la luz 2"
     assert "2" in result.response
     assert result.synthesis and result.synthesis.success
+    assert result.spoken_response == result.response
     assert set(result.timings_ms) >= {"recording", "stt.transcribe", "atlas", "personality", "tts_and_playback", "total"}
     assert voice.request[1]["emotion"] in {"emocionado", "neutral"}
+
+
+def test_manual_turn_keeps_session_alive_after_empty_audio(tmp_path):
+    class EmptySTT:
+        def transcribe(self, *_args, **_kwargs):
+            raise STTError("audio_empty", "empty")
+
+    session = ManualVoiceSession(
+        atlas=_Atlas(), recorder=_Recorder(), stt=EmptySTT(),
+        voice_service=_Voice(), work_dir=tmp_path,
+    )
+    result = session.process_recording(tmp_path / "empty.wav")
+    assert result.continue_running is True
+    assert result.recoverable_error == "audio_empty"
+    assert "vuelve a intentarlo" in result.response
+
+
+def test_spoken_text_is_short_and_removes_visual_only_content():
+    visible = "\U0001f680 Resultado completo. Segundo dato. Tercer dato. Cuarto dato. `codigo` C:\\privado\\dato.txt"
+    spoken = SpeechTextNormalizer.normalize(visible)
+    assert "\U0001f680" not in spoken
+    assert "C:\\" not in spoken
+    assert "Cuarto" not in spoken
+    assert visible.startswith("\U0001f680")
+
+
+def test_contextual_transcript_correction_never_invents_home_action():
+    safe = ContextualTranscriptNormalizer.normalize(
+        STTResult("Daxter, cuentame un ciste", confidence=STTConfidence.HIGH)
+    )
+    ambiguous = ContextualTranscriptNormalizer.normalize(
+        STTResult("tiene la luz del acuario pequeno", confidence=STTConfidence.HIGH)
+    )
+    assert safe.text == "cuentame un chiste"
+    assert ambiguous.text == "tiene la luz del acuario pequeno"

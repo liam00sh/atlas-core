@@ -60,10 +60,14 @@ class VoiceService:
         intensity="media",
         play_audio=True,
         queue_audio=False,
+        timings=None,
     ) -> SynthesisResult:
+        timings = timings if isinstance(timings, dict) else {}
+        resolve_started = time.perf_counter()
         identity = AssistantIdentity(identity)
         clean_text = self.clean_console_text(text)
         requested = requested_voice_id or self.preferred_voice(identity, preferences)
+        timings["resolve"] = round((time.perf_counter() - resolve_started) * 1000, 3)
         if not clean_text:
             return SynthesisResult(False, None, requested, "none", "No hay texto reproducible.", requested_voice_id=requested)
 
@@ -81,6 +85,7 @@ class VoiceService:
             if provider is None or not self._is_voice_available(definition):
                 continue
             output_path = self._build_output_path(definition.voice_id)
+            synthesis_started = time.perf_counter()
             raw = provider.synthesize(SynthesisRequest(
                 text=clean_text,
                 voice_id=definition.voice_id,
@@ -93,6 +98,7 @@ class VoiceService:
                 voice_profile_id=definition.provider_voice_id,
                 profile_version=str(definition.metadata.get("profile_version", "1.0.0")),
             ))
+            timings["synthesis"] = round((time.perf_counter() - synthesis_started) * 1000, 3)
             if not raw.success:
                 failures.append(f"{definition.voice_id}: {raw.error or 'fallo de síntesis'}")
                 continue
@@ -111,15 +117,18 @@ class VoiceService:
                 intensity=raw.intensity or intensity,
             )
             if play_audio and result.output_path is not None:
+                playback_started = time.perf_counter()
                 if queue_audio:
                     self.playback_queue.enqueue(result.output_path)
                 elif not self.player.play(result.output_path):
+                    timings["playback"] = round((time.perf_counter() - playback_started) * 1000, 3)
                     return SynthesisResult(
                         False, result.output_path, result.voice_id, result.provider_id,
                         "No se pudo reproducir el WAV.", requested,
                         result.fallback_used, result.selection_reason,
                         result.cache_hit, result.latency_ms, result.emotion, result.intensity,
                     )
+                timings["playback"] = round((time.perf_counter() - playback_started) * 1000, 3)
             return result
         detail = "; ".join(failures) if failures else "ninguna voz local compatible está disponible"
         return SynthesisResult(

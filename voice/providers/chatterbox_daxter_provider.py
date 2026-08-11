@@ -18,6 +18,7 @@ import wave
 
 from voice.models import SynthesisRequest, SynthesisResult
 from voice.providers.base_tts_provider import BaseTTSProvider
+from voice.config import VOICE_PROVIDER_TIMEOUT_SECONDS
 
 
 logger = logging.getLogger(__name__)
@@ -34,7 +35,8 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         reference_path: Path | None = None,
         worker_command: list[str] | None = None,
         cache_dir: Path | None = None,
-        timeout_seconds: float = 120.0,
+        timeout_seconds: float = VOICE_PROVIDER_TIMEOUT_SECONDS,
+        postprocess: bool = True,
     ) -> None:
         root = Path(__file__).resolve().parents[2]
         self.profile_path = Path(profile_path or root / "voice_profiles" / "daxter_es_jak2.json")
@@ -54,6 +56,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             self.worker_command = [sys.executable, str(root / "tools" / "chatterbox_worker.py")]
         self.cache_dir = Path(cache_dir or os.getenv("ATLAS_TTS_CACHE_DIR", root / "runtime" / "voice" / "cache"))
         self.timeout_seconds = timeout_seconds
+        self.postprocess = bool(postprocess)
         self._process: subprocess.Popen[str] | None = None
         self._lock = threading.RLock()
 
@@ -71,14 +74,14 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
     def supports_voice(self, provider_voice_id: str) -> bool:
         return provider_voice_id == self.profile["profile_id"]
 
-    @staticmethod
-    def _cache_key(request: SynthesisRequest) -> str:
+    def _cache_key(self, request: SynthesisRequest) -> str:
         payload = {
             "text": " ".join(request.text.split()),
             "voice": request.voice_profile_id or request.provider_voice_id,
             "emotion": request.emotion,
             "intensity": request.intensity,
             "profile_version": request.profile_version,
+            "postprocess_version": "trim-fade-v1" if self.postprocess else "none",
         }
         encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
@@ -118,6 +121,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "emotion": request.emotion,
             "intensity": request.intensity,
             "seed": int(key[:8], 16),
+            "postprocess": self.postprocess,
         }
         try:
             response = self._request_worker(payload)

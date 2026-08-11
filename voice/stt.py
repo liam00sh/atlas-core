@@ -21,6 +21,15 @@ import wave
 logger = logging.getLogger(__name__)
 
 
+def _repair_utf8_mojibake(value: str) -> str:
+    if "\u00c3" not in value:
+        return value
+    try:
+        return value.encode("latin-1").decode("utf-8")
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return value
+
+
 class STTError(RuntimeError):
     def __init__(self, code: str, message: str) -> None:
         super().__init__(message)
@@ -69,6 +78,9 @@ class STTConfig:
     medium_no_speech: float = 0.65
     high_language_probability: float = 0.50
     medium_language_probability: float = 0.25
+    beam_size: int = 3
+    initial_prompt: str = ""
+    hotwords: str = "Atlas Daxter Telegram Home Assistant acuario"
 
     @classmethod
     def from_env(cls, env=None) -> "STTConfig":
@@ -83,6 +95,15 @@ class STTConfig:
             max_audio_seconds=float(values.get("ATLAS_STT_MAX_AUDIO_SECONDS", "180")),
             allow_model_download=str(values.get("ATLAS_STT_ALLOW_MODEL_DOWNLOAD", "false")).casefold() in {"1", "true", "yes", "on"},
             language_hint=(str(values.get("ATLAS_STT_LANGUAGE_HINT", "")).strip() or None),
+            beam_size=max(1, int(values.get("ATLAS_STT_BEAM_SIZE", "3"))),
+            initial_prompt=str(values.get(
+                "ATLAS_STT_INITIAL_PROMPT",
+                "",
+            )).strip(),
+            hotwords=str(values.get(
+                "ATLAS_STT_HOTWORDS",
+                "Atlas Daxter Telegram Home Assistant acuario",
+            )).strip(),
         )
 
 
@@ -233,6 +254,11 @@ class FasterWhisperSTTProvider(BaseSTTProvider):
 
     def __init__(self, config: STTConfig | None = None) -> None:
         self.config = config or STTConfig.from_env()
+        self._initial_prompt = (
+            self.config.initial_prompt
+            if str(os.environ.get("ATLAS_STT_INITIAL_PROMPT", "")).strip()
+            else ""
+        )
         self._model = None
         self._backend = resolve_stt_backend(self.config)
         self._model_source: Path | str | None = None
@@ -263,7 +289,14 @@ class FasterWhisperSTTProvider(BaseSTTProvider):
             model = self._get_model()
             segments_iter, info = model.transcribe(
                 str(path), language=language_hint or self.config.language_hint,
-                vad_filter=True, word_timestamps=True,
+                vad_filter=True,
+                vad_parameters={"min_silence_duration_ms": 350},
+                word_timestamps=True,
+                beam_size=self.config.beam_size,
+                temperature=0.0,
+                condition_on_previous_text=False,
+                initial_prompt=_repair_utf8_mojibake(self._initial_prompt) or None,
+                hotwords=self.config.hotwords or None,
             )
             segments = list(segments_iter)
         except (OSError, RuntimeError) as exc:
@@ -276,7 +309,14 @@ class FasterWhisperSTTProvider(BaseSTTProvider):
                 model = self._get_model()
                 segments_iter, info = model.transcribe(
                     str(path), language=language_hint or self.config.language_hint,
-                    vad_filter=True, word_timestamps=True,
+                    vad_filter=True,
+                    vad_parameters={"min_silence_duration_ms": 350},
+                    word_timestamps=True,
+                    beam_size=self.config.beam_size,
+                    temperature=0.0,
+                    condition_on_previous_text=False,
+                    initial_prompt=_repair_utf8_mojibake(self._initial_prompt) or None,
+                    hotwords=self.config.hotwords or None,
                 )
                 segments = list(segments_iter)
             except (OSError, RuntimeError) as cpu_exc:
