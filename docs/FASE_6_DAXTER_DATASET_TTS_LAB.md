@@ -1,6 +1,6 @@
 # Fase 6 — cierre del dataset Daxter y laboratorio TTS
 
-Estado: dataset cerrado; Ronda B resuelta por evaluación humana con B1 como configuración base ganadora; catálogo emocional y personalidad v1 construidos, ambos pendientes de validación humana. No se ha integrado de forma irreversible ninguna voz o personalidad en Atlas.
+Estado vigente (11 de agosto de 2026): dataset cerrado y validado; Ronda B resuelta con B1; las 38 evaluaciones emocionales y las 40 revisiones de personalidad están procesadas. PersonalityAdapter v2, TTS B1 local, STT local y el turno manual de voz para PC están integrados con fallback textual. No hay escucha continua ni wake-word.
 
 ## Evidencia del dataset
 
@@ -118,9 +118,13 @@ Normalizaciones rechazadas:
 
 Los resultados completos están en `ROUND_B_HUMAN_RESULTS.json`, `ROUND_B_HUMAN_RESULTS.md` y `ROUND_B_FINAL_DECISION.json` dentro del laboratorio local.
 
-## Sistema emocional provisional
+## Cierre humano del sistema emocional
 
-`voice_profiles/DAXTER_EMOTION_CATALOG.json` contiene las quince expresiones oficiales y sus estadísticas reales. El maestro aporta evidencia directa para catorce; `sonoliento` tiene cero muestras y cae de forma explícita a `cansado`. La intensidad usa un único eje parametrizado: 0,45 baja, 0,55 media y 0,65 alta; los extremos proceden de B1 y el punto medio queda pendiente de escucha.
+Las 38 filas puntuadas de `HUMAN_EMOTION_TEST.csv` se cruzaron con la clave ciega sin alterar la fuente (`SHA-256 d163d1ff99ed66fe15f9feb3ebe0666a3308254544c1c4c968bebd48b200e02e`). B1 con referencia diversa obtuvo 3,9130 en identidad, frente a 2,8000 de la estrategia experimental. La evaluación humana deja 7 emociones aprobadas (`neutral`, `picaro`, `sorprendido`, `emocionado`, `confiado`, `determinado`, `risa`), 7 en ajuste dirigido y `sonoliento` en fallback.
+
+`sonoliento` no hereda ya evidencia ficticia de `cansado`: hasta una comparación humana directa usa `neutral` baja. Las otras emociones no aprobadas también caen de forma segura a neutral. `EMOTION_MINI_ROUND_PLAN.json` limita la comprobación posterior a 16 WAV ciegos como máximo —dos por cada una de las ocho emociones— y exige 4/5 en identidad, emoción y naturalidad sin artefactos graves.
+
+`voice_profiles/DAXTER_EMOTION_CATALOG_FINAL.json` es el catálogo operativo. Conserva las quince expresiones oficiales, el estado humano de cada una y el fallback explícito; una ausencia de anomalías automáticas nunca equivale a aprobación.
 
 La capa `VoiceStyleSelector` resuelve emoción, intensidad, energía y fallbacks sin conocer el proveedor. `ChatterboxStyleAdapter` traduce después ese estilo a los únicos controles reales de V2. El fallo de referencia vuelve a la referencia diversa ganadora.
 
@@ -128,20 +132,43 @@ El laboratorio `voice_lab_emotions` contiene 38 WAV ciegos: dos estrategias de r
 
 La primera ejecución refrescó la caché oficial de Chatterbox desde Hugging Face antes de generar. No se subieron datos ni audios. El runner fuerza ahora `HF_HUB_OFFLINE=1` y `TRANSFORMERS_OFFLINE=1`; las repeticiones verificadas usaron sólo la caché local.
 
-## Personalidad conversacional v1
+## Personalidad conversacional v2
 
 El análisis de las 1.300 transcripciones está en `docs/DAXTER_PERSONALITY_ANALYSIS.md` y el perfil estructurado en `conversation/profiles/DAXTER_PERSONALITY_PROFILE.json`. El dataset respalda, entre otros, entusiasmo, impulsividad, dramatismo, lealtad, humor, ingenio, queja, fanfarronería, burla, sarcasmo, curiosidad y afecto; cada rasgo conserva conteo y `sample_id` de evidencia.
 
-`PersonalityAdapter` conserva literalmente la respuesta base de Atlas y sólo añade una marca breve original cuando el contexto lo permite. Privacidad, seguridad, conducción y emergencia fuerzan personalidad `low`; hechos, cifras, permisos, incertidumbre y resultado de acciones nunca se reescriben. No se usa el banco de diálogos del juego como motor y no se ha entrenado ningún LLM.
+Las 40 revisiones se procesaron sin alterar el CSV humano (`SHA-256 5388a081482ab1a5f428536586f4fb37be60938988a8eb6aa0565c61dd27507c`). La media fue 4,25 en identidad Daxter, 4,40 en naturalidad, 4,55 en humor, 4,475 en intensidad y 5,0 en conservación de información. `normal` queda como nivel predeterminado; `low` mantiene una microidentidad verbal cuando el contexto no es sensible; `high` permite un único remate contextual. Privacidad, seguridad, conducción y emergencia fuerzan salida sobria sin humor.
 
-El laboratorio `personality_lab` contiene 40 situaciones offline con respuesta base, respuesta Daxter, emoción, intensidad y nivel efectivo. La evaluación humana permanece vacía y separada de la escucha emocional.
+`PersonalityAdapter` v2 usa reglas, tipo de respuesta, canal, emoción, intensidad, historial inmediato y transformaciones estructurales limitadas. Las correcciones de REDACTED_f73137d930c3 se convirtieron en patrones —unión natural de cláusulas cortas, aperturas contextuales, menos repetición y coherencia entre léxico y emoción—, no en un banco de frases. No reproduce diálogos del dataset.
+
+`BaseResponse` separa texto factual, hechos, resultado de acción, incertidumbre, permisos y errores. `StyledResponse` contiene la presentación posterior. `FactPreservationValidator` rechaza una adaptación que pierda cifras, nombres o marcadores protegidos y vuelve determinísticamente al texto base. La misma `DaxterResponsePipeline` sirve CLI, Telegram y voz, con independencia de Ollama o de futuros proveedores.
+
+Los resultados completos están en `PERSONALITY_HUMAN_RESULTS.json` y `.md` dentro del laboratorio local; las reglas versionadas están en `conversation/profiles/DAXTER_PERSONALITY_RULES_V2.json`.
+
+## TTS, STT y turno manual de PC
+
+`BaseTTSProvider` sigue siendo el contrato común. `ChatterboxDaxterProvider` lee el perfil B1 congelado, inicia un worker persistente de Python 3.11 sólo al primer uso, fuerza modo offline y usa una caché cuya clave incluye texto normalizado, voz, emoción, intensidad y versión. `VoiceService` resuelve Daxter B1, luego un TTS español local alternativo configurado y finalmente texto. La cola y el reproductor exponen `stop_current_audio()` y `clear_queue()`.
+
+La prueba real generó un WAV B1 en 69.021 ms incluyendo carga inicial y recuperó la misma solicitud en 11 ms desde caché. Los WAV y la caché viven en `runtime/voice/`, fuera de Git.
+
+`BaseSTTProvider` y `FasterWhisperSTTProvider` reutilizan el modelo local `faster-whisper-small`: ofrece buen equilibrio para español y cabe en el PC objetivo; usa CUDA si el entorno compatible está disponible y cae a CPU `int8`. Nunca descarga modelos salvo habilitación explícita. En la prueba local CPU transcribió «Apaga atlas.» en 6.286 ms, con confianza de habla media; la orden sensible quedó en espera de confirmación y `Atlas.process` no fue llamado.
+
+Telegram `voice` y `audio` pasan por el mismo `AudioConverter` y `STTService`; no existe una segunda lógica STT. Los temporales se borran tras el turno. En PC, `tools/run_daxter_voice_pc.py` graba exclusivamente entre dos pulsaciones de Enter, muestra latencias de grabación, STT, Atlas, personalidad, TTS y total, y conserva texto si la voz falla.
+
+```powershell
+python tools/run_daxter_voice_pc.py --list-devices
+python tools/run_daxter_voice_pc.py --device "Nombre exacto de los cascos Bluetooth"
+```
+
+Variables necesarias: `ATLAS_CHATTERBOX_PYTHON`, `ATLAS_DAXTER_VOICE_LAB_ROOT` y `ATLAS_STT_MODEL_PATH`; `.env.example` documenta todas sin incluir rutas privadas.
+
+La arquitectura móvil futura será aplicación → detector local «Oye Daxter» → grabación → Atlas. No se transmitirá audio continuo: sólo el fragmento capturado después del wake-word. Esa escucha y el barge-in automático no están implementados en esta intervención.
 
 ## Límites y seguridad
 
 - El dataset, las referencias, los modelos y los WAV generados permanecen locales y están excluidos por `.gitignore`.
-- Los scripts no integran aún ningún motor en Atlas y no cambian su fallback de voz.
+- La integración es reversible y desacoplada; cualquier fallo de STT/TTS conserva el canal textual y no bloquea Atlas.
 - No se aceptaron en nombre del usuario licencias o términos adicionales; por ello XTTS-v2 no se ejecutó.
-- B1 es ganador de Ronda B; no se declara aprobado todavía el sistema emocional ni la personalidad conversacional.
+- B1 sigue siendo el ganador; la personalidad está validada y el catálogo emocional conserva estados y fallbacks humanos por emoción.
 - El intento inicial contra `04_normalizados` se conserva separado como evidencia de raíz inválida; sus hashes no correspondían al maestro de 48 kHz.
 
 ## Verificación del código
