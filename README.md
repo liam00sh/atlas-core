@@ -136,6 +136,7 @@ python scripts/run_ai_benchmark.py
 Documentación técnica afectada:
 
 - `docs/FASE_6_DAXTER_DATASET_TTS_LAB.md`;
+- `docs/DAXTER_PERSONALITY_ANALYSIS.md`;
 - `docs/INVENTARIO_CAPACIDADES_ATLAS.md`;
 - `docs/HELP_PERMISSIONS_BY_CONTEXT.md`;
 - `docs/MONITORIZACION_Y_RECUPERACION.md`;
