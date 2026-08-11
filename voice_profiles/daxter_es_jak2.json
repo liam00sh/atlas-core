@@ -1,0 +1,43 @@
+﻿{
+  "profile_id": "daxter_es_jak2",
+  "version": "1.0.0",
+  "status": "round_b_human_winner_emotion_validation_pending",
+  "model": {
+    "package": "chatterbox-tts",
+    "version": "0.1.7",
+    "architecture": "Chatterbox Multilingual V2"
+  },
+  "winner": "B1",
+  "reference_strategy": "jak2_diverse",
+  "reference_file": "voice_lab_round_b/references/reference_daxter_jak2_diverse.wav",
+  "language_id": "es",
+  "parameters": {
+    "cfg_weight": 0.35,
+    "temperature": 0.8,
+    "repetition_penalty": 2.0,
+    "min_p": 0.05,
+    "top_p": 1.0
+  },
+  "exaggeration_policy": {
+    "neutral_or_confident": 0.45,
+    "expressive": 0.65
+  },
+  "accepted_inference_normalizations": [
+    "Jak→Yak",
+    "verbalización de fechas y números"
+  ],
+  "rejected_inference_normalizations": [
+    "Atlas→Átlas",
+    "Daxter→Dákster",
+    "Home Assistant→Joum Asístent",
+    "Telegram→Télegram"
+  ],
+  "seed_policy": "sha256(base_seed,candidate,battery,case_id); base_seed=20260809",
+  "provenance": {
+    "human_csv_sha256": "00f54cb95bffc8be670b65272b41490c5a41b42c9719d90fde49b7f74dfb30ba",
+    "review_mapping_digest": "93019d4c8d71bf452ef8e28c3b6376c0e191ad9e868b8d7c419e96ae5d2eb48b",
+    "decision_file": "voice_lab_round_b/ROUND_B_FINAL_DECISION.json",
+    "official_chatterbox_commit": "5de7a54aa4e5e2baadb0182dde554908b48b85c2",
+    "fine_tuning": "not_performed_no_official_stable_pipeline"
+  }
+}
