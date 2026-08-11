@@ -1,0 +1,4 @@
+# Copia este archivo como privacy_blocklist.txt y añade un término por línea.
+# El archivo real está ignorado y nunca debe contenerse en Git.
+PERSONA_EXTREMADAMENTE_SENSIBLE_DE_EJEMPLO
+ALIAS_PRIVADO_DE_EJEMPLO

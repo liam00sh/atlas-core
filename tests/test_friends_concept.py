@@ -16,11 +16,11 @@ def test_known_is_below_friendship_levels():
 
 def test_high_confidence_applies_automatically():
     r = repo()
-    REDACTED_f73137d930c3 = r.upsert_person("REDACTED_2c7b6821719d")
-    REDACTED_3a6d64c24cf8 = r.upsert_person("REDACTED_53b1fb446230 Vento Pérez")
+    Alex = r.upsert_person("Alex")
+    persona_ejemplo_06 = r.upsert_person("Zoe Vento Pérez")
     result = r.propose_or_apply_level_change(
-        owner_person_id=REDACTED_f73137d930c3.person_id,
-        target_person_id=REDACTED_3a6d64c24cf8.person_id,
+        owner_person_id=Alex.person_id,
+        target_person_id=persona_ejemplo_06.person_id,
         proposed_level=FriendshipLevel.CLOSE_FRIEND,
         confidence=0.91,
         source="conversation",
@@ -29,11 +29,11 @@ def test_high_confidence_applies_automatically():
 
 def test_medium_confidence_asks_user():
     r = repo()
-    REDACTED_f73137d930c3 = r.upsert_person("REDACTED_2c7b6821719d")
-    REDACTED_3a6d64c24cf8 = r.upsert_person("REDACTED_53b1fb446230 Vento Pérez")
+    Alex = r.upsert_person("Alex")
+    persona_ejemplo_06 = r.upsert_person("Zoe Vento Pérez")
     result = r.propose_or_apply_level_change(
-        owner_person_id=REDACTED_f73137d930c3.person_id,
-        target_person_id=REDACTED_3a6d64c24cf8.person_id,
+        owner_person_id=Alex.person_id,
+        target_person_id=persona_ejemplo_06.person_id,
         proposed_level=FriendshipLevel.FRIEND,
         confidence=0.70,
         source="conversation",
@@ -44,12 +44,12 @@ def test_friend_permission_requires_level_3_or_4():
     r = repo()
     with pytest.raises(PermissionError):
         r.grant_permission(
-            grantor_profile_id="REDACTED_1552db05a755",
+            grantor_profile_id="Carla",
             target_person_id="ana",
-            permission="home.light.REDACTED_1552db05a755_room",
-            scope="light.REDACTED_1552db05a755_room",
-            grantor_permissions={"home.light.REDACTED_1552db05a755_room"},
-            delegable_permissions={"home.light.REDACTED_1552db05a755_room"},
+            permission="home.light.Carla_room",
+            scope="light.Carla_room",
+            grantor_permissions={"home.light.Carla_room"},
+            delegable_permissions={"home.light.Carla_room"},
             friendship_level=FriendshipLevel.FRIEND,
             target_is_home=True,
             is_admin_permission=False,
@@ -60,12 +60,12 @@ def test_friend_permission_requires_home_presence():
     r = repo()
     with pytest.raises(PermissionError):
         r.grant_permission(
-            grantor_profile_id="REDACTED_1552db05a755",
+            grantor_profile_id="Carla",
             target_person_id="ana",
-            permission="home.light.REDACTED_1552db05a755_room",
-            scope="light.REDACTED_1552db05a755_room",
-            grantor_permissions={"home.light.REDACTED_1552db05a755_room"},
-            delegable_permissions={"home.light.REDACTED_1552db05a755_room"},
+            permission="home.light.Carla_room",
+            scope="light.Carla_room",
+            grantor_permissions={"home.light.Carla_room"},
+            delegable_permissions={"home.light.Carla_room"},
             friendship_level=FriendshipLevel.CLOSE_FRIEND,
             target_is_home=False,
             is_admin_permission=False,
@@ -76,7 +76,7 @@ def test_admin_permissions_are_never_delegated():
     r = repo()
     with pytest.raises(PermissionError):
         r.grant_permission(
-            grantor_profile_id="REDACTED_f73137d930c3",
+            grantor_profile_id="Alex",
             target_person_id="ana",
             permission="atlas.create_user",
             scope=None,

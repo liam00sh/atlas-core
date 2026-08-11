@@ -306,7 +306,7 @@ def test_pending_stt_state_is_isolated_by_session_and_expires(tmp_path):
 
 
 def test_gateway_routes_typed_stt_confirmation_to_same_core_once(tmp_path, gateway, linker):
-    link_user(linker, atlas_user="REDACTED_bc04a68d9192")
+    link_user(linker, atlas_user="Vega")
 
     class Service:
         def transcribe(self, *_args, **_kwargs):
@@ -322,4 +322,4 @@ def test_gateway_routes_typed_stt_confirmation_to_same_core_once(tmp_path, gatew
     first = gateway.handle(voice)
     confirmed = gateway.handle(make_message("sí", update_id=2, message_id=11))
     assert "He entendido" in first.text
-    assert confirmed.text == "REDACTED_bc04a68d9192:qué tiempo hace"
+    assert confirmed.text == "Vega:qué tiempo hace"

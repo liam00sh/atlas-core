@@ -6,7 +6,7 @@ from identity.identity_storage import IdentityStorage
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REAL_IDENTITY_DATA = (ROOT / "identity" / "data").resolve()
+REAL_IDENTITY_DATA = (ROOT / "examples" / "private_runtime" / "identity").resolve()
 REAL_USER_DATA = (ROOT / "data" / "users").resolve()
 
 
@@ -25,14 +25,14 @@ def test_default_identity_storage_is_a_temporary_copy():
 def test_default_identity_writes_never_touch_project_data():
     real_people_before = (REAL_IDENTITY_DATA / "people.json").read_bytes()
     storage = IdentityStorage()
-    REDACTED_f73137d930c3 = next(
+    Alex = next(
         person
         for person in storage.load_people()
-        if person.user_profile == "REDACTED_2c7b6821719d"
+        if person.user_profile == "Alex"
     )
 
-    REDACTED_f73137d930c3.register_encounter("2026-07-31T12:00:00")
-    assert storage.update_person(REDACTED_f73137d930c3)
+    Alex.register_encounter("2026-07-31T12:00:00")
+    assert storage.update_person(Alex)
 
     assert storage.people_file.parent != REAL_IDENTITY_DATA
     assert (REAL_IDENTITY_DATA / "people.json").read_bytes() == real_people_before

@@ -305,7 +305,7 @@ class AtlasFamilyMixin:
                 "Puedes probar con:\n"
                 "• Recuérdame mañana que llame al médico.\n"
                 "• Añade leche a la lista de la compra.\n"
-                "• Dile a REDACTED_2c7b6821719d que he llegado bien.\n"
+                "• Dile a Alex que he llegado bien.\n"
                 "• ¿Qué tiempo hará mañana?\n\n"
                 "Puedo guardar recuerdos en tu perfil, pero te pediré confirmación cuando sea "
                 "algo sensible o compartido. Cuando no entienda algo, te preguntaré antes de asumirlo."
@@ -487,7 +487,7 @@ class AtlasFamilyMixin:
         )
         if not any(_plain(marker) in plain for marker in markers):
             return False
-        if user.casefold() != "REDACTED_f73137d930c3":
+        if user.casefold() != "Alex":
             self._family_print("Ese diagnóstico contiene información técnica y está reservado al propietario de Atlas.")
             return True
         provider = getattr(self, "ai_provider", None)
@@ -507,7 +507,7 @@ class AtlasFamilyMixin:
             f"Ollama: {ollama}\n"
             "Internet: no comprobado; Atlas no hace búsquedas automáticas\n"
             f"Errores registrados hoy: {errors}\n"
-            f"Recordatorios pendientes de REDACTED_2c7b6821719d: {pending}\n\n"
+            f"Recordatorios pendientes de Alex: {pending}\n\n"
             "Si Ollama no está disponible, recordatorios, listas, mensajes y otras funciones deterministas pueden seguir funcionando."
         )
         return True

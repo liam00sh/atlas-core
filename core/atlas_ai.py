@@ -169,15 +169,15 @@ class AtlasAIMixin:
 
         Ejemplos reconocidos:
 
-            de qué estabas hablando con REDACTED_bc04a68d9192
-            de qué hablabas con REDACTED_bc04a68d9192
-            qué hablaste con REDACTED_bc04a68d9192
-            qué ha hablado REDACTED_bc04a68d9192
-            conversación de REDACTED_bc04a68d9192
-            conversación REDACTED_bc04a68d9192
-            contexto de REDACTED_bc04a68d9192
-            contexto REDACTED_bc04a68d9192
-            contecto REDACTED_bc04a68d9192
+            de qué estabas hablando con Vega
+            de qué hablabas con Vega
+            qué hablaste con Vega
+            qué ha hablado Vega
+            conversación de Vega
+            conversación Vega
+            contexto de Vega
+            contexto Vega
+            contecto Vega
 
         Devuelve:
             True:
@@ -384,7 +384,7 @@ class AtlasAIMixin:
             return []
 
         # Si varias referencias empiezan en la misma posición, se conserva
-        # únicamente la más específica. Así «REDACTED_77c013518681» no se reduce a «José».
+        # únicamente la más específica. Así «Zoe Soler» no se reduce a «José».
         best_length_by_start = {}
         for start, _, length, _, _ in matches:
             best_length_by_start[start] = max(
@@ -750,7 +750,7 @@ class AtlasAIMixin:
 
         - mi novia
         - hermano de mi novia
-        - hija de la tía de REDACTED_bc04a68d9192
+        - hija de la tía de Vega
 
         Devuelve las personas resultantes y la relación exterior.
         """
@@ -842,9 +842,9 @@ class AtlasAIMixin:
 
         Ejemplos:
             mi novia -> tu novia
-            tía de REDACTED_bc04a68d9192 -> la tía de REDACTED_8762331d93e2
-            hija de la tía de REDACTED_bc04a68d9192 ->
-                la hija de la tía de REDACTED_8762331d93e2
+            tía de Vega -> la tía de Vega Ferrer
+            hija de la tía de Vega ->
+                la hija de la tía de Vega Ferrer
         """
 
         if depth > 8:
@@ -998,7 +998,7 @@ class AtlasAIMixin:
             )
         )
 
-        # Una pregunta como «quién es REDACTED_bc04a68d9192» no es una consulta de parentesco.
+        # Una pregunta como «quién es Vega» no es una consulta de parentesco.
         if outer_relation is None:
             return None
 
@@ -1307,7 +1307,7 @@ class AtlasAIMixin:
         mentioned = self._find_entities_mentioned(user_message)
 
         # Cantidades de familiares:
-        # «¿Cuántos primos tengo?», «¿Cuántos primos tiene REDACTED_bc04a68d9192?»,
+        # «¿Cuántos primos tengo?», «¿Cuántos primos tiene Vega?»,
         # «¿Cuántos primos tiene mi novia?».
         count_match = re.fullmatch(
             rf"cuant(?:o|a|os|as)\s+"
@@ -1356,7 +1356,7 @@ class AtlasAIMixin:
         if household_answer is not None:
             return household_answer
 
-        # Relación directa con el interlocutor: «¿Quién es REDACTED_d296a64095dd para mí?».
+        # Relación directa con el interlocutor: «¿Quién es Vega para mí?».
         if len(mentioned) == 1 and any(marker in normalized for marker in ("para mi", "conmigo", "respecto a mi")):
             entity_type, entity = mentioned[0]
             speaker = self.people_manager.find_person_by_name(
@@ -1552,7 +1552,7 @@ class AtlasAIMixin:
 
             # Privacidad por defecto: una persona no recibe la ficha biográfica
             # completa de otra. Las fichas pueden contener cumpleaños exacto,
-            # empleo, domicilio, identidad de género o nombres anteriores.
+            # empleo, domicilio u otros datos personales especialmente sensibles.
             speaker_name = self._get_current_conversation_user()
             speaker = self.people_manager.find_person_by_name(speaker_name)
             same_person = bool(speaker is not None and speaker.id == getattr(entity, "id", None))
@@ -1580,7 +1580,7 @@ class AtlasAIMixin:
             ]
             keyword_groups = []
             if "donde " in normalized:
-                keyword_groups = ["nacio", "vive", "vivio", "ha vivido", "rumania", "REDACTED_b30b8594f679"]
+                keyword_groups = ["nacio", "vive", "vivio", "ha vivido", "rumania", "Provincia Ejemplo"]
             elif "cuando nacio" in normalized or "cumpleanos" in normalized:
                 keyword_groups = ["cumpleanos"]
             elif "trabaja" in normalized:
@@ -1631,9 +1631,9 @@ class AtlasAIMixin:
 
         Reglas:
         - «José» devuelve todos los José.
-        - «REDACTED_77c013518681» devuelve solo REDACTED_77c013518681.
-        - «REDACTED_fd70e667da43» devuelve REDACTED_fd70e667da43 y REDACTED_0a0e53340b75.
-        - «REDACTED_53b1fb446230» no coincide con REDACTED_bc04a68d9192.
+        - «Zoe Soler» devuelve solo Zoe Soler.
+        - «Zoe Soler» devuelve Zoe Soler y Zoe Vidal.
+        - «Diego» no coincide con Vega.
         - No se resuelven combinaciones no contiguas ni nombres parecidos.
         """
 
@@ -1659,7 +1659,7 @@ class AtlasAIMixin:
                 exact.append(person)
 
             # Los prefijos se calculan sobre el nombre principal. Esto permite
-            # que «REDACTED_fd70e667da43» incluya también «REDACTED_0a0e53340b75».
+            # que «Zoe Soler» incluya también «Zoe Vidal».
             primary_tokens = primary.split()
             if primary_tokens[:len(query_tokens)] == query_tokens:
                 prefix.append(person)
@@ -1671,7 +1671,7 @@ class AtlasAIMixin:
         exact = unique(exact)
 
         # Aunque exista una coincidencia exacta, un nombre puede ser prefijo
-        # completo de otra persona: «REDACTED_fd70e667da43» debe ofrecer ambas.
+        # completo de otra persona: «Zoe Soler» debe ofrecer ambas.
         if prefix:
             return sorted(prefix, key=lambda person: person.name.casefold())
         if exact:
@@ -2093,7 +2093,7 @@ class AtlasAIMixin:
         """
         Añade datos verificables de personas y animales mencionados.
 
-        Mencionar a REDACTED_bc04a68d9192, REDACTED_342ad0893cb2 o cualquier otra entidad no cambia quién está
+        Mencionar a Vega, Zoe o cualquier otra entidad no cambia quién está
         hablando. Este contexto permite responder relaciones familiares desde
         el punto de vista del interlocutor real.
         """
@@ -2179,7 +2179,7 @@ class AtlasAIMixin:
             elif not same_person:
                 lines.append(
                     "Privacidad: no incluyas biografía, cumpleaños, domicilio, "
-                    "empleo, identidad de género, REDACTED_2e31c44a7f7f ni otros datos "
+                    "empleo ni otros datos personales especialmente sensibles "
                     "personales de esta persona. Limítate a la relación verificada "
                     "con quien pregunta y a información expresamente pública."
                 )
@@ -3265,8 +3265,8 @@ class AtlasAIMixin:
             "indica que no tienes el dato verificado y ofrece consultarlo en Internet. "
             "No presentes una suposición como si fuera un hecho. "
             "No atribuyas posesión al interlocutor sin confirmación. Por ejemplo, si el contexto dice "
-            "que REDACTED_0f38c2ded26f pertenece a REDACTED_0392c3d1b4d3, escribe «REDACTED_0f38c2ded26f es el gato de REDACTED_0392c3d1b4d3», nunca "
-            "«REDACTED_0f38c2ded26f es tu gato de REDACTED_0392c3d1b4d3». Si el usuario solo presenta una foto o un nombre, "
+            "que Nube pertenece a Carla, escribe «Nube es el gato de Carla», nunca "
+            "«Nube es tu gato de Carla». Si el usuario solo presenta una foto o un nombre, "
             "no inventes parentescos, propietarios, lugares ni anécdotas."
         )
 

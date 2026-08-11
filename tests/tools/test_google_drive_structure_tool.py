@@ -26,7 +26,7 @@ def _manager(tmp_path: Path) -> ToolManager:
     return ToolManager(registry)
 
 
-def _context(user="REDACTED_2c7b6821719d", session="one", permission=True) -> ToolContext:
+def _context(user="Alex", session="one", permission=True) -> ToolContext:
     return ToolContext(
         requested_by=user,
         permissions={"google.drive.read"} if permission else set(),

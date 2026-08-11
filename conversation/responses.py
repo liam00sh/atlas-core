@@ -50,9 +50,9 @@ RESPONSES = {
     # -------------------------------------------------------------------------
     "hola": [
 
-        "Hola REDACTED_2c7b6821719d.",
+        "Hola Alex.",
 
-        "¡Hola REDACTED_2c7b6821719d!",
+        "¡Hola Alex!",
 
         "Hola, ¿qué tal?"
 

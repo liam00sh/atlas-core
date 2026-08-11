@@ -26,7 +26,7 @@ Ejemplo de recuerdo almacenado:
 
     {
         "id": "f06f3bc0-5da8-4a85-b8e8-f474d129ab32",
-        "owner": "REDACTED_2c7b6821719d",
+        "owner": "Alex",
         "content": "Mi coche es un Hyundai i30 N.",
         "visibility": "known",
         "created_at": "2026-07-11T20:35:42"
@@ -233,7 +233,7 @@ class MemoryManager:
 
             [
                 {
-                    "owner": "REDACTED_2c7b6821719d",
+                    "owner": "Alex",
                     "content": "Mi coche es...",
                     ...
                 }
@@ -336,7 +336,7 @@ class MemoryManager:
                     #
                     # Ejemplo:
                     #
-                    # "REDACTED_bc04a68d9192" o "información"
+                    # "Vega" o "información"
                     #
                     # en lugar de secuencias escapadas.
                     ensure_ascii=False,
@@ -776,16 +776,16 @@ class MemoryManager:
                 Lista de recuerdos autorizados.
 
         Ejemplo:
-            REDACTED_bc04a68d9192 pregunta qué sabe Atlas de REDACTED_2c7b6821719d.
+            Vega pregunta qué sabe Atlas de Alex.
 
             owner:
-                REDACTED_2c7b6821719d
+                Alex
 
             viewer:
-                REDACTED_bc04a68d9192
+                Vega
 
             viewer_profile:
-                Perfil de REDACTED_bc04a68d9192
+                Perfil de Vega
         """
 
         # Cargamos todos los recuerdos.

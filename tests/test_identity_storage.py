@@ -27,21 +27,21 @@ class IdentityStorageTests(unittest.TestCase):
             self.assertEqual(json.loads(path.read_text(encoding="utf-8")), [])
 
     def test_round_trip_entities(self):
-        person = Person(name="REDACTED_2c7b6821719d")
-        animal = Animal(name="REDACTED_a9baf529fb36", species="cat")
+        person = Person(name="Alex")
+        animal = Animal(name="Nube", species="cat")
         self.assertTrue(self.storage.add_person(person))
         self.assertTrue(self.storage.add_animal(animal))
-        self.assertEqual(self.storage.get_person_by_id(person.id).name, "REDACTED_2c7b6821719d")
-        self.assertEqual(self.storage.get_animal_by_id(animal.id).name, "REDACTED_a9baf529fb36")
+        self.assertEqual(self.storage.get_person_by_id(person.id).name, "Alex")
+        self.assertEqual(self.storage.get_animal_by_id(animal.id).name, "Nube")
 
     def test_rejects_duplicate_ids(self):
-        person = Person(name="REDACTED_2c7b6821719d")
+        person = Person(name="Alex")
         self.assertTrue(self.storage.add_person(person))
         self.assertFalse(self.storage.add_person(person))
 
     def test_delete_entity_removes_associated_relationships(self):
-        mother = Person(name="REDACTED_aebac53c46bb")
-        child = Person(name="REDACTED_2c7b6821719d")
+        mother = Person(name="Carla")
+        child = Person(name="Alex")
         self.storage.add_person(mother)
         self.storage.add_person(child)
         relationship = Relationship(
@@ -55,8 +55,8 @@ class IdentityStorageTests(unittest.TestCase):
         self.assertEqual(self.storage.load_relationships(), [])
 
     def test_rejects_relationship_with_missing_endpoint(self):
-        mother = Person(name="REDACTED_aebac53c46bb")
-        missing_child = Person(name="REDACTED_2c7b6821719d")
+        mother = Person(name="Carla")
+        missing_child = Person(name="Alex")
         self.storage.add_person(mother)
         relationship = Relationship(
             source_entity_id=mother.id,
@@ -70,8 +70,8 @@ class IdentityStorageTests(unittest.TestCase):
         self.assertEqual(self.storage.load_relationships(), [])
 
     def test_rejects_relationship_endpoint_with_wrong_entity_type(self):
-        mother = Person(name="REDACTED_aebac53c46bb")
-        child = Person(name="REDACTED_2c7b6821719d")
+        mother = Person(name="Carla")
+        child = Person(name="Alex")
         self.storage.add_person(mother)
         self.storage.add_person(child)
         relationship = Relationship(

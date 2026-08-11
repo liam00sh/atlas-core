@@ -33,7 +33,7 @@ def build_context(*, permission: bool = True) -> ToolContext:
         else set()
     )
     return ToolContext(
-        requested_by="REDACTED_2c7b6821719d",
+        requested_by="Alex",
         channel="test",
         permissions=permissions,
     )

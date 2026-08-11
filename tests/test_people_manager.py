@@ -18,29 +18,29 @@ class PeopleManagerTests(unittest.TestCase):
 
     def test_creates_and_finds_person_by_name_alias_and_profile(self):
         person = self.manager.create_user_person(
-            "REDACTED_46087f8d7037",
-            "REDACTED_2c7b6821719d",
-            aliases=["REDACTED_2c7b6821719d", "REDACTED_e97345c31916"],
+            "Alex Romero",
+            "Alex",
+            aliases=["Alex", "AlexAnterior"],
             grammatical_gender="masculine",
         )
         self.assertIsNotNone(person)
-        self.assertEqual(self.manager.find_person_by_name("REDACTED_c4f17676a981").id, person.id)
-        self.assertEqual(self.manager.find_person_by_user_profile("REDACTED_f73137d930c3").id, person.id)
+        self.assertEqual(self.manager.find_person_by_name("AlexAnterior").id, person.id)
+        self.assertEqual(self.manager.find_person_by_user_profile("Alex").id, person.id)
 
     def test_does_not_duplicate_obvious_person(self):
-        self.assertIsNotNone(self.manager.create_person("REDACTED_bc04a68d9192", aliases=["Sari"]))
-        self.assertIsNone(self.manager.create_person("REDACTED_7b9528898599"))
+        self.assertIsNotNone(self.manager.create_person("Vega", aliases=["Sari"]))
+        self.assertIsNone(self.manager.create_person("Vega"))
 
     def test_ambiguous_alias_returns_multiple_people(self):
-        self.manager.create_person("REDACTED_32885d880536", aliases=["REDACTED_342ad0893cb2"])
-        self.manager.create_person("REDACTED_e3b252570a2f", aliases=["REDACTED_342ad0893cb2"])
-        matches = self.manager.find_people_by_name("REDACTED_342ad0893cb2")
+        self.manager.create_person("Zoe Soler", aliases=["Zoe"])
+        self.manager.create_person("Zoe Vidal", aliases=["Zoe"])
+        matches = self.manager.find_people_by_name("Zoe")
         self.assertEqual(len(matches), 2)
-        self.assertIsNone(self.manager.find_person_by_name("REDACTED_342ad0893cb2"))
+        self.assertIsNone(self.manager.find_person_by_name("Zoe"))
 
     def test_creates_and_resolves_animal(self):
-        animal = self.manager.create_animal("REDACTED_c0240dd983fa", "cat", aliases=["REDACTED_0f38c2ded26f"])
-        entity_type, resolved = self.manager.resolve_entity("REDACTED_0f38c2ded26f", preferred_type="animal")
+        animal = self.manager.create_animal("Nube", "cat", aliases=["Nube"])
+        entity_type, resolved = self.manager.resolve_entity("Nube", preferred_type="animal")
         self.assertEqual(entity_type, "animal")
         self.assertEqual(resolved.id, animal.id)
 

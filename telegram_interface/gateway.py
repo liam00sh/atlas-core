@@ -308,7 +308,7 @@ class TelegramGateway:
                 "del contenido. Dime qué necesitas hacer con él y te guiaré sin inventar lo que contiene."
             )
         if message.media_type == "photo":
-            # Un pie como «Mira, este es REDACTED_0f38c2ded26f» describe la intención del usuario,
+            # Un pie como «Mira, este es Nube» describe la intención del usuario,
             # pero no demuestra visualmente identidad, propietario ni relaciones.
             if len(caption.split()) <= 12 and not caption.endswith("?"):
                 return GatewayResponse(

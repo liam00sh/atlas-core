@@ -245,20 +245,20 @@ def test_document_scope_isolated_by_owner_and_account(tmp_path: Path) -> None:
         client,
         root_folder_id=ROOT,
         target_folder_id=DOCS,
-        owner_user_id="REDACTED_2c7b6821719d",
-        drive_account_id="REDACTED_f73137d930c3-drive",
+        owner_user_id="Alex",
+        drive_account_id="Alex-drive",
     )
     allowed = index.search_chunks(
         "privacidad",
-        scope={"type": "global", "user_id": "REDACTED_2c7b6821719d", "drive_account_id": "REDACTED_f73137d930c3-drive"},
+        scope={"type": "global", "user_id": "Alex", "drive_account_id": "Alex-drive"},
     )
     wrong_user = index.search_chunks(
         "privacidad",
-        scope={"type": "global", "user_id": "REDACTED_bc04a68d9192", "drive_account_id": "REDACTED_f73137d930c3-drive"},
+        scope={"type": "global", "user_id": "Vega", "drive_account_id": "Alex-drive"},
     )
     wrong_account = index.search_chunks(
         "privacidad",
-        scope={"type": "global", "user_id": "REDACTED_2c7b6821719d", "drive_account_id": "other-drive"},
+        scope={"type": "global", "user_id": "Alex", "drive_account_id": "other-drive"},
     )
     assert allowed
     assert wrong_user == []

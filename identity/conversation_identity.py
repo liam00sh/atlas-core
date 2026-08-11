@@ -19,7 +19,7 @@ Descripción:
     Ejemplo:
 
         Sesión iniciada:
-            REDACTED_2c7b6821719d
+            Alex
 
         Persona que habla:
             María
@@ -27,7 +27,7 @@ Descripción:
     En ese caso:
 
         Usuario autenticado:
-            REDACTED_2c7b6821719d
+            Alex
 
         Persona actual:
             María
@@ -120,7 +120,7 @@ class ConversationIdentity:
         #
         # Ejemplo:
         #
-        # REDACTED_2c7b6821719d
+        # Alex
         #
         self.authenticated_user: str | None = None
 
@@ -132,15 +132,15 @@ class ConversationIdentity:
         #
         # Puede cambiar continuamente.
         #
-        # REDACTED_2c7b6821719d
+        # Alex
         #
         # ↓
         #
-        # REDACTED_bc04a68d9192
+        # Vega
         #
         # ↓
         #
-        # REDACTED_1b4b1a7f2126
+        # Diego
         #
         # ↓
         #
@@ -746,7 +746,7 @@ class ConversationIdentity:
             El usuario autenticado no concede sus permisos
             a la persona que está hablando.
 
-            Si la sesión pertenece a REDACTED_2c7b6821719d, pero quien habla
+            Si la sesión pertenece a Alex, pero quien habla
             es María, los permisos deben comprobarse como María.
         """
 

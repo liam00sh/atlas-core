@@ -15,7 +15,7 @@ Ejemplo de uso:
     from core import context
 
     context.atlas.get_user()
-    context.atlas.change_user("REDACTED_bc04a68d9192")
+    context.atlas.change_user("Vega")
 
 Importante:
     La variable atlas empieza con el valor None porque, al importar este

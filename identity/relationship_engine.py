@@ -28,25 +28,25 @@ Descripción:
 
     Ejemplos:
 
-        REDACTED_2c7b6821719d --partner--> REDACTED_bc04a68d9192
+        Alex --partner--> Vega
 
     puede generar automáticamente:
 
-        REDACTED_bc04a68d9192 --partner--> REDACTED_2c7b6821719d
+        Vega --partner--> Alex
 
 
-        REDACTED_1b4b1a7f2126 --brother--> REDACTED_bc04a68d9192
-
-    puede generar:
-
-        REDACTED_bc04a68d9192 --sister--> REDACTED_1b4b1a7f2126
-
-
-        REDACTED_2c7b6821719d --pet_owner--> Nala
+        Diego --brother--> Vega
 
     puede generar:
 
-        Nala --pet_of--> REDACTED_2c7b6821719d
+        Vega --sister--> Diego
+
+
+        Alex --pet_owner--> Nala
+
+    puede generar:
+
+        Nala --pet_of--> Alex
 
     RelationshipEngine no:
 
@@ -125,13 +125,6 @@ class RelationshipEngine:
     Todas las operaciones persistentes se delegan
     en IdentityStorage.
     """
-
-    # Política de presentación pública: estos vínculos se conservan
-    # internamente, pero se describen únicamente como primos.
-    _PUBLIC_COUSIN_ONLY_NAMES = {
-        frozenset({"REDACTED_46087f8d7037", "REDACTED_516d7f9914e7"}),
-        frozenset({"REDACTED_46087f8d7037", "REDACTED_a57a306cce03"}),
-    }
 
     def __init__(
         self,
@@ -1245,10 +1238,6 @@ class RelationshipEngine:
             else relationship.target_entity_id
         )
 
-        public_pair = frozenset({source_name, target_name})
-        if public_pair in self._PUBLIC_COUSIN_ONLY_NAMES:
-            return f"{source_name} y {target_name} son primos."
-
         label = get_relationship_label(
             relationship.relationship_type
         )
@@ -1554,15 +1543,6 @@ class RelationshipEngine:
         if source_entity is None or target_entity is None:
             return None
 
-        public_pair = frozenset({
-            source_entity.name,
-            target_entity.name,
-        })
-        if public_pair in self._PUBLIC_COUSIN_ONLY_NAMES:
-            return self._gendered_label(
-                "primo", "prima", source_entity, "primo o prima"
-            )
-
         direct = []
         for relationship in self.get_relationships_for_entity(
             entity_id=source_entity_id,
@@ -1762,12 +1742,12 @@ class RelationshipEngine:
 
         Ejemplo:
 
-            REDACTED_2c7b6821719d --partner--> REDACTED_bc04a68d9192
-            REDACTED_bc04a68d9192 --sister--> REDACTED_1b4b1a7f2126
+            Alex --partner--> Vega
+            Vega --sister--> Diego
 
         permite localizar el camino:
 
-            REDACTED_2c7b6821719d -> REDACTED_bc04a68d9192 -> REDACTED_1b4b1a7f2126
+            Alex -> Vega -> Diego
 
         Este método no crea relaciones nuevas.
         Solo devuelve caminos existentes.
@@ -1830,13 +1810,13 @@ class RelationshipEngine:
 
         Ejemplo:
 
-            REDACTED_2c7b6821719d es pareja de REDACTED_bc04a68d9192.
-            REDACTED_bc04a68d9192 es hermana de REDACTED_1b4b1a7f2126.
+            Alex es pareja de Vega.
+            Vega es hermana de Diego.
 
         Resultado:
 
-            REDACTED_1b4b1a7f2126 está relacionado con REDACTED_2c7b6821719d a través de REDACTED_bc04a68d9192:
-            REDACTED_bc04a68d9192 es pareja de REDACTED_2c7b6821719d y hermana de REDACTED_1b4b1a7f2126.
+            Diego está relacionado con Alex a través de Vega:
+            Vega es pareja de Alex y hermana de Diego.
 
         En esta primera versión se prioriza claridad
         sobre naturalidad lingüística perfecta.

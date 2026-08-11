@@ -556,7 +556,7 @@ class AtlasSocialMixin:
                 return True
             self._social_word_chain_last = word
             suggestions = {
-                "a": "avion", "b": "barco", "c": "casa", "d": "dado", "e": "REDACTED_d9078313c20e",
+                "a": "avion", "b": "barco", "c": "casa", "d": "dado", "e": "esfera",
                 "f": "faro", "g": "gato", "h": "hilo", "i": "isla", "j": "juego",
                 "l": "luna", "m": "mapa", "n": "nube", "o": "oso", "p": "puerta",
                 "r": "raton", "s": "sol", "t": "tren", "u": "universo", "v": "viento",

@@ -116,7 +116,7 @@ class TestMemoryRetriever(
         self.memories = [
             {
                 "id": "memory-car",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": (
                     "Mi coche es un Hyundai i30N Fastback."
                 ),
@@ -125,7 +125,7 @@ class TestMemoryRetriever(
             },
             {
                 "id": "memory-job",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": (
                     "Trabajo como administrador de sistemas Linux."
                 ),
@@ -134,16 +134,16 @@ class TestMemoryRetriever(
             },
             {
                 "id": "memory-partner",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": (
-                    "Mi pareja se llama REDACTED_bc04a68d9192."
+                    "Mi pareja se llama Vega."
                 ),
                 "visibility": "partner",
                 "created_at": "2026-07-13T20:00:00",
             },
             {
                 "id": "memory-computer",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": (
                     "Mi ordenador tiene una NVIDIA RTX 4060."
                 ),
@@ -161,7 +161,7 @@ class TestMemoryRetriever(
         )
 
         self.viewer_profile = {
-            "name": "REDACTED_2c7b6821719d",
+            "name": "Alex",
             "roles": [
                 "owner",
             ],
@@ -178,8 +178,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="¿Qué coche tengo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -202,8 +202,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="¿Qué vehículo tengo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -226,8 +226,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="¿En qué trabajo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -251,8 +251,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="¿Cómo se llama mi pareja?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -275,8 +275,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="¿Qué gráfica tiene mi PC?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -299,8 +299,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="¿Cuál es la capital de REDACTED_e7be6c6f309acia?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -319,8 +319,8 @@ class TestMemoryRetriever(
         self.assertEqual(
             self.retriever.find(
                 query="",
-                owner="REDACTED_2c7b6821719d",
-                viewer="REDACTED_2c7b6821719d",
+                owner="Alex",
+                viewer="Alex",
                 viewer_profile=self.viewer_profile,
             ),
             [],
@@ -329,8 +329,8 @@ class TestMemoryRetriever(
         self.assertEqual(
             self.retriever.find(
                 query="   ",
-                owner="REDACTED_2c7b6821719d",
-                viewer="REDACTED_2c7b6821719d",
+                owner="Alex",
+                viewer="Alex",
                 viewer_profile=self.viewer_profile,
             ),
             [],
@@ -345,8 +345,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="coche",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
             limit=0,
         )
@@ -366,7 +366,7 @@ class TestMemoryRetriever(
         repeated_memories = [
             {
                 "id": f"car-{index}",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": (
                     f"Mi coche número {index} es especial."
                 ),
@@ -391,8 +391,8 @@ class TestMemoryRetriever(
 
         results = retriever.find(
             query="¿Qué coche tengo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
             limit=3,
         )
@@ -412,8 +412,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="vehículo",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
             minimum_score=10.0,
         )
@@ -432,8 +432,8 @@ class TestMemoryRetriever(
 
         results = self.retriever.find(
             query="¿Qué coche tengo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -456,8 +456,8 @@ class TestMemoryRetriever(
 
         self.retriever.find(
             query="¿Qué coche tengo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -477,25 +477,25 @@ class TestMemoryRetriever(
         """
 
         profile = {
-            "name": "REDACTED_bc04a68d9192",
+            "name": "Vega",
             "roles": [],
         }
 
         self.retriever.find(
-            query="¿Qué coche tiene REDACTED_2c7b6821719d?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_bc04a68d9192",
+            query="¿Qué coche tiene Alex?",
+            owner="Alex",
+            viewer="Vega",
             viewer_profile=profile,
         )
 
         self.assertEqual(
             self.manager.last_owner,
-            "REDACTED_2c7b6821719d",
+            "Alex",
         )
 
         self.assertEqual(
             self.manager.last_viewer,
-            "REDACTED_bc04a68d9192",
+            "Vega",
         )
 
         self.assertIs(
@@ -520,11 +520,11 @@ class TestMemoryRetriever(
         )
 
         results = retriever.find(
-            query="¿Qué coche tiene REDACTED_2c7b6821719d?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_bc04a68d9192",
+            query="¿Qué coche tiene Alex?",
+            owner="Alex",
+            viewer="Vega",
             viewer_profile={
-                "name": "REDACTED_bc04a68d9192",
+                "name": "Vega",
                 "roles": [],
             },
         )
@@ -556,8 +556,8 @@ class TestMemoryRetriever(
 
         results = retriever.find(
             query="¿Qué coche tengo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -577,7 +577,7 @@ class TestMemoryRetriever(
         memories = [
             {
                 "id": "exact",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": (
                     "Mi coche es un Hyundai."
                 ),
@@ -586,7 +586,7 @@ class TestMemoryRetriever(
             },
             {
                 "id": "synonym",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": (
                     "Mi vehículo es gris."
                 ),
@@ -603,8 +603,8 @@ class TestMemoryRetriever(
 
         results = retriever.find(
             query="¿Qué coche tengo?",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -629,14 +629,14 @@ class TestMemoryRetriever(
         memories = [
             {
                 "id": "older",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": "Tengo un coche azul.",
                 "visibility": "known",
                 "created_at": "2026-07-10T10:00:00",
             },
             {
                 "id": "newer",
-                "owner": "REDACTED_2c7b6821719d",
+                "owner": "Alex",
                 "content": "Tengo un coche gris.",
                 "visibility": "known",
                 "created_at": "2026-07-12T10:00:00",
@@ -651,8 +651,8 @@ class TestMemoryRetriever(
 
         results = retriever.find(
             query="coche",
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_2c7b6821719d",
+            owner="Alex",
+            viewer="Alex",
             viewer_profile=self.viewer_profile,
         )
 
@@ -680,13 +680,13 @@ class TestMemoryRetriever(
         )
 
         self.assertIn(
-            "- Sobre REDACTED_2c7b6821719d: Mi coche es un Hyundai i30N Fastback.",
+            "- Sobre Alex: Mi coche es un Hyundai i30N Fastback.",
             text,
         )
 
         self.assertIn(
             (
-                "- Sobre REDACTED_2c7b6821719d: Trabajo como administrador "
+                "- Sobre Alex: Trabajo como administrador "
                 "de sistemas Linux."
             ),
             text,
@@ -754,11 +754,11 @@ class TestMemoryRetriever(
         text = self.retriever.format_for_prompt(
             [
                 {
-                    "owner": "REDACTED_2c7b6821719d",
+                    "owner": "Alex",
                     "content": "   ",
                 },
                 {
-                    "owner": "REDACTED_2c7b6821719d",
+                    "owner": "Alex",
                     "content": "Contenido válido.",
                 },
             ]
@@ -766,7 +766,7 @@ class TestMemoryRetriever(
 
         self.assertEqual(
             text,
-            "- Sobre REDACTED_2c7b6821719d: Contenido válido.",
+            "- Sobre Alex: Contenido válido.",
         )
 
 

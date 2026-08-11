@@ -28,7 +28,7 @@ Antes de escribir, la propuesta pasa a `processing`. Cada recuerdo confirmado co
 
 Los campos exclusivos conocidos, como color favorito o residencia, generan una propuesta de sustitución cuando ya existe un valor. Una corrección explícita localiza un único recuerdo y muestra el valor anterior y el nuevo. El borrado también exige una propuesta. Si hay varias coincidencias se conserva un estado `delete_selection` sin objetivo; frases como «El primero», «Borra el número 2» o «Me refiero al tercero» lo convierten en una propuesta concreta que todavía requiere confirmación.
 
-Las relaciones reconocibles, como «REDACTED_bc04a68d9192 es mi pareja», se encaminan a `RelationshipEngine` con `confirmed=True`, siempre que ambas personas puedan resolverse. No se duplican como texto libre.
+Las relaciones reconocibles, como «Vega es mi pareja», se encaminan a `RelationshipEngine` con `confirmed=True`, siempre que ambas personas puedan resolverse. No se duplican como texto libre.
 
 ## Permisos y riesgos
 

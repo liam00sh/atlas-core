@@ -8,5 +8,5 @@ def test_plain_normalizes_accents():
 
 def test_storage_roundtrip(tmp_path: Path):
     storage = UnderstandingStorage(tmp_path / "u.json")
-    storage.update(lambda data: data.setdefault("users", {}).update({"REDACTED_f73137d930c3": {"ok": True}}))
-    assert storage.snapshot()["users"]["REDACTED_f73137d930c3"]["ok"] is True
+    storage.update(lambda data: data.setdefault("users", {}).update({"Alex": {"ok": True}}))
+    assert storage.snapshot()["users"]["Alex"]["ok"] is True

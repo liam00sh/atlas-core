@@ -50,7 +50,7 @@ COMMAND = {
     "name": "estado",
     "description": "Resumen del estado del sistema.",
     "category": "Sistema",
-    "author": "REDACTED_2c7b6821719d",
+    "author": "Alex",
     "version": "1.1",
     "aliases": [
         "status",

@@ -124,8 +124,8 @@ class PeopleManager:
         En futuras versiones podrá utilizarse una clave adicional
         sin acentos para reconocer variantes como:
 
-            REDACTED_1b4b1a7f2126
-            Ruben
+            Diego
+            Diego
         """
 
         return str(

@@ -20,7 +20,7 @@ class AtlasDouble:
         self.results: list[Result] = []
 
     def get_user(self) -> str:
-        return "REDACTED_2c7b6821719d"
+        return "Alex"
 
     def execute_framework_tool(self, capability, *, arguments=None, channel="cli", metadata=None):
         self.calls.append((capability, arguments or {}, metadata or {}))

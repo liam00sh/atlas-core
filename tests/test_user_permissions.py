@@ -117,27 +117,27 @@ class FakeAtlasWithPermissions(
         """
         Crea dos usuarios:
 
-        REDACTED_2c7b6821719d:
+        Alex:
             Propietario general del sistema.
 
-        REDACTED_bc04a68d9192:
+        Vega:
             Usuario normal sin rol owner.
         """
 
-        self.current_user = "REDACTED_2c7b6821719d"
+        self.current_user = "Alex"
 
         self.users = FakeUserManager(
             profiles={
-                "REDACTED_2c7b6821719d": {
-                    "name": "REDACTED_2c7b6821719d",
+                "Alex": {
+                    "name": "Alex",
                     "roles": [
                         "owner",
                     ],
                     "relationships": {},
                 },
 
-                "REDACTED_bc04a68d9192": {
-                    "name": "REDACTED_bc04a68d9192",
+                "Vega": {
+                    "name": "Vega",
                     "roles": [],
                     "relationships": {},
                 },
@@ -203,36 +203,36 @@ class TestUserContextPermissions(
             FakeAtlasWithPermissions()
         )
 
-        REDACTED_f73137d930c3_context = (
+        Alex_context = (
             self.atlas._get_ai_context_for_user(
-                "REDACTED_2c7b6821719d"
+                "Alex"
             )
         )
 
-        REDACTED_f73137d930c3_context.add_message(
+        Alex_context.add_message(
             role="user",
-            content="Mensaje privado de REDACTED_2c7b6821719d.",
+            content="Mensaje privado de Alex.",
         )
 
-        REDACTED_f73137d930c3_context.add_message(
+        Alex_context.add_message(
             role="assistant",
-            content="Respuesta para REDACTED_2c7b6821719d.",
+            content="Respuesta para Alex.",
         )
 
-        REDACTED_7b9528898599_context = (
+        Vega_context = (
             self.atlas._get_ai_context_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
-        REDACTED_7b9528898599_context.add_message(
+        Vega_context.add_message(
             role="user",
-            content="Mensaje privado de REDACTED_bc04a68d9192.",
+            content="Mensaje privado de Vega.",
         )
 
-        REDACTED_7b9528898599_context.add_message(
+        Vega_context.add_message(
             role="assistant",
-            content="Respuesta para REDACTED_bc04a68d9192.",
+            content="Respuesta para Vega.",
         )
 
     def test_owner_role_can_manage_other_contexts(
@@ -244,7 +244,7 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_2c7b6821719d"
+            "Alex"
         )
 
         self.assertTrue(
@@ -260,7 +260,7 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_bc04a68d9192"
+            "Vega"
         )
 
         self.assertFalse(
@@ -275,12 +275,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_bc04a68d9192"
+            "Vega"
         )
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -295,7 +295,7 @@ class TestUserContextPermissions(
 
         self.assertEqual(
             messages[0]["content"],
-            "Mensaje privado de REDACTED_bc04a68d9192.",
+            "Mensaje privado de Vega.",
         )
 
     def test_normal_user_cannot_read_other_context(
@@ -307,12 +307,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_bc04a68d9192"
+            "Vega"
         )
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_2c7b6821719d"
+                "Alex"
             )
         )
 
@@ -329,12 +329,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_2c7b6821719d"
+            "Alex"
         )
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -349,7 +349,7 @@ class TestUserContextPermissions(
 
         self.assertEqual(
             messages[0]["content"],
-            "Mensaje privado de REDACTED_bc04a68d9192.",
+            "Mensaje privado de Vega.",
         )
 
     def test_contexts_are_kept_separate(
@@ -360,36 +360,36 @@ class TestUserContextPermissions(
         dentro del contexto de otro.
         """
 
-        REDACTED_f73137d930c3_messages = (
+        Alex_messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_2c7b6821719d"
+                "Alex"
             )
         )
 
-        REDACTED_7b9528898599_messages = (
+        Vega_messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
-        REDACTED_f73137d930c3_contents = {
+        Alex_contents = {
             message["content"]
-            for message in REDACTED_f73137d930c3_messages
+            for message in Alex_messages
         }
 
-        REDACTED_7b9528898599_contents = {
+        Vega_contents = {
             message["content"]
-            for message in REDACTED_7b9528898599_messages
+            for message in Vega_messages
         }
 
         self.assertNotIn(
-            "Mensaje privado de REDACTED_bc04a68d9192.",
-            REDACTED_f73137d930c3_contents,
+            "Mensaje privado de Vega.",
+            Alex_contents,
         )
 
         self.assertNotIn(
-            "Mensaje privado de REDACTED_2c7b6821719d.",
-            REDACTED_7b9528898599_contents,
+            "Mensaje privado de Alex.",
+            Vega_contents,
         )
 
     def test_returned_context_is_a_copy(
@@ -401,12 +401,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_2c7b6821719d"
+            "Alex"
         )
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -416,13 +416,13 @@ class TestUserContextPermissions(
 
         original_messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
         self.assertEqual(
             original_messages[0]["content"],
-            "Mensaje privado de REDACTED_bc04a68d9192.",
+            "Mensaje privado de Vega.",
         )
 
     def test_owner_can_clear_other_context(
@@ -434,12 +434,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_2c7b6821719d"
+            "Alex"
         )
 
         result = (
             self.atlas.clear_ai_context_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -449,7 +449,7 @@ class TestUserContextPermissions(
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -467,12 +467,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_bc04a68d9192"
+            "Vega"
         )
 
         result = (
             self.atlas.clear_ai_context_for_user(
-                "REDACTED_2c7b6821719d"
+                "Alex"
             )
         )
 
@@ -481,12 +481,12 @@ class TestUserContextPermissions(
         )
 
         self.atlas.set_current_user(
-            "REDACTED_2c7b6821719d"
+            "Alex"
         )
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_2c7b6821719d"
+                "Alex"
             )
         )
 
@@ -504,12 +504,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_bc04a68d9192"
+            "Vega"
         )
 
         result = (
             self.atlas.clear_ai_context_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -519,7 +519,7 @@ class TestUserContextPermissions(
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -537,7 +537,7 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_2c7b6821719d"
+            "Alex"
         )
 
         messages = (
@@ -560,12 +560,12 @@ class TestUserContextPermissions(
         """
 
         self.atlas.set_current_user(
-            "REDACTED_bc04a68d9192"
+            "Vega"
         )
 
         messages = (
             self.atlas.get_ai_context_messages_for_user(
-                "REDACTED_7b9528898599"
+                "Vega"
             )
         )
 
@@ -609,23 +609,23 @@ class TestMemoryAccessFiltering(
 
         self.memories = [
             {
-                "id": "REDACTED_f73137d930c3-public",
-                "owner": "REDACTED_2c7b6821719d",
-                "content": "Recuerdo público de REDACTED_2c7b6821719d.",
+                "id": "Alex-public",
+                "owner": "Alex",
+                "content": "Recuerdo público de Alex.",
                 "visibility": "public",
                 "created_at": "2026-07-10T10:00:00",
             },
             {
-                "id": "REDACTED_f73137d930c3-private",
-                "owner": "REDACTED_2c7b6821719d",
-                "content": "Recuerdo privado de REDACTED_2c7b6821719d.",
+                "id": "Alex-private",
+                "owner": "Alex",
+                "content": "Recuerdo privado de Alex.",
                 "visibility": "private",
                 "created_at": "2026-07-11T10:00:00",
             },
             {
-                "id": "REDACTED_7b9528898599-public",
-                "owner": "REDACTED_bc04a68d9192",
-                "content": "Recuerdo público de REDACTED_bc04a68d9192.",
+                "id": "Vega-public",
+                "owner": "Vega",
+                "content": "Recuerdo público de Vega.",
                 "visibility": "public",
                 "created_at": "2026-07-12T10:00:00",
             },
@@ -639,7 +639,7 @@ class TestMemoryAccessFiltering(
         )
 
         self.viewer_profile = {
-            "name": "REDACTED_bc04a68d9192",
+            "name": "Vega",
             "roles": [],
             "relationships": {},
         }
@@ -661,8 +661,8 @@ class TestMemoryAccessFiltering(
 
         results = (
             self.manager.get_accessible_memories(
-                owner="REDACTED_2c7b6821719d",
-                viewer="REDACTED_bc04a68d9192",
+                owner="Alex",
+                viewer="Vega",
                 viewer_profile=self.viewer_profile,
             )
         )
@@ -675,13 +675,13 @@ class TestMemoryAccessFiltering(
         self.assertEqual(
             result_ids,
             {
-                "REDACTED_f73137d930c3-public",
-                "REDACTED_f73137d930c3-private",
+                "Alex-public",
+                "Alex-private",
             },
         )
 
         self.assertNotIn(
-            "REDACTED_7b9528898599-public",
+            "Vega-public",
             result_ids,
         )
 
@@ -714,8 +714,8 @@ class TestMemoryAccessFiltering(
 
         results = (
             self.manager.get_accessible_memories(
-                owner="REDACTED_2c7b6821719d",
-                viewer="REDACTED_bc04a68d9192",
+                owner="Alex",
+                viewer="Vega",
                 viewer_profile=self.viewer_profile,
             )
         )
@@ -727,7 +727,7 @@ class TestMemoryAccessFiltering(
 
         self.assertEqual(
             results[0]["id"],
-            "REDACTED_f73137d930c3-public",
+            "Alex-public",
         )
 
     @patch(
@@ -748,8 +748,8 @@ class TestMemoryAccessFiltering(
 
         results = (
             self.manager.get_accessible_memories(
-                owner="REDACTED_2c7b6821719d",
-                viewer="REDACTED_bc04a68d9192",
+                owner="Alex",
+                viewer="Vega",
                 viewer_profile=self.viewer_profile,
             )
         )
@@ -777,8 +777,8 @@ class TestMemoryAccessFiltering(
 
         results = (
             self.manager.get_accessible_memories(
-                owner="REDACTED_2c7b6821719d",
-                viewer="REDACTED_bc04a68d9192",
+                owner="Alex",
+                viewer="Vega",
                 viewer_profile=self.viewer_profile,
             )
         )
@@ -805,8 +805,8 @@ class TestMemoryAccessFiltering(
         )
 
         self.manager.get_accessible_memories(
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_bc04a68d9192",
+            owner="Alex",
+            viewer="Vega",
             viewer_profile=self.viewer_profile,
         )
 
@@ -818,7 +818,7 @@ class TestMemoryAccessFiltering(
                 current_call.kwargs[
                     "viewer"
                 ],
-                "REDACTED_bc04a68d9192",
+                "Vega",
             )
 
     @patch(
@@ -838,8 +838,8 @@ class TestMemoryAccessFiltering(
         )
 
         self.manager.get_accessible_memories(
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_bc04a68d9192",
+            owner="Alex",
+            viewer="Vega",
             viewer_profile=self.viewer_profile,
         )
 
@@ -871,8 +871,8 @@ class TestMemoryAccessFiltering(
         )
 
         self.manager.get_accessible_memories(
-            owner="REDACTED_2c7b6821719d",
-            viewer="REDACTED_bc04a68d9192",
+            owner="Alex",
+            viewer="Vega",
             viewer_profile=self.viewer_profile,
         )
 
@@ -892,8 +892,8 @@ class TestMemoryAccessFiltering(
         self.assertEqual(
             received_ids,
             {
-                "REDACTED_f73137d930c3-public",
-                "REDACTED_f73137d930c3-private",
+                "Alex-public",
+                "Alex-private",
             },
         )
 
@@ -915,8 +915,8 @@ class TestMemoryAccessFiltering(
 
         results = (
             self.manager.get_accessible_memories(
-                owner="REDACTED_f73137d930c3",
-                viewer="REDACTED_bc04a68d9192",
+                owner="Alex",
+                viewer="Vega",
                 viewer_profile=self.viewer_profile,
             )
         )
@@ -941,7 +941,7 @@ class TestMemoryAccessFiltering(
         results = (
             self.manager.get_accessible_memories(
                 owner="UsuarioInexistente",
-                viewer="REDACTED_bc04a68d9192",
+                viewer="Vega",
                 viewer_profile=self.viewer_profile,
             )
         )

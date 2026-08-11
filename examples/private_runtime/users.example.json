@@ -1,0 +1,79 @@
+{
+  "main_user": "Alex",
+  "profiles": {
+    "alex": {
+      "name": "Alex",
+      "grammatical_gender": "masculine",
+      "pronouns": {
+        "subject": "?l",
+        "object": "lo",
+        "indirect_object": "le",
+        "possessive": "su"
+      },
+      "roles": [
+        "owner",
+        "admin"
+      ],
+      "relationships": {
+        "partner_of": [
+          "Vega"
+        ],
+        "family_of": [
+          "Carla",
+          "Diego"
+        ],
+        "known_of": [
+          "Vega",
+          "Carla",
+          "Diego"
+        ]
+      }
+    },
+    "vega": {
+      "name": "Vega",
+      "grammatical_gender": "feminine",
+      "pronouns": {
+        "subject": "ella",
+        "object": "la",
+        "indirect_object": "le",
+        "possessive": "su"
+      },
+      "roles": [
+        "partner",
+        "known"
+      ],
+      "relationships": {
+        "partner_of": [
+          "Alex"
+        ],
+        "family_of": [],
+        "known_of": [
+          "Alex"
+        ]
+      }
+    },
+    "carla": {
+      "name": "Carla",
+      "grammatical_gender": "feminine",
+      "roles": [
+        "family",
+        "known"
+      ],
+      "relationships": {
+        "family_of": [
+          "Alex"
+        ],
+        "known_of": [
+          "Alex"
+        ]
+      }
+    },
+    "visitor": {
+      "name": "Visitante Ejemplo",
+      "roles": [
+        "guest"
+      ],
+      "relationships": {}
+    }
+  }
+}

@@ -23,7 +23,7 @@ def main() -> int:
     parser.add_argument(
         "text",
         nargs="?",
-        default="Hola, REDACTED_2c7b6821719d. La voz alternativa de Atlas está funcionando.",
+        default="Hola, Alex. La voz alternativa de Atlas está funcionando.",
     )
     args = parser.parse_args()
 

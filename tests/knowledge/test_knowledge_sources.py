@@ -18,20 +18,20 @@ from tools.google_drive_semantic import SemanticChunkMatch
 def test_memory_source_preserves_authorization_metadata():
     class Retriever:
         def find(self, query, **kwargs):
-            assert kwargs["owner"] == kwargs["viewer"] == "REDACTED_2c7b6821719d"
+            assert kwargs["owner"] == kwargs["viewer"] == "Alex"
             return [{
-                "id": "m1", "owner": "REDACTED_2c7b6821719d", "content": "Prefiere trabajo local",
+                "id": "m1", "owner": "Alex", "content": "Prefiere trabajo local",
                 "visibility": "private", "confirmed": True, "relevance_score": 4,
             }]
 
-    items = list(MemoryKnowledgeSource(Retriever(), lambda _: {"roles": ["owner"]}).retrieve("local", user_id="REDACTED_2c7b6821719d", limit=3))
+    items = list(MemoryKnowledgeSource(Retriever(), lambda _: {"roles": ["owner"]}).retrieve("local", user_id="Alex", limit=3))
     assert items[0].source_type == "memory"
     assert items[0].verified is True
     assert items[0].metadata["visibility"] == "private"
 
 
 def test_identity_source_returns_person_and_verified_relationship():
-    person = SimpleNamespace(id="p1", name="REDACTED_bc04a68d9192", aliases=[], summary="Colabora", status="user")
+    person = SimpleNamespace(id="p1", name="Vega", aliases=[], summary="Colabora", status="user")
     relationship = SimpleNamespace(
         id="r1", source_entity_id="p1", target_entity_id="p2",
         relationship_type="partner", information_source="user",
@@ -40,7 +40,7 @@ def test_identity_source_returns_person_and_verified_relationship():
 
     class People:
         def get_people(self): return [person]
-        def find_person_by_name(self, name): return person if name == "REDACTED_bc04a68d9192" else None
+        def find_person_by_name(self, name): return person if name == "Vega" else None
 
     class Relationships:
         def get_relationships_for_entity(
@@ -53,9 +53,9 @@ def test_identity_source_returns_person_and_verified_relationship():
             return [relationship]
 
         def describe_relationship(self, item):
-            return "REDACTED_bc04a68d9192 es pareja de REDACTED_2c7b6821719d."
+            return "Vega es pareja de Alex."
 
-    items = list(IdentityKnowledgeSource(People(), Relationships()).retrieve("Que sabes sobre REDACTED_bc04a68d9192", user_id="REDACTED_2c7b6821719d", limit=5))
+    items = list(IdentityKnowledgeSource(People(), Relationships()).retrieve("Que sabes sobre Vega", user_id="Alex", limit=5))
     assert [item.source_type for item in items] == ["person", "relationship"]
     assert items[1].verified is True
 
@@ -71,8 +71,8 @@ def test_lexical_and_semantic_sources_preserve_document_provenance():
         def search(self, *args, **kwargs):
             return [SemanticChunkMatch(item, "Privacidad local", 0.9, 2)]
 
-    lexical = list(DriveIndexKnowledgeSource(Lexical()).retrieve("privacidad", user_id="REDACTED_2c7b6821719d", limit=3))[0]
-    semantic = list(SemanticKnowledgeSource(Semantic()).retrieve("privacidad", user_id="REDACTED_2c7b6821719d", limit=3))[0]
+    lexical = list(DriveIndexKnowledgeSource(Lexical()).retrieve("privacidad", user_id="Alex", limit=3))[0]
+    semantic = list(SemanticKnowledgeSource(Semantic()).retrieve("privacidad", user_id="Alex", limit=3))[0]
     assert lexical.metadata["url"] == semantic.metadata["url"]
     assert lexical.source_id == semantic.source_id == "doc"
 
@@ -80,18 +80,18 @@ def test_lexical_and_semantic_sources_preserve_document_provenance():
 def test_identity_source_uses_real_relationship_engine_contract(tmp_path):
     storage = IdentityStorage(tmp_path)
     people = PeopleManager(storage)
-    REDACTED_7b9528898599 = people.create_person("REDACTED_bc04a68d9192", summary="Colabora")
-    REDACTED_f73137d930c3 = people.create_person("REDACTED_2c7b6821719d")
+    alias_ejemplo_44_01 = people.create_person("Vega", summary="Colabora")
+    Alex = people.create_person("Alex")
 
-    assert REDACTED_7b9528898599 is not None
-    assert REDACTED_f73137d930c3 is not None
+    assert alias_ejemplo_44_01 is not None
+    assert Alex is not None
 
     relationships = RelationshipEngine(people, storage)
     created, _ = relationships.create_relationship(
-        source_entity_id=REDACTED_7b9528898599.id,
+        source_entity_id=alias_ejemplo_44_01.id,
         source_entity_type=PERSON_ENTITY,
         relationship_type=PARTNER,
-        target_entity_id=REDACTED_f73137d930c3.id,
+        target_entity_id=Alex.id,
         target_entity_type=PERSON_ENTITY,
         confirmed=True,
         create_inverse=False,
@@ -103,8 +103,8 @@ def test_identity_source_uses_real_relationship_engine_contract(tmp_path):
             people,
             relationships,
         ).retrieve(
-            "Que informacion tienes sobre REDACTED_bc04a68d9192",
-            user_id="REDACTED_2c7b6821719d",
+            "Que informacion tienes sobre Vega",
+            user_id="Alex",
             limit=5,
         )
     )

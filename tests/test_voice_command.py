@@ -8,7 +8,7 @@ from voice.preferences.manager import VoicePreferenceManager
 def isolated_manager(tmp_path, monkeypatch):
     manager = VoicePreferenceManager(
         storage_path=tmp_path / "preferences.json",
-        user_provider=lambda: "REDACTED_2c7b6821719d",
+        user_provider=lambda: "Alex",
     )
     monkeypatch.setattr(
         voice_command,

@@ -8,5 +8,5 @@
 - Añadido resolvedor recursivo de expresiones familiares.
 - Añadido soporte para cadenas de hasta ocho relaciones.
 - Añadidas pruebas para hermano y madre de la pareja.
-- Añadida prueba para hija de la tía de REDACTED_bc04a68d9192.
+- Añadida prueba para hija de la tía de Vega.
 - Añadidas pruebas de exclusión e indexación incremental.

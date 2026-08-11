@@ -5,7 +5,7 @@ def test_recognizes_natural_unified_questions():
     recognizer = KnowledgeIntentRecognizer()
     for text in (
         "¿Qué sabes sobre mi familia?",
-        "¿Qué información tienes sobre REDACTED_bc04a68d9192?",
+        "¿Qué información tienes sobre Vega?",
         "¿Cómo quiero que funcione la memoria de Atlas?",
         "¿Qué hemos decidido sobre la privacidad?",
         "Resume lo que sabes sobre la arquitectura de Atlas.",
@@ -33,7 +33,7 @@ def test_explicit_sensitive_question_is_marked_but_not_authorized():
 def test_recognizes_additional_natural_variants():
     recognizer = KnowledgeIntentRecognizer()
     for text in (
-        "Hablame de REDACTED_bc04a68d9192.",
+        "Hablame de Vega.",
         "Dime todo lo que recuerdas de mi familia.",
         "Cuentame lo que sabes acerca de la privacidad.",
         "Que recuerdas sobre el acceso a Internet?",

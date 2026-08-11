@@ -4,8 +4,8 @@ Incluye:
 
 - interlocutor temporal persistente por sesión Telegram;
 - separación de autenticación e interlocutor;
-- `Soy REDACTED_d296a64095dd, qué sabes de mí` dividido en identidad y consulta;
-- vuelta al propietario con `soy REDACTED_2c7b6821719d`, `he vuelto`, `ya estoy yo`, etc.;
+- `Soy Vega, qué sabes de mí` dividido en identidad y consulta;
+- vuelta al propietario con `soy Alex`, `he vuelto`, `ya estoy yo`, etc.;
 - consultas `quién soy`, `con quién hablo` y `en qué modo estás`;
 - saludo `¿estás?`;
 - desambiguación al saludar a una persona presente;

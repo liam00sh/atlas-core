@@ -10,8 +10,8 @@ from monitoring.models import Incident
 
 @dataclass(slots=True)
 class AffectedUserPolicy:
-    administrator_user_id: str = "REDACTED_f73137d930c3"
-    home_assistant_user_ids: tuple[str, ...] = ("REDACTED_f73137d930c3", "REDACTED_7b9528898599")
+    administrator_user_id: str = "Alex"
+    home_assistant_user_ids: tuple[str, ...] = ("Alex", "Vega")
 
 
 class NotificationRouter:
@@ -25,7 +25,7 @@ class NotificationRouter:
     ) -> None:
         self.send_private = send_private
         self.is_user_at_home = is_user_at_home or (lambda user_id: True)
-        self.has_capability = has_capability or (lambda user_id, capability: user_id == "REDACTED_f73137d930c3")
+        self.has_capability = has_capability or (lambda user_id, capability: user_id == "Alex")
         self.policy = policy or AffectedUserPolicy()
 
     def affected_users_for(self, source_id: str) -> set[str]:

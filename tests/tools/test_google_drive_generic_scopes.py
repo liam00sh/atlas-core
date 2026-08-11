@@ -49,7 +49,7 @@ class RootClient(InMemoryGoogleDriveClient):
 def _structure(tmp_path: Path):
     index = GoogleDriveStructureIndex(tmp_path / "structure.json")
     index.sync(
-        RootClient(), user_id="REDACTED_2c7b6821719d", drive_account_id="account",
+        RootClient(), user_id="Alex", drive_account_id="account",
         root_folder_id=ROOT, root_folder_name="Atlas Project",
     )
     return index, DriveNavigationService(index)
@@ -57,7 +57,7 @@ def _structure(tmp_path: Path):
 
 def _identity():
     return {
-        "user_id": "REDACTED_2c7b6821719d", "session_id": "session", "drive_account_id": "account",
+        "user_id": "Alex", "session_id": "session", "drive_account_id": "account",
         "root_folder_id": ROOT, "root_folder_name": "Atlas Project",
     }
 
@@ -117,10 +117,10 @@ def test_configured_technical_folder_stays_visible_but_is_not_traversed(tmp_path
         tmp_path / "structure.json", pruned_folder_names={"Carpeta cualquiera"}
     )
     structure.sync(
-        RootClient(), user_id="REDACTED_2c7b6821719d", drive_account_id="account",
+        RootClient(), user_id="Alex", drive_account_id="account",
         root_folder_id=ROOT, root_folder_name="Atlas Project",
     )
-    entries = structure.entries(user_id="REDACTED_2c7b6821719d", drive_account_id="account", root_folder_id=ROOT)
+    entries = structure.entries(user_id="Alex", drive_account_id="account", root_folder_id=ROOT)
     assert entries["any"].traversal_status == "excluded_by_policy"
     assert entries["any"].exclusion_reason == "technical_folder_name"
     assert "l1" not in entries
@@ -170,7 +170,7 @@ def test_syncing_another_scope_does_not_change_current_folder(tmp_path: Path) ->
     index = GoogleDriveDocumentIndex(tmp_path / "documents.json")
     index.sync_scope(RootClient(), root_folder_id=ROOT, target_folder_id="backups")
     assert navigation.state(**_identity()).current_folder_id == "pc"
-    assert structure.entries(user_id="REDACTED_2c7b6821719d", drive_account_id="account", root_folder_id=ROOT)
+    assert structure.entries(user_id="Alex", drive_account_id="account", root_folder_id=ROOT)
 
 
 def test_deep_parent_navigation_cannot_escape_root(tmp_path: Path) -> None:

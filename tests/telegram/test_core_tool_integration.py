@@ -18,7 +18,7 @@ from ai.context.context_manager import AIContextManager
 class FakeIdentityManager:
     def __init__(self, owner):
         self.owner = owner
-        self.values = {"REDACTED_2c7b6821719d": "daxter", "REDACTED_bc04a68d9192": "coco"}
+        self.values = {"Alex": "daxter", "Vega": "coco"}
     def get_active_identity_name(self):
         return self.values[self.owner.user]
     def change_identity(self, value, save_preference=True):
@@ -30,7 +30,7 @@ class FakeIdentityManager:
 
 class FakeAtlas:
     def __init__(self):
-        self.user = "REDACTED_2c7b6821719d"
+        self.user = "Alex"
         self.session_id = "cli:default"
         self.identity_manager = FakeIdentityManager(self)
         self.change_calls = []
@@ -45,7 +45,7 @@ class FakeAtlas:
         return True
 
 
-def context(user="REDACTED_bc04a68d9192", session_id="telegram:1:2"):
+def context(user="Vega", session_id="telegram:1:2"):
     return TelegramRequestContext(
         channel="telegram", atlas_user_id=user, session_id=session_id,
         telegram_user_id="1", chat_id="2", message_id=3,
@@ -59,16 +59,16 @@ def test_internal_personality_lookup_does_not_register_encounters():
     atlas = FakeAtlas()
     adapter = AtlasCoreAdapter(atlas)
 
-    assert adapter.active_personality("REDACTED_bc04a68d9192") == "coco"
-    assert atlas.change_calls == [("REDACTED_bc04a68d9192", False), ("REDACTED_2c7b6821719d", False)]
+    assert adapter.active_personality("Vega") == "coco"
+    assert atlas.change_calls == [("Vega", False), ("Alex", False)]
 
 
 def test_core_adapter_uses_normal_process_and_restores_global_state():
     atlas = FakeAtlas()
     adapter = AtlasCoreAdapter(atlas)
     response = adapter.process("hola", context())
-    assert response == "REDACTED_bc04a68d9192|telegram:1:2|hola"
-    assert atlas.user == "REDACTED_2c7b6821719d"
+    assert response == "Vega|telegram:1:2|hola"
+    assert atlas.user == "Alex"
     assert atlas.session_id == "cli:default"
     assert atlas.channel_request_context is None
 
@@ -76,30 +76,30 @@ def test_core_adapter_uses_normal_process_and_restores_global_state():
 def test_personality_change_is_persistent_per_user_and_restores_current_user():
     atlas = FakeAtlas()
     adapter = AtlasCoreAdapter(atlas)
-    assert adapter.change_personality("REDACTED_bc04a68d9192", "daxter") is True
-    assert atlas.identity_manager.values["REDACTED_bc04a68d9192"] == "daxter"
-    assert atlas.identity_manager.values["REDACTED_2c7b6821719d"] == "daxter"
-    assert atlas.user == "REDACTED_2c7b6821719d"
+    assert adapter.change_personality("Vega", "daxter") is True
+    assert atlas.identity_manager.values["Vega"] == "daxter"
+    assert atlas.identity_manager.values["Alex"] == "daxter"
+    assert atlas.user == "Alex"
 
 
 def test_local_tool_requires_permission_and_explicit_confirmation(tmp_path):
     storage = TelegramStorage(tmp_path / "state.json")
     linker = TelegramIdentityLinker(storage)
     code = linker.request_code(TelegramUser("1", "2"))
-    tool = TelegramAccountTool(linker, user_exists=lambda user: user == "REDACTED_2c7b6821719d")
+    tool = TelegramAccountTool(linker, user_exists=lambda user: user == "Alex")
     denied = tool.execute(
         tool.capabilities[0],
-        {"code": code, "atlas_user_id": "REDACTED_2c7b6821719d", "confirmed": True},
-        ToolContext(requested_by="REDACTED_bc04a68d9192", permissions=set()),
+        {"code": code, "atlas_user_id": "Alex", "confirmed": True},
+        ToolContext(requested_by="Vega", permissions=set()),
     )
     assert denied.success is False
     allowed = tool.execute(
         tool.capabilities[0],
-        {"code": code, "atlas_user_id": "REDACTED_2c7b6821719d", "confirmed": True},
-        ToolContext(requested_by="REDACTED_2c7b6821719d", permissions={"telegram.admin_link"}),
+        {"code": code, "atlas_user_id": "Alex", "confirmed": True},
+        ToolContext(requested_by="Alex", permissions={"telegram.admin_link"}),
     )
     assert allowed.success is True
-    assert allowed.data == {"atlas_user_id": "REDACTED_2c7b6821719d", "linked": True}
+    assert allowed.data == {"atlas_user_id": "Alex", "linked": True}
 
 
 def test_local_tool_rejects_missing_confirmation(tmp_path):
@@ -120,7 +120,7 @@ def test_tool_context_uses_telegram_channel_and_permission_intersection():
     atlas.get_name = lambda: "Daxter"
     atlas.can_use_tools = lambda: True
     atlas.can_access_internet = lambda: False
-    atlas.channel_request_context = context("REDACTED_2c7b6821719d")
+    atlas.channel_request_context = context("Alex")
     adapter = AtlasToolAdapter(
         ToolManager(ToolRegistry()),
         permission_resolver=lambda _atlas: {"telegram.use", "memory.read", "google.drive.read"},
@@ -133,21 +133,21 @@ def test_tool_context_uses_telegram_channel_and_permission_intersection():
 
 def test_telegram_authenticated_identity_cannot_switch_atlas_user():
     class GuardedAtlas(AtlasUsersMixin):
-        channel_request_context = context("REDACTED_2c7b6821719d")
-        def get_user(self): return "REDACTED_2c7b6821719d"
-        def get_main_user(self): return "REDACTED_2c7b6821719d"
+        channel_request_context = context("Alex")
+        def get_user(self): return "Alex"
+        def get_main_user(self): return "Alex"
     atlas = GuardedAtlas()
-    assert atlas.change_user("REDACTED_bc04a68d9192") is False
+    assert atlas.change_user("Vega") is False
 
 
 def test_telegram_non_main_user_cannot_return_to_main_user():
     class GuardedAtlas(AtlasUsersMixin):
-        channel_request_context = context("REDACTED_bc04a68d9192")
-        def get_user(self): return "REDACTED_bc04a68d9192"
-        def get_main_user(self): return "REDACTED_2c7b6821719d"
+        channel_request_context = context("Vega")
+        def get_user(self): return "Vega"
+        def get_main_user(self): return "Alex"
     atlas = GuardedAtlas()
     assert atlas.return_to_main_user() is None
-    assert atlas.get_user() == "REDACTED_bc04a68d9192"
+    assert atlas.get_user() == "Vega"
 
 
 def test_pending_confirmations_are_isolated_by_telegram_session():
@@ -164,26 +164,26 @@ def test_pending_confirmations_are_isolated_by_telegram_session():
             else:
                 print("pending" if self.confirmations.pending_confirmation else "empty")
     adapter = AtlasCoreAdapter(SessionAtlas())
-    assert adapter.process("create", context("REDACTED_2c7b6821719d", "telegram:a")) == "created"
-    assert adapter.process("check", context("REDACTED_2c7b6821719d", "telegram:b")) == "empty"
-    assert adapter.process("check", context("REDACTED_2c7b6821719d", "telegram:a")) == "pending"
+    assert adapter.process("create", context("Alex", "telegram:a")) == "created"
+    assert adapter.process("check", context("Alex", "telegram:b")) == "empty"
+    assert adapter.process("check", context("Alex", "telegram:a")) == "pending"
 
 
 def test_ai_context_is_isolated_from_cli_and_other_telegram_sessions():
     class SessionAtlas(FakeAtlas):
         def __init__(self):
             super().__init__()
-            self.ai_contexts = {"REDACTED_f73137d930c3": AIContextManager()}
+            self.ai_contexts = {"Alex": AIContextManager()}
             self.ai_context_max_messages = 10
         def process(self, text):
             current = self.ai_contexts[self.user.casefold()]
             print(len(current.messages))
             current.add_message("user", text)
     atlas = SessionAtlas()
-    cli_context = atlas.ai_contexts["REDACTED_f73137d930c3"]
+    cli_context = atlas.ai_contexts["Alex"]
     adapter = AtlasCoreAdapter(atlas)
-    assert adapter.process("one", context("REDACTED_2c7b6821719d", "telegram:a")) == "0"
-    assert adapter.process("two", context("REDACTED_2c7b6821719d", "telegram:a")) == "1"
-    assert adapter.process("other", context("REDACTED_2c7b6821719d", "telegram:b")) == "0"
-    assert atlas.ai_contexts["REDACTED_f73137d930c3"] is cli_context
+    assert adapter.process("one", context("Alex", "telegram:a")) == "0"
+    assert adapter.process("two", context("Alex", "telegram:a")) == "1"
+    assert adapter.process("other", context("Alex", "telegram:b")) == "0"
+    assert atlas.ai_contexts["Alex"] is cli_context
     assert cli_context.messages == []

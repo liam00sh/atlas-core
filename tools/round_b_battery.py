@@ -17,7 +17,7 @@ ORIGINAL_EMOTIONS = {
 
 CORRECTED_BATTERY = (
     ("01_neutral", "Atlas está listo. Todo funciona con normalidad.", "neutral"),
-    ("02_sonriente", "Hola REDACTED_2c7b6821719d. Me alegra verte por aquí.", "sonriente"),
+    ("02_sonriente", "Hola Alex. Me alegra verte por aquí.", "sonriente"),
     ("03_travieso", "Je, je. Seguro que este botón no hace nada peligroso.", "travieso"),
     ("04_sorprendido", "¡Qué! ¿Eso sí que no me lo esperaba?", "sorprendido"),
     ("05_emocionado", "¡Vamos, Jak! ¡Esta aventura acaba de empezar!", "emocionado"),
@@ -27,10 +27,10 @@ CORRECTED_BATTERY = (
     ("09_confiado", "Tranquilo. Lo tengo todo bajo control.", "confiado"),
     ("10_determinado", "No nos rendiremos. Encontraremos una salida.", "determinado"),
     ("11_jugueton", "A que no me pillas, Jak. ¡Vamos, inténtalo!", "travieso"),
-    ("12_numeros_nombres", "REDACTED_2c7b6821719d y REDACTED_bc04a68d9192 probarán Atlas el nueve de agosto de dos mil veintiséis, a las dieciocho cuarenta y cinco, con mil trescientas muestras.", "neutral"),
+    ("12_numeros_nombres", "Alex y Vega probarán Atlas el nueve de agosto de dos mil veintiséis, a las dieciocho cuarenta y cinco, con mil trescientas muestras.", "neutral"),
     ("13_larga", "Atlas procesa la petición localmente y conserva los permisos del núcleo. Si la voz principal falla, utiliza una alternativa española sin repetir acciones ni ocultar el error.", "neutral"),
     ("14_atlas", "Atlas está listo.", "neutral"),
-    ("15_hola", "Hola, REDACTED_2c7b6821719d.", "sonriente"),
+    ("15_hola", "Hola, Alex.", "sonriente"),
     ("16_jak_espera", "Jak, espera.", "determinado"),
     ("17_espera", "Espera, espera.", "asustado"),
     ("18_oye_atlas", "Oye Atlas, tengo una idea.", "curioso"),

@@ -80,16 +80,16 @@ Evidencias:
 
 Resultados representativos:
 
-- `¿Quién soy?` -> identifica a REDACTED_bc04a68d9192 desde el perfil autenticado.
+- `¿Quién soy?` -> identifica a Vega desde el perfil autenticado.
 - `¿Quiénes son mis primos?` -> usa relaciones verificadas y no convierte a
-  REDACTED_2c7b6821719d en primo.
-- `He venido a casa de REDACTED_2c7b6821719d unos días` -> conserva ubicación temporal sin
+  Alex en primo.
+- `He venido a casa de Alex unos días` -> conserva ubicación temporal sin
   cambiar identidad, domicilio ni permisos.
-- `¿Dónde estoy ahora?` -> responde `casa de REDACTED_2c7b6821719d` como contexto temporal.
-- `¿Dónde vivo?` -> responde REDACTED_4cde1bf18b9c como domicilio habitual.
+- `¿Dónde estoy ahora?` -> responde `casa de Alex` como contexto temporal.
+- `¿Dónde vivo?` -> responde Provincia Ejemplo como domicilio habitual.
 - `Apaga la luz del acuario pequeño` -> deniega por presencia no verificada y
   nunca afirma que la luz se apagó.
-- `¿Cuál es la población actual de REDACTED_a77d7bb7adbf?` -> reconoce que falta un dato
+- `¿Cuál es la población actual de VillaEjemplo?` -> reconoce que falta un dato
   verificado y ofrece consulta web sin ejecutarla.
 - Overrides `fast`, `reasoning` y `deep` -> rutas verificadas.
 - Fallback -> `fast -> reasoning` tras una respuesta vacía simulada.

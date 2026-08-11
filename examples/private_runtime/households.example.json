@@ -1,0 +1,83 @@
+{
+  "households": [
+    {
+      "key": "casa_ejemplo",
+      "label": "la vivienda ficticia principal",
+      "people": [
+        "Alex Romero",
+        "Vega Ferrer"
+      ],
+      "animals": [
+        "Nube"
+      ],
+      "owners": [
+        "Alex Romero"
+      ],
+      "tenure": "vivienda ficticia",
+      "notes": [
+        "Datos exclusivamente sint?ticos."
+      ],
+      "aliases": [
+        "casa principal"
+      ],
+      "anonymous_companions": []
+    },
+    {
+      "key": "casa_familiar_ejemplo",
+      "label": "la vivienda ficticia familiar",
+      "people": [
+        "Carla Romero",
+        "Diego Romero"
+      ],
+      "animals": [
+        "Brisa"
+      ],
+      "owners": [
+        "Carla Romero"
+      ],
+      "tenure": "vivienda ficticia",
+      "notes": [],
+      "aliases": [
+        "casa familiar"
+      ],
+      "anonymous_companions": []
+    }
+  ],
+  "other_properties": {},
+  "family_group_order": [
+    [
+      "Carla Romero",
+      "Diego Romero"
+    ]
+  ],
+  "person_locations": [
+    {
+      "person": "Alex Romero",
+      "origin": "VillaEjemplo",
+      "habitual_residence": "VillaEjemplo",
+      "birth_place": "",
+      "previous_residences": [],
+      "summer_residence": "",
+      "aliases": [
+        "Alex"
+      ]
+    },
+    {
+      "person": "Vega Ferrer",
+      "origin": "VillaEjemplo",
+      "habitual_residence": "Provincia Ejemplo",
+      "birth_place": "",
+      "previous_residences": [],
+      "summer_residence": "",
+      "aliases": [
+        "Vega"
+      ]
+    }
+  ],
+  "preferred_person_names": {
+    "Alex Romero": "Alex",
+    "Vega Ferrer": "Vega",
+    "Carla Romero": "Carla",
+    "Diego Romero": "Diego"
+  }
+}

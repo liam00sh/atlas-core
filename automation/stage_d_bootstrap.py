@@ -20,7 +20,7 @@ def build_stage_d_permissions() -> AutomationPermissions:
     permissions = AutomationPermissions()
     permissions.set_user(
         UserAccess(
-            user_id="REDACTED_f73137d930c3",
+            user_id="Alex",
             roles={"owner", "administrator"},
             permissions={
                 "system.status.read",
@@ -35,7 +35,7 @@ def build_stage_d_permissions() -> AutomationPermissions:
     )
     permissions.set_user(
         UserAccess(
-            user_id="REDACTED_7b9528898599",
+            user_id="Vega",
             roles={"family"},
             permissions={
                 "system.status.read",
@@ -47,7 +47,7 @@ def build_stage_d_permissions() -> AutomationPermissions:
     )
     permissions.set_user(
         UserAccess(
-            user_id="REDACTED_6915771be1c5",
+            user_id="Carla",
             roles={"family"},
             permissions={
                 "system.status.read",

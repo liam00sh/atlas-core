@@ -23,7 +23,7 @@ class ChatterboxStyleAdapter:
 
     @staticmethod
     def normalize_text(text: str) -> str:
-        """Aplica sólo las dos normalizaciones aceptadas por REDACTED_2c7b6821719d."""
+        """Aplica sólo las dos normalizaciones aceptadas por Alex."""
         result = re.sub(r"\bJak\b", "Yak", text, flags=re.IGNORECASE)
         replacements = {
             "el 9 de agosto de 2026": "el nueve de agosto de dos mil veintiséis",

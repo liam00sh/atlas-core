@@ -192,11 +192,11 @@ Los tests preexistentes ya cubren audio vacío/corrupto, duración, timeout, FFm
 - `check_stt_config.py --help`: muestra `--load-model | --live RUTA_AUDIO`.
 - `check_stt_config.py`: diagnóstico offline correcto.
 - `check_stt_config.py --load-model`: no descargó; caché antes/después `1/1` archivos incluso heredando permiso `true`.
-- `check_stt_config.py --live C:\Proyectos\Atlas\pruebas\voz_REDACTED_f73137d930c3.oga`: formato aceptado y salida controlada `stt_unavailable` por ausencia del modelo; ningún temporal restante.
+- `check_stt_config.py --live C:\Proyectos\Atlas\pruebas\voz_Alex.oga`: formato aceptado y salida controlada `stt_unavailable` por ausencia del modelo; ningún temporal restante.
 
 ## 12. Rendimiento
 
-El archivo autorizado `C:\Proyectos\Atlas\pruebas\voz_REDACTED_f73137d930c3.oga` superó la validación de formato y el comando `--live` llegó de forma segura hasta el proveedor. La transcripción real se detuvo con `stt_unavailable` porque no existe un snapshot completo del modelo. No se inventan tiempos. El flujo mantiene una conversión, una transcripción y como máximo una llamada a Atlas.
+El archivo autorizado `C:\Proyectos\Atlas\pruebas\voz_Alex.oga` superó la validación de formato y el comando `--live` llegó de forma segura hasta el proveedor. La transcripción real se detuvo con `stt_unavailable` porque no existe un snapshot completo del modelo. No se inventan tiempos. El flujo mantiene una conversión, una transcripción y como máximo una llamada a Atlas.
 
 ## 13. Riesgos y pruebas manuales pendientes
 
@@ -211,11 +211,11 @@ El archivo autorizado `C:\Proyectos\Atlas\pruebas\voz_REDACTED_f73137d930c3.oga`
 
 No se creó commit, no se hizo merge y no se hizo push. El repositorio original `atlas_core` y sus cambios locales permanecen intactos. La entrega está en la rama aislada `feature/stt-confidence-production`, basada en `origin/main`.
 
-## 15. Pasos exactos para REDACTED_2c7b6821719d
+## 15. Pasos exactos para Alex
 
 ### Opción recomendada: activar primero en CPU
 
-Después de que REDACTED_2c7b6821719d proporcione o descargue el modelo por un procedimiento separado y expresamente autorizado:
+Después de que Alex proporcione o descargue el modelo por un procedimiento separado y expresamente autorizado:
 
 ```powershell
 cd C:\Proyectos\Atlas\atlas_core
@@ -225,7 +225,7 @@ $env:ATLAS_STT_COMPUTE_TYPE='int8'
 $env:ATLAS_STT_MODEL='small'
 $env:ATLAS_STT_ALLOW_MODEL_DOWNLOAD='false'
 python scripts/check_stt_config.py --load-model
-python scripts/check_stt_config.py --live 'C:\Proyectos\Atlas\pruebas\voz_REDACTED_f73137d930c3.oga'
+python scripts/check_stt_config.py --live 'C:\Proyectos\Atlas\pruebas\voz_Alex.oga'
 ```
 
 `check_stt_config.py` nunca descarga, aunque la variable esté accidentalmente en `true`. Después, guardar en el `.env` privado `ATLAS_STT_ALLOW_MODEL_DOWNLOAD=false` y la configuración elegida. No subir `.env`.
@@ -253,4 +253,4 @@ git diff --check
 git status -sb
 ```
 
-Solo después de revisar que no hay datos ni modelos en el diff, REDACTED_2c7b6821719d podrá decidir commits y publicación. No se recomienda arrancar Telegram real hasta que `check_stt_config.py --load-model` indique proveedor activo.
+Solo después de revisar que no hay datos ni modelos en el diff, Alex podrá decidir commits y publicación. No se recomienda arrancar Telegram real hasta que `check_stt_config.py --load-model` indique proveedor activo.

@@ -135,7 +135,7 @@ class AtlasCoreAdapter:
         if not words:
             return ""
         # Conserva nombres compuestos frecuentes; para el resto usa el nombre cotidiano.
-        if len(words) >= 2 and words[0].casefold() in {"REDACTED_1ec4ed037766", "josé", "maria", "maría"}:
+        if len(words) >= 2 and words[0].casefold() in {"Zoe", "josé", "maria", "maría"}:
             return " ".join(words[:2])
         return words[0]
 

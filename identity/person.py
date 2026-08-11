@@ -11,14 +11,14 @@ Descripción:
 
     Ejemplos:
 
-    - REDACTED_2c7b6821719d:
+    - Alex:
         Usuario principal y propietario del sistema.
 
-    - REDACTED_bc04a68d9192:
+    - Vega:
         Usuaria con perfil propio.
 
-    - REDACTED_1b4b1a7f2126:
-        Persona conocida y hermano de REDACTED_bc04a68d9192.
+    - Diego:
+        Persona conocida y hermano de Vega.
 
     - Un invitado ocasional:
         Puede existir como persona sin disponer de usuario,

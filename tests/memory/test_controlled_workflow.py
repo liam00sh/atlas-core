@@ -39,134 +39,134 @@ def test_detector_avoids_false_positives(text):
 
 def test_proposal_does_not_write_and_is_isolated(workflow):
     result = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Mi color favorito es el azul",
+        user_id="Alex", source_text="Mi color favorito es el azul",
         permissions=FULL, session_id="one",
     )
     assert result["status"] == "pending"
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 0
+    assert workflow.memory.count_memories("Alex") == 0
     proposal_id = result["proposal"]["proposal_id"]
-    assert workflow.proposals.get(proposal_id, user_id="REDACTED_bc04a68d9192") is None
-    assert workflow.proposals.latest_pending("REDACTED_bc04a68d9192") is None
+    assert workflow.proposals.get(proposal_id, user_id="Vega") is None
+    assert workflow.proposals.latest_pending("Vega") is None
 
 
 def test_confirm_is_idempotent_and_preserves_provenance(workflow):
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Recuerda que mi color favorito es el azul",
+        user_id="Alex", source_text="Recuerda que mi color favorito es el azul",
         permissions=FULL,
     )
     proposal_id = proposed["proposal"]["proposal_id"]
-    first = workflow.confirm(user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=FULL)
-    second = workflow.confirm(user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=FULL)
+    first = workflow.confirm(user_id="Alex", proposal_id=proposal_id, permissions=FULL)
+    second = workflow.confirm(user_id="Alex", proposal_id=proposal_id, permissions=FULL)
     assert first["status"] == second["status"] == "confirmed"
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 1
-    memory = workflow.memory.list_memories(owner="REDACTED_2c7b6821719d")[0]
+    assert workflow.memory.count_memories("Alex") == 1
+    memory = workflow.memory.list_memories(owner="Alex")[0]
     assert memory["proposal_id"] == proposal_id
     assert memory["source"] == "confirmed_conversation"
-    assert workflow.read(user_id="REDACTED_2c7b6821719d", query="color", permissions=FULL)["memories"]
+    assert workflow.read(user_id="Alex", query="color", permissions=FULL)["memories"]
 
 
 def test_reject_never_writes(workflow):
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Trabajo con Linux", permissions=FULL,
+        user_id="Alex", source_text="Trabajo con Linux", permissions=FULL,
     )
     result = workflow.reject(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
+        user_id="Alex", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
     )
     assert result["status"] == "rejected"
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 0
-    assert workflow.audit.list_for_user("REDACTED_2c7b6821719d")[-1]["action"] == "rejected"
+    assert workflow.memory.count_memories("Alex") == 0
+    assert workflow.audit.list_for_user("Alex")[-1]["action"] == "rejected"
 
 
 def test_exact_duplicate_is_not_proposed(workflow):
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Mi color favorito es el azul", "private")
+    workflow.memory.remember("Alex", "Mi color favorito es el azul", "private")
     result = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Mi color favorito es el azul", permissions=FULL,
+        user_id="Alex", source_text="Mi color favorito es el azul", permissions=FULL,
     )
     assert result["status"] == "duplicate"
-    assert workflow.proposals.latest_pending("REDACTED_2c7b6821719d") is None
+    assert workflow.proposals.latest_pending("Alex") is None
 
 
 def test_conflict_becomes_confirmable_update(workflow):
     workflow.memory.remember(
-        "REDACTED_2c7b6821719d", "Mi color favorito es el azul", "private",
+        "Alex", "Mi color favorito es el azul", "private",
         metadata={"memory_key": "favorite_color"},
     )
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Mi color favorito es el verde", permissions=FULL,
+        user_id="Alex", source_text="Mi color favorito es el verde", permissions=FULL,
     )
     assert proposed["proposal"]["operation"] == "update"
     assert "azul" in proposed["message"]
     workflow.confirm(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
+        user_id="Alex", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
     )
-    contents = [item["content"] for item in workflow.memory.list_memories(owner="REDACTED_2c7b6821719d")]
+    contents = [item["content"] for item in workflow.memory.list_memories(owner="Alex")]
     assert contents == ["Mi color favorito es el verde"]
-    assert workflow.audit.list_for_user("REDACTED_2c7b6821719d")[-1]["action"] == "updated"
+    assert workflow.audit.list_for_user("Alex")[-1]["action"] == "updated"
 
 
 def test_update_proposal_changes_only_pending_version(workflow):
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Mi color favorito es el azul", permissions=FULL,
+        user_id="Alex", source_text="Mi color favorito es el azul", permissions=FULL,
     )
     updated = workflow.update_proposal(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposed["proposal"]["proposal_id"],
+        user_id="Alex", proposal_id=proposed["proposal"]["proposal_id"],
         content="Mi color favorito es el verde", permissions=FULL,
     )
     assert updated["proposal"]["version"] == 2
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 0
+    assert workflow.memory.count_memories("Alex") == 0
 
 
 def test_delete_requires_proposal_and_confirmation(workflow):
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Mi color favorito es el azul", "private")
+    workflow.memory.remember("Alex", "Mi color favorito es el azul", "private")
     proposed = workflow.propose_delete(
-        user_id="REDACTED_2c7b6821719d", query="color favorito", permissions=FULL,
+        user_id="Alex", query="color favorito", permissions=FULL,
     )
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 1
+    assert workflow.memory.count_memories("Alex") == 1
     workflow.confirm(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
+        user_id="Alex", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
     )
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 0
-    assert workflow.audit.list_for_user("REDACTED_2c7b6821719d")[-1]["action"] == "deleted"
+    assert workflow.memory.count_memories("Alex") == 0
+    assert workflow.audit.list_for_user("Alex")[-1]["action"] == "deleted"
 
 
 def test_delete_requires_selection_when_multiple(workflow):
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Trabajo con Linux", "private")
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Trabajo con Windows", "private")
-    result = workflow.propose_delete(user_id="REDACTED_2c7b6821719d", query="trabajo", permissions=FULL)
+    workflow.memory.remember("Alex", "Trabajo con Linux", "private")
+    workflow.memory.remember("Alex", "Trabajo con Windows", "private")
+    result = workflow.propose_delete(user_id="Alex", query="trabajo", permissions=FULL)
     assert result["status"] == "selection_required"
     assert len(result["candidates"]) == 2
-    selection = workflow.proposals.latest_pending("REDACTED_2c7b6821719d")
+    selection = workflow.proposals.latest_pending("Alex")
     assert selection is not None
     assert selection.operation == "delete_selection"
     assert selection.target_memory_id is None
 
 
 def test_cross_user_update_and_delete_are_impossible(workflow):
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Vivo en REDACTED_a77d7bb7adbf", "private")
-    memory_id = workflow.memory.list_memories(owner="REDACTED_2c7b6821719d")[0]["id"]
+    workflow.memory.remember("Alex", "Vivo en VillaEjemplo", "private")
+    memory_id = workflow.memory.list_memories(owner="Alex")[0]["id"]
     assert workflow.memory.update_memory(
-        memory_id=memory_id, owner="REDACTED_bc04a68d9192", content="Vivo en Madrid"
+        memory_id=memory_id, owner="Vega", content="Vivo en Madrid"
     ) is None
-    assert workflow.memory.delete_memory(memory_id=memory_id, owner="REDACTED_bc04a68d9192") is None
+    assert workflow.memory.delete_memory(memory_id=memory_id, owner="Vega") is None
 
 
 def test_sensitive_memory_needs_permission_and_reinforced_confirmation(workflow):
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Recuerda que mi diagnóstico es privado", permissions=FULL,
+        user_id="Alex", source_text="Recuerda que mi diagnóstico es privado", permissions=FULL,
     )
     proposal_id = proposed["proposal"]["proposal_id"]
     with pytest.raises(PermissionError):
         workflow.confirm(
-            user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id,
+            user_id="Alex", proposal_id=proposal_id,
             permissions=FULL, reinforced=True,
         )
     allowed = FULL | {"memory.sensitive.write"}
     result = workflow.confirm(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=allowed, reinforced=False,
+        user_id="Alex", proposal_id=proposal_id, permissions=allowed, reinforced=False,
     )
     assert result["status"] == "reinforced_confirmation_required"
     result = workflow.confirm(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=allowed, reinforced=True,
+        user_id="Alex", proposal_id=proposal_id, permissions=allowed, reinforced=True,
     )
     assert result["status"] == "confirmed"
     audit_text = workflow.audit.path.read_text(encoding="utf-8")
@@ -182,7 +182,7 @@ def test_sensitive_memory_needs_permission_and_reinforced_confirmation(workflow)
     ],
 )
 def test_secrets_are_never_proposed(workflow, text):
-    result = workflow.propose(user_id="REDACTED_2c7b6821719d", source_text=text, permissions=FULL)
+    result = workflow.propose(user_id="Alex", source_text=text, permissions=FULL)
     assert result["status"] == "not_candidate"
     assert not workflow.proposals.path.exists()
 
@@ -199,14 +199,14 @@ def test_expired_proposal_cannot_be_confirmed(tmp_path):
         proposal_store=store,
     )
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Trabajo con Linux", permissions=FULL,
+        user_id="Alex", source_text="Trabajo con Linux", permissions=FULL,
     )
     current["value"] = now + timedelta(minutes=2)
     result = workflow.confirm(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
+        user_id="Alex", proposal_id=proposed["proposal"]["proposal_id"], permissions=FULL,
     )
     assert result["status"] == "expired"
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 0
+    assert workflow.memory.count_memories("Alex") == 0
 
 
 def test_insufficient_permissions_are_enforced(workflow):
@@ -221,7 +221,7 @@ def test_insufficient_permissions_are_enforced(workflow):
 @pytest.mark.parametrize("operation", ["confirm", "reject", "update"])
 def test_final_operations_enforce_same_session(workflow, operation):
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d",
+        user_id="Alex",
         source_text="Mi color favorito es el azul",
         permissions=FULL,
         session_id="session-a",
@@ -229,44 +229,44 @@ def test_final_operations_enforce_same_session(workflow, operation):
     proposal_id = proposed["proposal"]["proposal_id"]
     if operation == "confirm":
         result = workflow.confirm(
-            user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=FULL,
+            user_id="Alex", proposal_id=proposal_id, permissions=FULL,
             session_id="session-b",
         )
     elif operation == "reject":
         result = workflow.reject(
-            user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=FULL,
+            user_id="Alex", proposal_id=proposal_id, permissions=FULL,
             session_id="session-b",
         )
     else:
         with pytest.raises(LookupError):
             workflow.update_proposal(
-                user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id,
+                user_id="Alex", proposal_id=proposal_id,
                 content="Mi color favorito es el verde", permissions=FULL,
                 session_id="session-b",
             )
         result = {"status": "not_found"}
     assert result["status"] == "not_found"
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 0
-    assert workflow.proposals.latest_pending("REDACTED_2c7b6821719d", "session-a") is not None
+    assert workflow.memory.count_memories("Alex") == 0
+    assert workflow.proposals.latest_pending("Alex", "session-a") is not None
 
 
 def test_general_read_excludes_legacy_sensitive_memory(workflow):
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Mi DNI es 12345678Z", "private")
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Trabajo con Linux", "private")
-    result = workflow.read(user_id="REDACTED_2c7b6821719d", query="", permissions=FULL)
+    workflow.memory.remember("Alex", "Mi DNI es 12345678Z", "private")
+    workflow.memory.remember("Alex", "Trabajo con Linux", "private")
+    result = workflow.read(user_id="Alex", query="", permissions=FULL)
     assert [item["content"] for item in result["memories"]] == ["Trabajo con Linux"]
     assert result["excluded_sensitive"] == 1
 
 
 def test_sensitive_read_requires_separate_permission_and_masks(workflow):
-    workflow.memory.remember("REDACTED_2c7b6821719d", "Mi diagnóstico es privado", "private")
+    workflow.memory.remember("Alex", "Mi diagnóstico es privado", "private")
     with pytest.raises(PermissionError):
         workflow.read(
-            user_id="REDACTED_2c7b6821719d", query="diagnóstico", permissions=FULL,
+            user_id="Alex", query="diagnóstico", permissions=FULL,
             allow_sensitive=True,
         )
     result = workflow.read(
-        user_id="REDACTED_2c7b6821719d", query="diagnóstico",
+        user_id="Alex", query="diagnóstico",
         permissions=FULL | {"memory.sensitive.read"},
         allow_sensitive=True,
     )
@@ -275,7 +275,7 @@ def test_sensitive_read_requires_separate_permission_and_masks(workflow):
 
 def test_confirm_recovers_after_write_before_proposal_result(workflow, monkeypatch):
     proposed = workflow.propose(
-        user_id="REDACTED_2c7b6821719d", source_text="Trabajo con Linux", permissions=FULL,
+        user_id="Alex", source_text="Trabajo con Linux", permissions=FULL,
         session_id="recoverable",
     )
     proposal_id = proposed["proposal"]["proposal_id"]
@@ -291,19 +291,19 @@ def test_confirm_recovers_after_write_before_proposal_result(workflow, monkeypat
     monkeypatch.setattr(workflow.proposals, "set_result", fail_once)
     with pytest.raises(RuntimeError):
         workflow.confirm(
-            user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=FULL,
+            user_id="Alex", proposal_id=proposal_id, permissions=FULL,
             session_id="recoverable",
         )
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 1
+    assert workflow.memory.count_memories("Alex") == 1
 
     result = workflow.confirm(
-        user_id="REDACTED_2c7b6821719d", proposal_id=proposal_id, permissions=FULL,
+        user_id="Alex", proposal_id=proposal_id, permissions=FULL,
         session_id="recoverable",
     )
     assert result["status"] == "confirmed"
-    assert workflow.memory.count_memories("REDACTED_2c7b6821719d") == 1
+    assert workflow.memory.count_memories("Alex") == 1
     events = [
-        item for item in workflow.audit.list_for_user("REDACTED_2c7b6821719d")
+        item for item in workflow.audit.list_for_user("Alex")
         if item["proposal_id"] == proposal_id
     ]
     assert len(events) == 1

@@ -21,7 +21,7 @@ Descripción:
     Ejemplos:
 
         Nala:
-            Gata de REDACTED_2c7b6821719d.
+            Gata de Alex.
 
         Thor:
             Perro de una persona conocida.
@@ -162,7 +162,7 @@ COMMON_SPECIES = {
 
 SPECIES_LABELS = {
     DOG: "Perro",
-    CAT: "REDACTED_a9baf529fb36",
+    CAT: "gato",
     BIRD: "Ave",
     FISH: "Pez",
     REPTILE: "Reptil",

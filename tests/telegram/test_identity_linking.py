@@ -13,7 +13,7 @@ def test_unknown_account_is_unlinked(linker):
 
 
 def test_code_is_hashed_and_account_pending(linker, storage):
-    code = linker.request_code(TelegramUser("100", "200", username="REDACTED_f73137d930c3"))
+    code = linker.request_code(TelegramUser("100", "200", username="Alex"))
     payload = storage.snapshot()
     serialized = str(payload)
     assert code not in serialized
@@ -21,18 +21,18 @@ def test_code_is_hashed_and_account_pending(linker, storage):
 
 
 def test_confirmation_links_by_id_not_username(linker):
-    code = linker.request_code(TelegramUser("100", "200", username="REDACTED_bc04a68d9192"))
-    linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda value: value == "REDACTED_2c7b6821719d")
+    code = linker.request_code(TelegramUser("100", "200", username="Vega"))
+    linker.confirm_code(code, "Alex", user_exists=lambda value: value == "Alex")
     account = linker.get_account("100")
-    assert account["atlas_user_id"] == "REDACTED_2c7b6821719d"
+    assert account["atlas_user_id"] == "Alex"
     assert account["state"] == "linked"
 
 
 def test_code_is_one_use(linker):
     code = linker.request_code(TelegramUser("100", "200"))
-    linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+    linker.confirm_code(code, "Alex", user_exists=lambda _: True)
     with pytest.raises(TelegramLinkError) as caught:
-        linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+        linker.confirm_code(code, "Alex", user_exists=lambda _: True)
     assert caught.value.code == "invalid_link_code"
 
 
@@ -42,7 +42,7 @@ def test_expired_code_is_rejected(linker, storage):
         expires_at=(datetime.now(UTC) - timedelta(seconds=1)).isoformat()
     ))
     with pytest.raises(TelegramLinkError) as caught:
-        linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+        linker.confirm_code(code, "Alex", user_exists=lambda _: True)
     assert caught.value.code == "expired_link_code"
 
 
@@ -51,7 +51,7 @@ def test_wrong_code_reduces_attempts_and_eventually_blocks(linker, storage):
     wrong_code = code[:3] + ("A" * 7 if code[3:] != "A" * 7 else "B" * 7)
     for _ in range(5):
         with pytest.raises(TelegramLinkError):
-            linker.confirm_code(wrong_code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+            linker.confirm_code(wrong_code, "Alex", user_exists=lambda _: True)
     proposal = next(iter(storage.section("link_codes").values()))
     assert proposal["state"] == "blocked"
     assert set(proposal) == {"state", "closed_at"}
@@ -61,7 +61,7 @@ def test_wrong_code_reduces_attempts_and_eventually_blocks(linker, storage):
 def test_wrong_prefix_does_not_consume_another_accounts_attempts(linker, storage):
     code = linker.request_code(TelegramUser("100", "200"))
     with pytest.raises(TelegramLinkError):
-        linker.confirm_code("ZZZAAAAAAA", "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+        linker.confirm_code("ZZZAAAAAAA", "Alex", user_exists=lambda _: True)
     proposal = next(iter(storage.section("link_codes").values()))
     assert proposal["attempts_left"] == 5
     assert code not in str(storage.snapshot())
@@ -78,12 +78,12 @@ def test_cancel_invalidates_pending_code(linker):
     code = linker.request_code(TelegramUser("100", "200"))
     assert linker.cancel_pending("100", "200") is True
     with pytest.raises(TelegramLinkError):
-        linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+        linker.confirm_code(code, "Alex", user_exists=lambda _: True)
 
 
 def test_unlink_keeps_atlas_identity_but_removes_association(linker):
     code = linker.request_code(TelegramUser("100", "200"))
-    linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+    linker.confirm_code(code, "Alex", user_exists=lambda _: True)
     assert linker.unlink("100", "200") is True
     account = linker.get_account("100")
     assert account["atlas_user_id"] is None
@@ -93,14 +93,14 @@ def test_unlink_keeps_atlas_identity_but_removes_association(linker):
 
 def test_revoke_by_atlas_user(linker):
     code = linker.request_code(TelegramUser("100", "200"))
-    linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
-    assert linker.revoke(atlas_user_id="REDACTED_2c7b6821719d") is True
+    linker.confirm_code(code, "Alex", user_exists=lambda _: True)
+    assert linker.revoke(atlas_user_id="Alex") is True
     assert linker.get_account("100")["state"] == "revoked"
 
 
 def test_used_proposal_keeps_no_code_or_telegram_metadata(linker, storage):
     code = linker.request_code(TelegramUser("100", "200"))
-    linker.confirm_code(code, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
+    linker.confirm_code(code, "Alex", user_exists=lambda _: True)
     proposal = next(iter(storage.section("link_codes").values()))
     assert proposal["state"] == "used"
     assert set(proposal) == {"state", "closed_at"}
@@ -109,7 +109,7 @@ def test_used_proposal_keeps_no_code_or_telegram_metadata(linker, storage):
 def test_same_username_does_not_merge_accounts(linker):
     first = linker.request_code(TelegramUser("100", "200", username="same"))
     second = linker.request_code(TelegramUser("101", "201", username="same"))
-    linker.confirm_code(first, "REDACTED_2c7b6821719d", user_exists=lambda _: True)
-    linker.confirm_code(second, "REDACTED_bc04a68d9192", user_exists=lambda _: True)
-    assert linker.get_account("100")["atlas_user_id"] == "REDACTED_2c7b6821719d"
-    assert linker.get_account("101")["atlas_user_id"] == "REDACTED_bc04a68d9192"
+    linker.confirm_code(first, "Alex", user_exists=lambda _: True)
+    linker.confirm_code(second, "Vega", user_exists=lambda _: True)
+    assert linker.get_account("100")["atlas_user_id"] == "Alex"
+    assert linker.get_account("101")["atlas_user_id"] == "Vega"

@@ -34,7 +34,7 @@ class DesktopWidgets:
 
         self.raspberry = self._build_window(
             width=430,
-            height=560,
+            height=600,
             x_offset=19,
             y_offset=390,
             anchor_right=True,
@@ -67,7 +67,7 @@ class DesktopWidgets:
         self.raspberry_label.pack(
             anchor="w",
             padx=12,
-            pady=(0, 10),
+            pady=(0, 0),
         )
 
         self.raspberry_services_title_label = tk.Label(
@@ -82,7 +82,7 @@ class DesktopWidgets:
         self.raspberry_services_title_label.pack(
             anchor="w",
             padx=12,
-            pady=(8, 0),
+            pady=(24, 0),
         )
 
         self.raspberry_services_label = tk.Label(

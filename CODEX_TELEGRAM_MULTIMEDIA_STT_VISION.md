@@ -276,7 +276,7 @@ No se hizo push, merge ni reescritura de historial.
 - Verificar GPU/CPU, latencia de modelos y límites definitivos en el equipo de destino.
 - Valorar cifrado del almacén biométrico en reposo mediante una clave externa al repositorio.
 
-## 15. Recomendación y comandos para REDACTED_2c7b6821719d
+## 15. Recomendación y comandos para Alex
 
 Recomendación: revisar esta rama completa y abrir un pull request. Los commits son dependientes y forman una sola arquitectura; no se recomienda cherry-pick parcial salvo revisión técnica específica.
 

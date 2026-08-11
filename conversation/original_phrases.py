@@ -235,15 +235,15 @@ ORIGINAL_PHRASES = {
     # Se utilizan cuando un usuario temporal abandona Atlas
     # y el control vuelve automáticamente al usuario principal.
     #
-    # Actualmente REDACTED_2c7b6821719d.
+    # Actualmente Alex.
     # -------------------------------------------------------------------------
-    "return_to_REDACTED_f73137d930c3": [
+    "return_to_Alex": [
 
-        "Vuelvo con REDACTED_2c7b6821719d. El jefe ha recuperado el control.",
+        "Vuelvo con Alex. El jefe ha recuperado el control.",
 
-        "Perfil principal restaurado. Hola de nuevo, REDACTED_2c7b6821719d.",
+        "Perfil principal restaurado. Hola de nuevo, Alex.",
 
-        "Invitado despedido. REDACTED_2c7b6821719d vuelve a estar al mando.",
+        "Invitado despedido. Alex vuelve a estar al mando.",
 
     ],
 

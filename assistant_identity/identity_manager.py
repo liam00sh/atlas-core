@@ -81,11 +81,23 @@ from assistant_identity.mode_selector import ModeSelector
 # CONSTANTES
 # =============================================================================
 
-DEFAULT_PREFERENCES_PATH = (
-    Path(__file__).resolve().parent
-    / "data"
-    / "preferences.json"
-)
+def _default_preferences_path() -> Path:
+    explicit = os.environ.get("ATLAS_ASSISTANT_PREFERENCES_PATH", "").strip()
+    if explicit:
+        return Path(explicit).expanduser().resolve()
+
+    private_root = os.environ.get("ATLAS_PRIVATE_DATA_DIR", "").strip()
+    if private_root:
+        return (
+            Path(private_root).expanduser().resolve()
+            / "assistant"
+            / "preferences.json"
+        )
+
+    return Path("data/private/assistant/preferences.json").resolve()
+
+
+DEFAULT_PREFERENCES_PATH = _default_preferences_path()
 
 
 DEFAULT_AUTOMATIC_MODE_CONFIDENCE = 0.70
@@ -103,13 +115,13 @@ class IdentityManager:
 
     Ejemplo:
 
-        REDACTED_2c7b6821719d:
+        Alex:
             Identidad: Daxter
             Modo predeterminado: Clásico
             Modo actual: Trabajo
             Cambio automático: activado
 
-        REDACTED_bc04a68d9192:
+        Vega:
             Identidad: Coco
             Modo predeterminado: Clásico
             Modo actual: Clásico
@@ -133,7 +145,11 @@ class IdentityManager:
 
                 Si no se indica, utiliza:
 
-                    assistant_identity/data/preferences.json
+                    data/private/assistant/preferences.json
+
+                Puede configurarse mediante
+                ``ATLAS_ASSISTANT_PREFERENCES_PATH`` o
+                ``ATLAS_PRIVATE_DATA_DIR``.
 
             mode_selector:
                 Selector utilizado para sugerir modos.

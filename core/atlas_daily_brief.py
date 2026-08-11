@@ -2,7 +2,7 @@
 
 El tiempo se consulta automáticamente mediante Open-Meteo, sin pedir permiso de
 búsqueda web. La ubicación usa ATLAS_HOME_LOCATION y, mientras no haya ubicación
-actual del dispositivo, REDACTED_a77d7bb7adbf (REDACTED_4cde1bf18b9c) como residencia predeterminada.
+actual del dispositivo, VillaEjemplo (Provincia Ejemplo) como residencia predeterminada.
 """
 from __future__ import annotations
 
@@ -39,7 +39,7 @@ def _json(url: str) -> dict:
 
 
 def _home_location() -> str:
-    return os.environ.get("ATLAS_HOME_LOCATION", "REDACTED_a77d7bb7adbf").strip() or "REDACTED_a77d7bb7adbf"
+    return os.environ.get("ATLAS_HOME_LOCATION", "VillaEjemplo").strip() or "VillaEjemplo"
 
 
 

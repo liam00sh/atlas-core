@@ -156,7 +156,7 @@ document.getElementById('filter').addEventListener('change',e=>{{document.queryS
 
     comparison = [
         "# Comparativa Ronda B — Chatterbox Multilingual V2", "",
-        "No se declara ganador de Ronda B. REDACTED_2c7b6821719d debe decidir después de la escucha ciega.", "",
+        "No se declara ganador de Ronda B. Alex debe decidir después de la escucha ciega.", "",
         "## Decisión humana de Ronda A", "",
         f"- Chatterbox: media {round_a['engines']['chatterbox']['global_mean']}; similitud Daxter {round_a['engines']['chatterbox']['metrics']['similitud_daxter_1_5']}.",
         f"- OpenVoice: media {round_a['engines']['openvoice']['global_mean']}; similitud Daxter {round_a['engines']['openvoice']['metrics']['similitud_daxter_1_5']}.",

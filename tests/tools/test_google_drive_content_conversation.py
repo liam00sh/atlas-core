@@ -20,7 +20,7 @@ class FakeResult:
 
 class FakeAtlas:
     def __init__(self) -> None:
-        self.user = "REDACTED_2c7b6821719d"
+        self.user = "Alex"
         self.calls: list[
             tuple[str, dict[str, Any]]
         ] = []

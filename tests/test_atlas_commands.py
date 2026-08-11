@@ -14,7 +14,7 @@ from core.atlas_commands import AtlasCommandsMixin
 class CommandAtlas(AtlasCommandsMixin):
     def __init__(self, path):
         self.identity_manager = IdentityManager(preferences_path=path)
-        self.identity_manager.load_user("REDACTED_2c7b6821719d")
+        self.identity_manager.load_user("Alex")
 
     def get_project(self):
         return "Proyecto Atlas"

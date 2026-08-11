@@ -1,4 +1,4 @@
-"""Política de presencia para el acceso familiar al PC de REDACTED_2c7b6821719d."""
+"""Política de presencia para el acceso familiar al PC de Alex."""
 
 from __future__ import annotations
 
@@ -18,17 +18,17 @@ class PcAccessDecision:
     reason: str
 
 
-def can_access_REDACTED_f73137d930c3_pc(
+def can_access_Alex_pc(
     *,
     user_id: str,
     presence: PresenceStatus = PresenceStatus.UNKNOWN,
 ) -> PcAccessDecision:
     normalized = str(user_id).strip().casefold()
 
-    if normalized == "REDACTED_f73137d930c3":
+    if normalized == "alex":
         return PcAccessDecision(True, "administrator_owner")
 
-    if normalized != "REDACTED_7b9528898599":
+    if normalized != "vega":
         return PcAccessDecision(False, "user_not_authorized")
 
     if presence == PresenceStatus.HOME_VERIFIED:

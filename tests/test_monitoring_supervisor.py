@@ -31,11 +31,11 @@ def test_incident_opens_and_resolves_without_duplicates(tmp_path):
         message="Disponible.",
     )
 
-    first = manager.apply_result(failing, affected_users={"REDACTED_f73137d930c3"})
-    second = manager.apply_result(failing, affected_users={"REDACTED_7b9528898599"})
+    first = manager.apply_result(failing, affected_users={"Alex"})
+    second = manager.apply_result(failing, affected_users={"Vega"})
     assert first is second
     assert len(opened) == 1
-    assert first.affected_users == {"REDACTED_f73137d930c3", "REDACTED_7b9528898599"}
+    assert first.affected_users == {"Alex", "Vega"}
 
     manager.apply_result(healthy)
     assert len(resolved) == 1
@@ -51,12 +51,12 @@ def test_router_limits_home_assistant_to_present_authorized_users():
 
     router = NotificationRouter(
         send_private=send,
-        is_user_at_home=lambda user_id: user_id == "REDACTED_7b9528898599",
-        has_capability=lambda user_id, capability: user_id in {"REDACTED_f73137d930c3", "REDACTED_7b9528898599"},
+        is_user_at_home=lambda user_id: user_id == "Vega",
+        has_capability=lambda user_id, capability: user_id in {"Alex", "Vega"},
     )
 
-    assert router.affected_users_for("home_assistant") == {"REDACTED_f73137d930c3", "REDACTED_7b9528898599"}
-    assert router.affected_users_for("ollama") == {"REDACTED_f73137d930c3"}
+    assert router.affected_users_for("home_assistant") == {"Alex", "Vega"}
+    assert router.affected_users_for("ollama") == {"Alex"}
 
 
 def test_supervisor_writes_status(tmp_path):

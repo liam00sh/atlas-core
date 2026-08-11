@@ -9,9 +9,9 @@ Descripción:
     Este módulo es el único responsable de leer y escribir directamente
     los archivos JSON relacionados con identidades:
 
-        identity/data/people.json
-        identity/data/animals.json
-        identity/data/relationships.json
+        <private-data>/identity/people.json
+        <private-data>/identity/animals.json
+        <private-data>/identity/relationships.json
 
     Sus responsabilidades son:
 
@@ -87,7 +87,7 @@ class IdentityStorage:
 
                 Si no se proporciona, se utilizará:
 
-                    identity/data/
+                    data/private/identity/
 
                 Este parámetro también permitirá utilizar carpetas
                 temporales durante las pruebas automáticas.
@@ -99,10 +99,15 @@ class IdentityStorage:
                 "ATLAS_IDENTITY_DATA_DIR"
             )
 
+            private_root = os.environ.get("ATLAS_PRIVATE_DATA_DIR", "").strip()
             self.data_folder = (
-                Path(configured_data_folder).resolve()
+                Path(configured_data_folder).expanduser().resolve()
                 if configured_data_folder
-                else Path(__file__).resolve().parent / "data"
+                else (
+                    Path(private_root).expanduser().resolve() / "identity"
+                    if private_root
+                    else Path("data/private/identity").resolve()
+                )
             )
 
         else:

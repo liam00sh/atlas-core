@@ -121,15 +121,15 @@ def test_rate_limit_retry_after_is_honoured(storage, tmp_path):
 
 
 def test_linked_help_uses_core_with_bound_identity(gateway, linker):
-    link_user(linker, atlas_user="REDACTED_bc04a68d9192")
+    link_user(linker, atlas_user="Vega")
     response = gateway.handle(make_message("/help"))
-    assert response.text == "REDACTED_bc04a68d9192:ayuda"
+    assert response.text == "Vega:ayuda"
 
 
 def test_media_analyzer_receives_atlas_identity_not_telegram_id(gateway):
     seen = []
     gateway.core.analyze_media = lambda **kwargs: seen.append(kwargs) or "analizado"
     message = media_message(local_path="C:/temp/safe.txt", media_status="quarantined")
-    response = gateway._handle_media_message(message, atlas_user_id="REDACTED_bc04a68d9192")
+    response = gateway._handle_media_message(message, atlas_user_id="Vega")
     assert response.text == "analizado"
-    assert seen[0]["user_id"] == "REDACTED_bc04a68d9192"
+    assert seen[0]["user_id"] == "Vega"

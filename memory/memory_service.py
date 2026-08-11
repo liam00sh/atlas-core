@@ -97,7 +97,7 @@ class MemoryService:
         # Cuando existe una clasificación pendiente:
         #
         # {
-        #     "owner": "REDACTED_2c7b6821719d",
+        #     "owner": "Alex",
         #     "content": "Mi coche es..."
         # }
         self.pending_memory = None
@@ -476,7 +476,7 @@ class MemoryService:
             viewer_profile = {}
 
         is_owner = owner.casefold() == viewer.casefold()
-        is_admin = viewer.casefold() == "REDACTED_f73137d930c3"
+        is_admin = viewer.casefold() == "Alex"
 
         if is_admin:
             memories = self.atlas.memory.list_memories(owner=owner)

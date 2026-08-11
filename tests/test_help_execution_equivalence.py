@@ -57,14 +57,14 @@ def _light_state(atlas) -> str:
     return atlas.stage_e_environment.adapter.get_state(entity_id)["state"]
 
 
-def test_REDACTED_7b9528898599_home_verified_sees_and_executes_light(atlas, capsys):
+def test_Vega_home_verified_sees_and_executes_light(atlas, capsys):
     _configure_user(
         atlas,
-        "REDACTED_bc04a68d9192",
+        "Vega",
         roles={"family"},
         home_permissions={"home.control.light"},
     )
-    atlas.stage_e_environment.set_guest_presence("REDACTED_7b9528898599", True)
+    atlas.stage_e_environment.set_guest_presence("Vega", True)
 
     help_output = _run(atlas, capsys, "ayuda luz")
     assert "encender luz" in help_output.casefold()
@@ -75,14 +75,14 @@ def test_REDACTED_7b9528898599_home_verified_sees_and_executes_light(atlas, caps
     assert _light_state(atlas) == "on"
 
 
-def test_REDACTED_7b9528898599_away_neither_sees_nor_executes_light(atlas, capsys):
+def test_Vega_away_neither_sees_nor_executes_light(atlas, capsys):
     _configure_user(
         atlas,
-        "REDACTED_bc04a68d9192",
+        "Vega",
         roles={"family"},
         home_permissions={"home.control.light"},
     )
-    atlas.stage_e_environment.set_guest_presence("REDACTED_7b9528898599", False)
+    atlas.stage_e_environment.set_guest_presence("Vega", False)
 
     help_output = _run(atlas, capsys, "ayuda luz")
     assert "encender luz" not in help_output.casefold()
@@ -91,12 +91,12 @@ def test_REDACTED_7b9528898599_away_neither_sees_nor_executes_light(atlas, capsy
     assert _light_state(atlas) == "off"
 
 
-def test_REDACTED_7b9528898599_unknown_presence_neither_sees_nor_executes_light(
+def test_Vega_unknown_presence_neither_sees_nor_executes_light(
     atlas, capsys, monkeypatch
 ):
     _configure_user(
         atlas,
-        "REDACTED_bc04a68d9192",
+        "Vega",
         roles={"family"},
         home_permissions={"home.control.light"},
     )
@@ -117,40 +117,40 @@ def test_REDACTED_7b9528898599_unknown_presence_neither_sees_nor_executes_light(
     assert _light_state(atlas) == "off"
 
 
-def test_REDACTED_6915771be1c5_without_permission_neither_sees_nor_creates_profile(atlas, capsys):
-    _configure_user(atlas, "REDACTED_aebac53c46bb", roles={"family"})
-    person = atlas.people_manager.find_person_by_name("REDACTED_be725da4ea72")
+def test_family_member_without_permission_neither_sees_nor_creates_profile(atlas, capsys):
+    _configure_user(atlas, "Carla", roles={"family"})
+    person = atlas.people_manager.find_person_by_name("Diego")
     assert person is not None and not person.is_user()
 
     help_output = _run(atlas, capsys, "ayuda crear perfil de usuario")
     assert "• crear perfil de usuario:" not in help_output.casefold()
-    execution_output = _run(atlas, capsys, "crear perfil de usuario para REDACTED_be725da4ea72")
-    assert "solo REDACTED_f73137d930c3" in execution_output.casefold()
+    execution_output = _run(atlas, capsys, "crear perfil de usuario para Diego")
+    assert "solo alex" in execution_output.casefold()
     assert not person.is_user()
 
 
 def test_non_owner_admin_neither_sees_nor_executes_owner_only(atlas, capsys):
     _configure_user(atlas, "Operador", roles={"administrator"})
-    person = atlas.people_manager.find_person_by_name("REDACTED_be725da4ea72")
+    person = atlas.people_manager.find_person_by_name("Diego")
     assert person is not None and not person.is_user()
 
     help_output = _run(atlas, capsys, "ayuda crear perfil de usuario")
     assert "• crear perfil de usuario:" not in help_output.casefold()
-    execution_output = _run(atlas, capsys, "crear perfil de usuario para REDACTED_be725da4ea72")
-    assert "solo REDACTED_f73137d930c3" in execution_output.casefold()
+    execution_output = _run(atlas, capsys, "crear perfil de usuario para Diego")
+    assert "solo alex" in execution_output.casefold()
     assert not person.is_user()
 
 
-def test_REDACTED_f73137d930c3_owner_sees_and_executes_owner_only(atlas, capsys):
-    _configure_user(atlas, "REDACTED_2c7b6821719d", roles={"owner"})
-    person = atlas.people_manager.find_person_by_name("REDACTED_be725da4ea72")
+def test_Alex_owner_sees_and_executes_owner_only(atlas, capsys):
+    _configure_user(atlas, "Alex", roles={"owner"})
+    person = atlas.people_manager.find_person_by_name("Diego")
     assert person is not None and not person.is_user()
 
     help_output = _run(atlas, capsys, "ayuda crear perfil de usuario")
     assert "crear perfil de usuario" in help_output.casefold()
-    execution_output = _run(atlas, capsys, "crear perfil de usuario para REDACTED_be725da4ea72")
+    execution_output = _run(atlas, capsys, "crear perfil de usuario para Diego")
     assert "perfil atlas creado" in execution_output.casefold()
-    assert atlas.people_manager.find_person_by_name("REDACTED_be725da4ea72").is_user()
+    assert atlas.people_manager.find_person_by_name("Diego").is_user()
 
 
 @pytest.mark.parametrize(
@@ -180,7 +180,7 @@ def test_guest_neither_sees_nor_executes_home_or_admin_actions(atlas, capsys):
     assert "crear perfil de usuario" not in general_help.casefold()
 
     home_output = _run(atlas, capsys, "enciende la luz")
-    admin_output = _run(atlas, capsys, "crear perfil de usuario para REDACTED_be725da4ea72")
+    admin_output = _run(atlas, capsys, "crear perfil de usuario para Diego")
     assert "no tiene permiso" in home_output.casefold()
     assert "no tiene permiso" in admin_output.casefold()
     assert _light_state(atlas) == "off"

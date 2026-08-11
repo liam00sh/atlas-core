@@ -130,7 +130,7 @@ class FamilyInitializer:
 
         # Los alias solo se utilizan como ruta de migración para perfiles
         # de usuario. En personas sin cuenta pueden existir alias legítimos
-        # repetidos —por ejemplo, dos familiares llamados «REDACTED_342ad0893cb2»— y no deben
+        # repetidos —por ejemplo, dos familiares llamados «Zoe»— y no deben
         # provocar que dos registros distintos se fusionen.
         if not user_profile:
             return None
@@ -263,25 +263,9 @@ class FamilyInitializer:
     def _remove_obsolete_people(
         self,
     ) -> int:
-        """Elimina perfiles históricos sustituidos por nombres corregidos."""
+        """Compatibilidad sin reglas específicas de instalaciones privadas."""
 
-        obsolete_names = {
-            "REDACTED_0ecd782cb495 Esteve",
-            "REDACTED_678ace636439 Pérez",
-        }
-        removed = 0
-
-        for person in self.people_manager.get_people():
-            if person.name not in obsolete_names:
-                continue
-
-            if self.people_manager.delete_person(
-                person.id,
-                delete_relationships=True,
-            ):
-                removed += 1
-
-        return removed
+        return 0
 
     def _initialize_people(
         self,
@@ -527,47 +511,9 @@ class FamilyInitializer:
     def _remove_obsolete_relationships(
         self,
     ) -> int:
-        """Elimina relaciones declarativas antiguas que ya fueron corregidas."""
+        """Compatibilidad sin reglas específicas de instalaciones privadas."""
 
-        antonio = self.people_manager.find_person_by_name(
-            "REDACTED_a8e7422bbc91"
-        )
-        REDACTED_d9078313c20e = self.people_manager.find_animal_by_name(
-            "REDACTED_06768d0d9b38"
-        )
-
-        if antonio is None or REDACTED_d9078313c20e is None:
-            return 0
-
-        removed = 0
-
-        for relationship in list(
-            self.relationship_engine.get_relationships()
-        ):
-            is_obsolete_direct = (
-                relationship.source_entity_id == antonio.id
-                and relationship.target_entity_id == REDACTED_d9078313c20e.id
-                and relationship.relationship_type == "cares_for"
-            )
-            is_obsolete_inverse = (
-                relationship.source_entity_id == REDACTED_d9078313c20e.id
-                and relationship.target_entity_id == antonio.id
-                and relationship.relationship_type == "cared_for_by"
-            )
-
-            if not (
-                is_obsolete_direct
-                or is_obsolete_inverse
-            ):
-                continue
-
-            if self.relationship_engine.delete_relationship(
-                relationship.id,
-                delete_inverse=True,
-            ):
-                removed += 1
-
-        return removed
+        return 0
 
     def _initialize_relationships(
         self,
@@ -632,7 +578,7 @@ class FamilyInitializer:
                     target_type=data.get("target_type"),
                     confirmed=True,
                     information_source="user",
-                    registered_by="REDACTED_2c7b6821719d",
+                    registered_by="Alex",
                     confidence=1.0,
                     notes=data.get("notes", ""),
                     create_inverse=True,
@@ -661,7 +607,7 @@ class FamilyInitializer:
                 target_entity_type=target_type,
                 confirmed=True,
                 information_source="user",
-                registered_by="REDACTED_2c7b6821719d",
+                registered_by="Alex",
                 confidence=1.0,
                 notes=data.get(
                     "notes",

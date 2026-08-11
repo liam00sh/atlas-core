@@ -135,11 +135,11 @@ def test_audio_converter_rejects_absent_ffmpeg(tmp_path):
 def test_gateway_routes_voice_transcript_once_with_bound_user_and_session(
     tmp_path, gateway, linker
 ):
-    link_user(linker, atlas_user="REDACTED_bc04a68d9192")
+    link_user(linker, atlas_user="Vega")
     provider = FakeProvider("dime el tiempo", language="es")
     gateway.media_processor = TelegramMultimediaProcessor(
         stt=build_service(tmp_path, provider=provider),
-        language_resolver=lambda user: {"REDACTED_bc04a68d9192": "es", "REDACTED_2c7b6821719d": "ca"}.get(user),
+        language_resolver=lambda user: {"Vega": "es", "Alex": "ca"}.get(user),
     )
     message = replace(
         make_message("", user_id="100", chat_id="200"),
@@ -151,7 +151,7 @@ def test_gateway_routes_voice_transcript_once_with_bound_user_and_session(
 
     response = gateway.handle(message)
 
-    assert response.text == "REDACTED_bc04a68d9192:dime el tiempo"
+    assert response.text == "Vega:dime el tiempo"
     assert len(provider.calls) == 1
     assert provider.calls[0][1] == "es"
     assert {"audio.convert", "stt.transcribe"} <= response.stage_timings_ms.keys()

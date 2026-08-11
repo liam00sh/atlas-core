@@ -9,9 +9,9 @@ def result(requested, active, fallback):
 def test_fallback_is_notified_once(tmp_path):
     tracker = VoiceStatusTracker(tmp_path / "status.json")
     value = result("daxter_official", "daxter_alex", True)
-    first = tracker.register(user_id="REDACTED_2c7b6821719d", identity=AssistantIdentity.DAXTER,
+    first = tracker.register(user_id="Alex", identity=AssistantIdentity.DAXTER,
                              result=value, notify_enabled=True)
-    second = tracker.register(user_id="REDACTED_2c7b6821719d", identity=AssistantIdentity.DAXTER,
+    second = tracker.register(user_id="Alex", identity=AssistantIdentity.DAXTER,
                               result=value, notify_enabled=True)
     assert first is not None
     assert first.event_type == "fallback_started"
@@ -19,10 +19,10 @@ def test_fallback_is_notified_once(tmp_path):
 
 def test_recovery_is_notified(tmp_path):
     tracker = VoiceStatusTracker(tmp_path / "status.json")
-    tracker.register(user_id="REDACTED_2c7b6821719d", identity="daxter",
+    tracker.register(user_id="Alex", identity="daxter",
                      result=result("daxter_official", "daxter_alex", True),
                      notify_enabled=True)
-    event = tracker.register(user_id="REDACTED_2c7b6821719d", identity="daxter",
+    event = tracker.register(user_id="Alex", identity="daxter",
                              result=result("daxter_official", "daxter_official", False),
                              notify_enabled=True)
     assert event is not None
@@ -30,7 +30,7 @@ def test_recovery_is_notified(tmp_path):
 
 def test_selected_alternative_is_not_failure(tmp_path):
     tracker = VoiceStatusTracker(tmp_path / "status.json")
-    event = tracker.register(user_id="REDACTED_2c7b6821719d", identity="daxter",
+    event = tracker.register(user_id="Alex", identity="daxter",
                              result=result("daxter_alex", "daxter_alex", False),
                              notify_enabled=True)
     assert event is None

@@ -49,7 +49,7 @@ def build_tool() -> GoogleDriveReadTool:
 
 def context() -> ToolContext:
     return ToolContext(
-        requested_by="REDACTED_2c7b6821719d",
+        requested_by="Alex",
         permissions=frozenset({
             "google.drive.read",
         }),

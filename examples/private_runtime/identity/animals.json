@@ -1,0 +1,40 @@
+[
+    {
+        "id": "ace12405-f979-4a66-8a3f-9836da271de8",
+        "name": "Nube",
+        "aliases": [
+            "Nube Ejemplo"
+        ],
+        "species": "cat",
+        "breed": null,
+        "sex": "female",
+        "grammatical_gender": "feminine",
+        "birth_date": null,
+        "status": "active",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "summary": "Mascota ficticia.",
+        "created_at": "2026-08-11T16:29:30",
+        "updated_at": "2026-08-11T16:29:30"
+    },
+    {
+        "id": "2ab4be00-7b89-4fd9-847e-07b1f0cf7b53",
+        "name": "Brisa",
+        "aliases": [
+            "Brisa Ejemplo"
+        ],
+        "species": "dog",
+        "breed": null,
+        "sex": "female",
+        "grammatical_gender": "feminine",
+        "birth_date": null,
+        "status": "active",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "summary": "Mascota ficticia.",
+        "created_at": "2026-08-11T16:29:30",
+        "updated_at": "2026-08-11T16:29:30"
+    }
+]

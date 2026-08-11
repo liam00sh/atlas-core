@@ -2,14 +2,13 @@
 from core.user_manager import UserManager
 
 
-def test_effective_profile_has_REDACTED_f73137d930c3_biography():
+def test_effective_profile_has_safe_synthetic_identity():
     manager = UserManager()
-    profile = manager.get_effective_profile("REDACTED_2c7b6821719d")
+    profile = manager.get_effective_profile("Alex")
 
-    assert profile["birthday"] == "25 de noviembre de 2000"
-    assert profile["birth_place"] == "REDACTED_a77d7bb7adbf"
-    assert profile["location"] == "REDACTED_a77d7bb7adbf"
-    assert "REDACTED_4cde1bf18b9c" in profile["previous_residences"]
+    assert profile["name"] == "Alex"
+    assert profile["linked_person"]["name"] == "Alex Romero"
+    assert profile["roles"] == ["owner", "admin"]
 
 
 def test_special_greetings_are_not_generic_fast_greetings():

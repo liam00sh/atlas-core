@@ -1,6 +1,6 @@
 """Comprobación manual del umbral de progreso desde PowerShell."""
 from telegram_interface.progress import progress_delay_for
 
-SAMPLES = ("Hola", "¿Cómo estás?", "Gracias", "Busca en Internet población de REDACTED_4cde1bf18b9c")
+SAMPLES = ("Hola", "¿Cómo estás?", "Gracias", "Busca en Internet población de Provincia Ejemplo")
 for sample in SAMPLES:
     print(f"{sample!r}: {progress_delay_for(sample)}")

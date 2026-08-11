@@ -55,7 +55,7 @@ def test_official_daxter_falls_back_to_alex(
     )
 
     result = service.speak(
-        "Hola, REDACTED_2c7b6821719d.",
+        "Hola, Alex.",
         identity=AssistantIdentity.DAXTER,
         requested_voice_id="daxter_official",
     )
@@ -75,7 +75,7 @@ def test_official_coco_falls_back_to_dora(
     )
 
     result = service.speak(
-        "Hola, REDACTED_2c7b6821719d.",
+        "Hola, Alex.",
         identity=AssistantIdentity.COCO,
         requested_voice_id="coco_official",
     )
@@ -109,7 +109,7 @@ def test_speak_can_synthesize_without_local_playback(
 def test_console_cleanup_ignores_visual_separators() -> None:
     text = """
     ====================
-    Hola, REDACTED_2c7b6821719d.
+    Hola, Alex.
 
     INFO: prueba interna
     Todo está bien.
@@ -117,7 +117,7 @@ def test_console_cleanup_ignores_visual_separators() -> None:
 
     assert (
         VoiceService.clean_console_text(text)
-        == "Hola, REDACTED_2c7b6821719d.\n\nTodo está bien."
+        == "Hola, Alex.\n\nTodo está bien."
     )
 
 

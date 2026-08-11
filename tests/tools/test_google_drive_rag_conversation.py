@@ -21,7 +21,7 @@ class FakeAtlas:
         self.calls = []
 
     def get_user(self) -> str:
-        return "REDACTED_2c7b6821719d"
+        return "Alex"
 
     def execute_framework_tool(
         self,

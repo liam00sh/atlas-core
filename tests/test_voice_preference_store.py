@@ -9,7 +9,7 @@ def test_preferences_are_persistent(tmp_path) -> None:
         coco_voice_id="coco_dora",
     )
 
-    store.save("REDACTED_2c7b6821719d", preferences)
-    restored = store.load("REDACTED_f73137d930c3")
+    store.save("Alex", preferences)
+    restored = store.load("Alex")
 
     assert restored == preferences

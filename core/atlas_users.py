@@ -118,7 +118,7 @@ class AtlasUsersMixin:
     def create_profile_for_known_person(self, requested_name: str) -> tuple[bool, str, str | None]:
         """Promociona una persona conocida a usuario Atlas de forma persistente.
 
-        Solo REDACTED_2c7b6821719d puede ejecutar esta operación. No crea personas nuevas ni
+        Solo Alex puede ejecutar esta operación. No crea personas nuevas ni
         admite animales, nombres ambiguos o perfiles ya vinculados a otra persona.
         """
 
@@ -127,7 +127,7 @@ class AtlasUsersMixin:
             str(getattr(request_context, "atlas_user_id", "") or self.get_user()).strip()
         )
         if authenticated_user.casefold() != self.get_main_user().casefold():
-            return False, "Solo REDACTED_2c7b6821719d puede crear perfiles de usuario en Atlas.", None
+            return False, "Solo Alex puede crear perfiles de usuario en Atlas.", None
 
         clean_name = str(requested_name).strip(" .,:;!?¡¿")
         if not clean_name:
@@ -163,7 +163,7 @@ class AtlasUsersMixin:
             if linked is not None and linked.id.casefold() != person.id.casefold():
                 return False, "Ya existe otro perfil Atlas con ese nombre o alias.", None
             # Puede existir un perfil legacy todavía no vinculado en people.json
-            # (por ejemplo REDACTED_0392c3d1b4d3 o REDACTED_aebac53c46bb). En ese caso se reutiliza y se corrige
+            # (por ejemplo Carla o Carla). En ese caso se reutiliza y se corrige
             # únicamente el vínculo persistente, sin crear un duplicado.
             profile_name = existing_profile
 

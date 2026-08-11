@@ -22,7 +22,7 @@ from voice.style import VoiceStyleSelector
 
 EMOTION_TEXTS = {
     "neutral": "Todo está preparado; podemos continuar.",
-    "sonriente": "Hola, REDACTED_2c7b6821719d. Me alegra verte por aquí.",
+    "sonriente": "Hola, Alex. Me alegra verte por aquí.",
     "picaro": "Tengo una idea; técnicamente no rompe ninguna regla.",
     "sorprendido": "¡Vaya! Eso sí que no me lo esperaba.",
     "pensativo": "Espera un momento; creo que hay otra forma de hacerlo.",

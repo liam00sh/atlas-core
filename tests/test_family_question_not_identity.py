@@ -40,6 +40,6 @@ def test_family_questions_do_not_switch_identity():
 
 
 def test_valid_identity_declarations_still_work():
-    assert is_identity_declaration("Soy REDACTED_0a0e53340b75")
+    assert is_identity_declaration("Soy Zoe")
     assert is_identity_declaration("Sí, soy Juan")
     assert not is_identity_declaration("Soy mis primos")

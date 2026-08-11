@@ -984,10 +984,10 @@ class AtlasDailyMixin:
                 visibility = str(memory.get("visibility", "private"))
                 mapping = {
                     "private": "Solo su propietario.",
-                    "admin_managed": "Su propietario y REDACTED_2c7b6821719d como administrador de Atlas.",
-                    "partner": "Su propietario, su pareja autorizada y REDACTED_2c7b6821719d.",
-                    "family": "Su propietario, la familia autorizada y REDACTED_2c7b6821719d.",
-                    "known": "Las personas de confianza autorizadas y REDACTED_2c7b6821719d.",
+                    "admin_managed": "Su propietario y Alex como administrador de Atlas.",
+                    "partner": "Su propietario, su pareja autorizada y Alex.",
+                    "family": "Su propietario, la familia autorizada y Alex.",
+                    "known": "Las personas de confianza autorizadas y Alex.",
                     "public": "Cualquier usuario de Atlas.",
                 }
                 self._print(mapping.get(visibility, "No puedo explicar ese permiso con seguridad."))

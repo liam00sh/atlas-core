@@ -8,11 +8,11 @@ from utils.intent_normalizer import interpret_text
 
 
 def test_typing_interpretation_is_conservative():
-    result = interpret_text("Com quien vive REDACTED_de9c80449aae y dile a REDACTED_bc04a68d9192 qe compre pam")
+    result = interpret_text("Com quien vive Diego y dile a Vega qe compre pam")
     assert result.interpreted.startswith("Con quien")
     assert "que compre pan" in result.interpreted
-    assert "REDACTED_de9c80449aae" in result.interpreted
-    assert "REDACTED_bc04a68d9192" in result.interpreted
+    assert "Diego" in result.interpreted
+    assert "Vega" in result.interpreted
 
 
 def test_relative_reminder():
@@ -35,10 +35,10 @@ def test_absolute_reminder():
 
 def test_personal_lists(tmp_path):
     service = PersonalListService(DailyLifeStorage(tmp_path / "daily.json"))
-    assert service.create("REDACTED_2c7b6821719d", "farmacia")
-    assert service.add("REDACTED_2c7b6821719d", "compra", ["leche", "pan"]) == ["leche", "pan"]
-    assert service.remove("REDACTED_2c7b6821719d", "compra", "pan")
-    record = service.get("REDACTED_2c7b6821719d", "compra")
+    assert service.create("Alex", "farmacia")
+    assert service.add("Alex", "compra", ["leche", "pan"]) == ["leche", "pan"]
+    assert service.remove("Alex", "compra", "pan")
+    record = service.get("Alex", "compra")
     assert [item["text"] for item in record["items"]] == ["leche"]
 
 

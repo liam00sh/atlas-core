@@ -98,7 +98,7 @@ def test_tool_returns_answer_and_sources(tmp_path: Path) -> None:
         FakeProvider(),
     )
     context = ToolContext(
-        requested_by="REDACTED_2c7b6821719d",
+        requested_by="Alex",
         permissions={"google.drive.read"},
         channel="test",
     )

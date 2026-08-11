@@ -45,7 +45,7 @@ habitual, ubicación temporal, presencia doméstica, tiempo relevante, acciones,
 confirmaciones, herramientas, hechos temporales y participantes compartidos.
 
 Identidad, cuenta, domicilio, ubicación temporal y presencia son campos
-independientes. «Estoy en casa de REDACTED_2c7b6821719d» puede actualizar el contexto de lugar,
+independientes. «Estoy en casa de Alex» puede actualizar el contexto de lugar,
 pero no cambia identidad, domicilio, parentescos ni permisos de Home Assistant.
 
 ## Fuentes de verdad

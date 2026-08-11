@@ -39,10 +39,10 @@ def test_mode_is_persistent_per_user(tmp_path) -> None:
     storage = TelegramStorage(tmp_path / "state.json")
     modes = TelegramResponseModeStore(storage)
 
-    modes.set("REDACTED_2c7b6821719d", TelegramResponseMode.AUDIO_ONLY)
+    modes.set("Alex", TelegramResponseMode.AUDIO_ONLY)
 
-    assert modes.get("REDACTED_f73137d930c3") is TelegramResponseMode.AUDIO_ONLY
-    assert modes.get("REDACTED_bc04a68d9192") is TelegramResponseMode.AUTOMATIC
+    assert modes.get("Alex") is TelegramResponseMode.AUDIO_ONLY
+    assert modes.get("Vega") is TelegramResponseMode.AUTOMATIC
 
 
 def test_automatic_follows_input_type() -> None:

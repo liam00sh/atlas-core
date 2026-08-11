@@ -2,40 +2,34 @@
 from core.user_manager import UserManager
 
 
-def test_REDACTED_6915771be1c5_effective_profile_uses_structured_biography():
+def test_effective_profile_uses_structured_synthetic_identity():
     manager = UserManager()
 
-    profile = manager.get_effective_profile("REDACTED_aebac53c46bb")
+    profile = manager.get_effective_profile("Alex")
 
-    assert profile["linked_person"]["name"] == "REDACTED_ba2c2b03ba9a"
-    assert profile["birthday"] == "7 de junio de 1972"
-    assert profile["birth_place"] == "REDACTED_a77d7bb7adbf"
-    assert profile["residence"] == "REDACTED_a77d7bb7adbf"
-    assert profile["location"] == "REDACTED_a77d7bb7adbf"
+    assert profile["linked_person"]["name"] == "Alex Romero"
+    assert profile["biography_summary"] == "Usuario principal completamente ficticio."
+    assert "birthday" not in profile
 
 
 def test_effective_profile_does_not_mutate_operational_profile():
     manager = UserManager()
 
-    assert "birthday" not in manager.get_profile("REDACTED_aebac53c46bb")
-    assert "residence" not in manager.get_profile("REDACTED_aebac53c46bb")
+    assert "biography_summary" not in manager.get_profile("Alex")
 
-    manager.get_effective_profile("REDACTED_aebac53c46bb")
+    manager.get_effective_profile("Alex")
 
-    assert "birthday" not in manager.get_profile("REDACTED_aebac53c46bb")
-    assert "residence" not in manager.get_profile("REDACTED_aebac53c46bb")
+    assert "biography_summary" not in manager.get_profile("Alex")
 
 
-def test_REDACTED_f73137d930c3_and_REDACTED_7b9528898599_read_linked_person_data():
+def test_Alex_and_Vega_read_linked_synthetic_people():
     manager = UserManager()
 
-    REDACTED_f73137d930c3 = manager.get_effective_profile("REDACTED_2c7b6821719d")
-    REDACTED_7b9528898599 = manager.get_effective_profile("REDACTED_bc04a68d9192")
+    Alex = manager.get_effective_profile("Alex")
+    alias_ejemplo_44_01 = manager.get_effective_profile("Vega")
 
-    assert REDACTED_f73137d930c3["birthday"] == "25 de noviembre de 2000"
-    assert REDACTED_f73137d930c3["location"] == "REDACTED_a77d7bb7adbf"
-    assert REDACTED_7b9528898599["birthday"] == "18 de noviembre de 2003"
-    assert REDACTED_7b9528898599["location"] == "REDACTED_4cde1bf18b9c"
+    assert Alex["linked_person"]["name"] == "Alex Romero"
+    assert alias_ejemplo_44_01["linked_person"]["name"] == "Vega Ferrer"
 
 
 def test_unlinked_profile_remains_safe():

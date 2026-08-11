@@ -111,11 +111,11 @@ def test_private_telegram_notification_uses_resolver():
     telegram = FakeTelegram()
     provider = TelegramPrivateNotificationProvider(
         telegram,
-        lambda user_id: {"REDACTED_2c7b6821719d": 123}.get(user_id),
+        lambda user_id: {"Alex": 123}.get(user_id),
     )
-    assert provider.send("REDACTED_2c7b6821719d", "Incidencia") is True
+    assert provider.send("Alex", "Incidencia") is True
     assert telegram.messages == [(123, "Incidencia")]
-    assert provider.send("REDACTED_aebac53c46bb", "Incidencia") is False
+    assert provider.send("Carla", "Incidencia") is False
 
 
 def test_stage_c_environment_registers_real_catalog(tmp_path):

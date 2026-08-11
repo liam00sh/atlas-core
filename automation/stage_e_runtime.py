@@ -229,15 +229,13 @@ def _build_environment(
 def build_stage_e_simulation(
     storage_path: str | Path,
     *,
-    owner_user_id: str = "REDACTED_f73137d930c3",
+    owner_user_id: str = "Alex",
     household_user_ids: tuple[str, ...] = (
-        "REDACTED_f73137d930c3",
-        "maria REDACTED_1ec4ed037766",
-        "REDACTED_1ec4ed037766 vicente navarro",
-        "REDACTED_1552db05a755",
-        "REDACTED_72534c4a93dd",
+        "Alex",
+        "Carla",
+        "Diego",
     ),
-    guest_user_ids: tuple[str, ...] = ("REDACTED_7b9528898599", "raul"),
+    guest_user_ids: tuple[str, ...] = ("Vega",),
     present_guest_user_ids: tuple[str, ...] = (),
 ) -> StageEEnvironment:
     entities, states = _simulated_entities()
@@ -258,15 +256,13 @@ def build_stage_e_environment(
     *,
     env_file: str | Path | None = None,
     environ: dict[str, str] | None = None,
-    owner_user_id: str = "REDACTED_f73137d930c3",
+    owner_user_id: str = "Alex",
     household_user_ids: tuple[str, ...] = (
-        "REDACTED_f73137d930c3",
-        "maria REDACTED_1ec4ed037766",
-        "REDACTED_1ec4ed037766 vicente navarro",
-        "REDACTED_1552db05a755",
-        "REDACTED_72534c4a93dd",
+        "Alex",
+        "Carla",
+        "Diego",
     ),
-    guest_user_ids: tuple[str, ...] = ("REDACTED_7b9528898599", "raul"),
+    guest_user_ids: tuple[str, ...] = ("Vega",),
     present_guest_user_ids: tuple[str, ...] = (),
 ) -> StageEEnvironment:
     settings = load_home_assistant_settings(environ, env_file=env_file)

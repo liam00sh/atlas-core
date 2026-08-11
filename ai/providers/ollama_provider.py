@@ -166,7 +166,7 @@ class OllamaProvider(BaseAIProvider):
 
         # El modelo a veces copia un formato de transcripción completo.
         cleaned = re.sub(
-            r"(?mi)^\s*(?:Coco|Daxter|REDACTED_2c7b6821719d|Usuario|Asistente)\s*:\s*",
+            r"(?mi)^\s*(?:Coco|Daxter|Alex|Usuario|Asistente)\s*:\s*",
             "",
             cleaned,
         )
@@ -181,7 +181,7 @@ class OllamaProvider(BaseAIProvider):
 
         cleaned = re.sub(
             # Solo retiramos un saludo completo. Exigir puntuación tras el
-            # nombre evita mutilar frases válidas como «Hola REDACTED_2c7b6821719d es...».
+            # nombre evita mutilar frases válidas como «Hola Alex es...».
             r"^\s*[¡!]?hola(?:,\s*|\s+)"
             r"[A-ZÁÉÍÓÚÑ][\wÁÉÍÓÚÑáéíóúñ-]*"
             r"\s*[,;:.!¡?¿\-–—]+\s*",
@@ -243,9 +243,8 @@ class OllamaProvider(BaseAIProvider):
             r"\beres tan afortunado teniéndola a su lado\b": "tienes mucha suerte de tenerla a tu lado",
             r"\buna foto nuestra juntos\b": "una foto vuestra juntos",
             r"\buna foto nuestra juntas\b": "una foto vuestra juntas",
-            r"\bREDACTED_2c7b6821719d Navarro\b": "REDACTED_2c7b6821719d",
-            r"\bREDACTED_46087f8d7037\b": "REDACTED_2c7b6821719d",
-            r"\bREDACTED_bc04a68d9192['’]s madre\b": "la madre de REDACTED_bc04a68d9192",
+            r"\bAlex Navarro\b": "Alex",
+            r"\bAlex Romero\b": "Alex",
             r"\becharse una mano\b": "echarte una mano",
             r"\bun amigo y una compañera\b": "una amiga y una compañera",
         }

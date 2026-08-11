@@ -13,7 +13,7 @@ def test_conversational_light_control(tmp_path):
 
     response = service.handle(
         "Enciende la luz virtual",
-        user_id="REDACTED_f73137d930c3",
+        user_id="Alex",
         channel="test",
     )
 
@@ -29,7 +29,7 @@ def test_conversational_temperature(tmp_path):
 
     response = service.handle(
         "¿Qué temperatura marca el sensor?",
-        user_id="REDACTED_f73137d930c3",
+        user_id="Alex",
         channel="test",
     )
 
@@ -45,7 +45,7 @@ def test_switch_executes_without_confirmation(tmp_path):
 
     response = service.handle(
         "Enciende el enchufe virtual",
-        user_id="REDACTED_f73137d930c3",
+        user_id="Alex",
         channel="test",
     )
 
@@ -56,7 +56,7 @@ def test_switch_executes_without_confirmation(tmp_path):
 def test_absent_guest_gets_daxter_coco_style_message(tmp_path):
     environment = build_stage_e_simulation(
         tmp_path / "automations.json",
-        guest_user_ids=("REDACTED_7b9528898599",),
+        guest_user_ids=("Vega",),
     )
     service = HomeIntentService(
         environment,
@@ -65,7 +65,7 @@ def test_absent_guest_gets_daxter_coco_style_message(tmp_path):
 
     response = service.handle(
         "¿Qué temperatura marca el sensor?",
-        user_id="REDACTED_bc04a68d9192",
+        user_id="Vega",
         channel="test",
     )
 
@@ -81,7 +81,7 @@ def test_absent_guest_gets_daxter_coco_style_message(tmp_path):
 def test_absent_guest_message_does_not_repeat_immediately(tmp_path):
     environment = build_stage_e_simulation(
         tmp_path / "automations.json",
-        guest_user_ids=("REDACTED_7b9528898599",),
+        guest_user_ids=("Vega",),
     )
     service = HomeIntentService(
         environment,
@@ -90,12 +90,12 @@ def test_absent_guest_message_does_not_repeat_immediately(tmp_path):
 
     first = service.handle(
         "¿Qué temperatura marca el sensor?",
-        user_id="REDACTED_7b9528898599",
+        user_id="Vega",
         channel="test",
     )
     second = service.handle(
         "¿Qué temperatura marca el sensor?",
-        user_id="REDACTED_7b9528898599",
+        user_id="Vega",
         channel="test",
     )
 

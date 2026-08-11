@@ -429,9 +429,9 @@ def returned_to_main(
             Mensaje completo de transición.
     """
 
-    # Buscamos frases configuradas para el regreso a REDACTED_2c7b6821719d.
+    # Buscamos frases configuradas para el regreso a Alex.
     messages = ORIGINAL_PHRASES.get(
-        "return_to_REDACTED_f73137d930c3",
+        "return_to_Alex",
         [],
     )
 

@@ -7,6 +7,6 @@ def test_simple_greeting_has_no_progress():
 
 
 def test_slow_operations_wait_until_latency_is_perceptible():
-    assert progress_delay_for("Busca en Internet la población de REDACTED_4cde1bf18b9c") == 4.5
+    assert progress_delay_for("Busca en Internet la población de Provincia Ejemplo") == 4.5
     assert progress_delay_for("Traduce este texto") == 4.5
     assert progress_delay_for("Explícame una cosa compleja") == 4.5

@@ -22,25 +22,25 @@ class ConversationRegressionTests(unittest.TestCase):
 
     def test_failed_animal_login_keeps_current_user(self):
         atlas = Mock()
-        atlas.get_user.return_value = "REDACTED_2c7b6821719d"
+        atlas.get_user.return_value = "Alex"
         animal = Mock()
-        animal.name = "REDACTED_c0240dd983fa"
-        animal.aliases = ["REDACTED_0f38c2ded26f"]
+        animal.name = "Nube"
+        animal.aliases = ["Nube"]
         atlas.people_manager.find_animal_by_name.return_value = animal
 
 
         with patch.object(intent.context, "atlas", atlas):
-            response = intent.detect("ahora soy REDACTED_0f38c2ded26f")
+            response = intent.detect("ahora soy Nube")
 
 
-        self.assertIn("REDACTED_0f38c2ded26f es un animal", response)
-        self.assertIn("Sigues siendo REDACTED_2c7b6821719d", response)
+        self.assertIn("Nube es un animal", response)
+        self.assertIn("Sigues siendo Alex", response)
         atlas.change_user.assert_not_called()
 
 
     def test_xambia_changes_identity_without_falling_through_to_ai(self):
         atlas = Mock()
-        atlas.get_user.return_value = "REDACTED_2c7b6821719d"
+        atlas.get_user.return_value = "Alex"
         atlas.identity_manager.change_identity.return_value = True
         atlas.identity_manager.get_active_display_name.side_effect = ["Daxter", "Coco"]
         atlas.identity_manager.get_phrase.return_value = "Coco al mando."
@@ -56,15 +56,15 @@ class ConversationRegressionTests(unittest.TestCase):
 
     def test_declaring_current_user_does_not_reinitialize_profile(self):
         atlas = Mock()
-        atlas.get_user.return_value = "REDACTED_2c7b6821719d"
+        atlas.get_user.return_value = "Alex"
         atlas.get_name.return_value = "Daxter"
         atlas.people_manager.find_animal_by_name.return_value = None
         atlas.people_manager.find_person_by_name.return_value = None
 
         with patch.object(intent.context, "atlas", atlas):
-            response = intent.detect("soy REDACTED_2c7b6821719d")
+            response = intent.detect("soy Alex")
 
-        self.assertIn("REDACTED_2c7b6821719d", response)
+        self.assertIn("Alex", response)
         atlas.change_user.assert_not_called()
 
     def test_presentate_is_consumed_without_falling_through_to_ai(self):
@@ -78,8 +78,8 @@ class ConversationRegressionTests(unittest.TestCase):
 
     def test_response_cleaner_removes_repetitive_wrapping(self):
         response = (
-            "¡Hola REDACTED_2c7b6821719d!\n\n"
-            "REDACTED_bc04a68d9192 es tu pareja.\n\n"
+            "¡Hola Alex!\n\n"
+            "Vega es tu pareja.\n\n"
             "¿Cómo estás hoy? Estoy aquí para ayudarte si lo necesitas.\n\n"
             "Saludos,\nCoco"
         )
@@ -87,7 +87,7 @@ class ConversationRegressionTests(unittest.TestCase):
             response,
             "Responde ahora como Coco. Coco habla de sí misma en femenino.",
         )
-        self.assertEqual(cleaned, "REDACTED_bc04a68d9192 es tu pareja.")
+        self.assertEqual(cleaned, "Vega es tu pareja.")
 
 
     def test_response_cleaner_fixes_agreement_and_coco_gender(self):

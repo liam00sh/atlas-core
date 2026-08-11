@@ -29,7 +29,7 @@ class FakeAtlas:
             str,
             list[FakeResult],
         ] = {}
-        self.user = "REDACTED_2c7b6821719d"
+        self.user = "Alex"
 
     def get_user(self) -> str:
         return self.user
@@ -343,7 +343,7 @@ def test_state_is_separated_by_user() -> None:
                 "items": [
                     drive_item(
                         "doc-1",
-                        "Documento de REDACTED_2c7b6821719d",
+                        "Documento de Alex",
                     )
                 ]
             },
@@ -355,7 +355,7 @@ def test_state_is_separated_by_user() -> None:
         "Busca en Drive Documento",
     )
 
-    atlas.user = "REDACTED_bc04a68d9192"
+    atlas.user = "Vega"
     response = controller.handle(
         atlas,
         "Abre el primero",

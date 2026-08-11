@@ -49,7 +49,7 @@ La batería común contiene trece frases en español: neutra, sonriente, travies
 
 Todas las salidas son WAV mono PCM de 16 bits. La métrica ECAPA es orientativa y no sustituye la escucha. Chatterbox produjo duraciones anómalas en los casos `09_confiado` y `12_numeros_nombres`; deben escucharse para detectar pausas, repetición o alucinación. OpenVoice usa esas mismas tomas como fuente y puede heredar el problema.
 
-La evaluación humana de Ronda A dio a Chatterbox una media de 4,4066/5 y una similitud con Daxter de 4,6154/5, frente a 4,0989 y 3,5385 de Chatterbox + OpenVoice. REDACTED_2c7b6821719d seleccionó Chatterbox Multilingual V2 como motor base de Ronda B. OpenVoice se conserva como alternativa experimental, sin borrar sus salidas.
+La evaluación humana de Ronda A dio a Chatterbox una media de 4,4066/5 y una similitud con Daxter de 4,6154/5, frente a 4,0989 y 3,5385 de Chatterbox + OpenVoice. Alex seleccionó Chatterbox Multilingual V2 como motor base de Ronda B. OpenVoice se conserva como alternativa experimental, sin borrar sus salidas.
 
 Chatterbox gana por identidad vocal, emoción y naturalidad percibidas, además de funcionamiento completamente local. Sus problemas conocidos son el acento latinoamericano ocasional, pronunciación de nombres, posibles cortes/alucinaciones, agudeza y roboticidad en frases largas. En la ejecución local usó Python 3.11, PyTorch 2.6.0+cu124 y una RTX 4060; la Ronda A alcanzó 4.529,9 MB de VRAM y RTF medio 1,225. El código es MIT y las salidas incluyen la marca de agua PerTh. La ausencia de locale `es-ES` y de entrenamiento oficial son riesgos explícitos, no capacidades supuestas.
 

@@ -24,8 +24,8 @@ def linked_storage(tmp_path):
 
     def mutate(data):
         data["accounts"] = {
-            "100": {"state": "linked", "atlas_user_id": "REDACTED_2c7b6821719d", "chat_id": "500"},
-            "200": {"state": "linked", "atlas_user_id": "REDACTED_bc04a68d9192", "chat_id": "600"},
+            "100": {"state": "linked", "atlas_user_id": "Alex", "chat_id": "500"},
+            "200": {"state": "linked", "atlas_user_id": "Vega", "chat_id": "600"},
         }
 
     storage.update(mutate)
@@ -36,14 +36,14 @@ def test_immediate_message_is_generic_and_delivered(tmp_path):
     storage = linked_storage(tmp_path)
     queue = TelegramDeliveryQueue(storage)
     parser = InteruserRequestParser("Europe/Madrid")
-    request = parser.parse("recuérdale a REDACTED_bc04a68d9192 que compre pan", linked_user_ids=queue.linked_users())
+    request = parser.parse("recuérdale a Vega que compre pan", linked_user_ids=queue.linked_users())
     assert request is not None and request.scheduled is False
-    created = queue.enqueue("REDACTED_2c7b6821719d", request)
+    created = queue.enqueue("Alex", request)
     assert created["ok"] is True
 
     client = FakeClient()
     assert TelegramDeliveryDispatcher(queue, client).deliver_due() == 1
-    assert client.sent == [("600", "REDACTED_2c7b6821719d te recuerda que compres pan.", None)]
+    assert client.sent == [("600", "Alex te recuerda que compres pan.", None)]
 
 
 def test_scheduled_message_accepts_spanish_time(tmp_path):
@@ -51,7 +51,7 @@ def test_scheduled_message_accepts_spanish_time(tmp_path):
     queue = TelegramDeliveryQueue(storage)
     parser = InteruserRequestParser("Europe/Madrid")
     request = parser.parse(
-        "recuerda a REDACTED_bc04a68d9192 a las 17 que vaya al mercado",
+        "recuerda a Vega a las 17 que vaya al mercado",
         linked_user_ids=queue.linked_users(),
         now=datetime(2026, 7, 20, 16, 0, tzinfo=ZoneInfo("Europe/Madrid")),
     )
@@ -64,28 +64,28 @@ def test_target_must_be_linked(tmp_path):
     storage = linked_storage(tmp_path)
     queue = TelegramDeliveryQueue(storage)
     parser = InteruserRequestParser()
-    assert parser.parse("dile a REDACTED_0392c3d1b4d3 que llame", linked_user_ids=queue.linked_users()) is None
+    assert parser.parse("dile a Carla que llame", linked_user_ids=queue.linked_users()) is None
 
 
 def test_affection_message_is_natural():
     assert NaturalInteruserMessageFormatter.format(
-        sender="REDACTED_2c7b6821719d",
+        sender="Alex",
         body="la quiero mucho",
         scheduled=False,
-    ) == "REDACTED_2c7b6821719d quiere que sepas que te quiere mucho."
+    ) == "Alex quiere que sepas que te quiere mucho."
 
 
 def test_household_task_is_rewritten_for_recipient():
     assert NaturalInteruserMessageFormatter.format(
-        sender="REDACTED_2c7b6821719d",
+        sender="Alex",
         body="ponga la lavadora",
         scheduled=False,
-    ) == "REDACTED_2c7b6821719d te recuerda que pongas la lavadora."
+    ) == "Alex te recuerda que pongas la lavadora."
 
 
 def test_personal_obligation_changes_to_second_person():
     assert NaturalInteruserMessageFormatter.format(
-        sender="REDACTED_2c7b6821719d",
+        sender="Alex",
         body="se tiene que ir a cortar el pelo",
         scheduled=False,
-    ) == "REDACTED_2c7b6821719d te recuerda que te tienes que ir a cortar el pelo."
+    ) == "Alex te recuerda que te tienes que ir a cortar el pelo."

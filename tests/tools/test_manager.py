@@ -17,7 +17,7 @@ def build_manager() -> tuple[ToolManager, SystemStatusTool]:
 def test_manager_executes_tool() -> None:
     manager, _ = build_manager()
     context = ToolContext(
-        requested_by="REDACTED_2c7b6821719d",
+        requested_by="Alex",
         permissions={"system.status.read"},
     )
 
@@ -34,7 +34,7 @@ def test_manager_executes_tool() -> None:
 
 def test_manager_rejects_missing_permission() -> None:
     manager, _ = build_manager()
-    context = ToolContext(requested_by="REDACTED_2c7b6821719d")
+    context = ToolContext(requested_by="Alex")
 
     with pytest.raises(ToolPermissionError):
         manager.execute(
@@ -47,7 +47,7 @@ def test_manager_rejects_disabled_tool() -> None:
     manager, tool = build_manager()
     tool.disable()
     context = ToolContext(
-        requested_by="REDACTED_2c7b6821719d",
+        requested_by="Alex",
         permissions={"system.status.read"},
     )
 

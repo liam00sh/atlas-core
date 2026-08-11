@@ -43,7 +43,7 @@ class AtlasTelegramMixin:
 
         Si el usuario escribió un destino explícito que no puede resolverse,
         devuelve ``None``. Nunca sustituye silenciosamente ese destino por el
-        usuario activo, porque eso podría vincular una cuenta familiar a REDACTED_2c7b6821719d.
+        usuario activo, porque eso podría vincular una cuenta familiar a Alex.
         """
 
         current_user = self.get_user()
@@ -100,7 +100,7 @@ class AtlasTelegramMixin:
 
 
     def _handle_profile_creation_request(self, original_text: str) -> bool:
-        """Crea perfiles únicamente para personas ya conocidas y solo por REDACTED_2c7b6821719d."""
+        """Crea perfiles únicamente para personas ya conocidas y solo por Alex."""
 
         normalized = self._normalize_telegram_admin_text(original_text)
         match = re.match(
@@ -152,7 +152,7 @@ class AtlasTelegramMixin:
             print(
                 "Para vincular Telegram necesito el código temporal de "
                 "10 caracteres que mostró el bot. Ejemplo: "
-                "«Confirma el código de Telegram ABC234DEFG para REDACTED_2c7b6821719d»."
+                "«Confirma el código de Telegram ABC234DEFG para Alex»."
             )
             return True
 

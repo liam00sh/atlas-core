@@ -53,7 +53,7 @@ TELEGRAM_CHANNEL_ALLOWED_PERMISSIONS = frozenset(
         "memory.audit.read",
         # Solo llegan hasta aquí si el usuario autenticado ya posee estos
         # permisos en Atlas (propietario o administrador). Esto permite que
-        # REDACTED_2c7b6821719d confirme o revoque vinculaciones desde su propio Telegram sin
+        # Alex confirme o revoque vinculaciones desde su propio Telegram sin
         # conceder administración al resto de cuentas.
         "telegram.admin_link",
         "telegram.admin_revoke",
@@ -208,7 +208,7 @@ def build_runtime(atlas, config: TelegramConfig) -> TelegramRuntime:
         progress_delay_seconds=config.progress_delay_seconds,
         progress_message_factory=progress_message,
         delivery_dispatcher=delivery_dispatcher,
-        owner_user_id="REDACTED_2c7b6821719d",
+        owner_user_id="Alex",
         media_limits=TelegramMediaLimits(
             voice=config.media_voice_max_bytes,
             audio=config.media_audio_max_bytes,

@@ -93,7 +93,7 @@ política del canal Telegram.
 `/daxter` y `/coco` llaman a `IdentityManager.change_identity()` con
 persistencia. No existe una preferencia Telegram independiente. Una elección
 hecha desde Telegram se observa en la CLI y viceversa. El adaptador restaura al
-usuario anterior después de cada operación, por lo que REDACTED_2c7b6821719d y REDACTED_bc04a68d9192 mantienen
+usuario anterior después de cada operación, por lo que Alex y Vega mantienen
 preferencias separadas.
 
 La sesión ya admite atributos temporales aislados por `telegram_user_id` y

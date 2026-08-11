@@ -27,7 +27,7 @@ def main() -> None:
 
     environment = build_stage_e_simulation(
         storage_path=storage_path,
-        owner_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
     )
 
     print_result(
@@ -38,8 +38,8 @@ def main() -> None:
     # 1. Consultar temperatura.
     temperature_task = environment.manager.create(
         action_id="home.state.read",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={
             "entity_id": "sensor.atlas_temperature",
         },
@@ -47,7 +47,7 @@ def main() -> None:
 
     temperature_result = environment.manager.execute(
         temperature_task.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="manual_test",
     )
 
@@ -59,8 +59,8 @@ def main() -> None:
     # 2. Encender luz virtual.
     light_on_task = environment.manager.create(
         action_id="home.light.turn_on",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={
             "entity_id": "light.atlas_virtual",
         },
@@ -68,7 +68,7 @@ def main() -> None:
 
     light_on_result = environment.manager.execute(
         light_on_task.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="manual_test",
     )
 
@@ -80,8 +80,8 @@ def main() -> None:
     # 3. Apagar luz virtual.
     light_off_task = environment.manager.create(
         action_id="home.light.turn_off",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={
             "entity_id": "light.atlas_virtual",
         },
@@ -89,7 +89,7 @@ def main() -> None:
 
     light_off_result = environment.manager.execute(
         light_off_task.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="manual_test",
     )
 
@@ -101,8 +101,8 @@ def main() -> None:
     # 4. Intentar encender enchufe sin confirmar.
     switch_task = environment.manager.create(
         action_id="home.switch.turn_on",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={
             "entity_id": "switch.atlas_virtual",
         },
@@ -110,7 +110,7 @@ def main() -> None:
 
     switch_pending_result = environment.manager.execute(
         switch_task.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="manual_test",
     )
 
@@ -122,7 +122,7 @@ def main() -> None:
     # 5. Confirmar el encendido.
     switch_confirmed_result = environment.manager.execute(
         switch_task.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="manual_test",
         confirmed=True,
     )
@@ -135,8 +135,8 @@ def main() -> None:
     # 6. Probar una cerradura no registrada.
     lock_task = environment.manager.create(
         action_id="home.state.read",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={
             "entity_id": "lock.front_door",
         },
@@ -144,7 +144,7 @@ def main() -> None:
 
     lock_result = environment.manager.execute(
         lock_task.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="manual_test",
     )
 

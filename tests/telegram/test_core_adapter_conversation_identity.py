@@ -5,19 +5,19 @@ from telegram_interface.core_adapter import AtlasCoreAdapter
 
 def test_identity_parser_stops_at_comma_and_question():
     assert AtlasCoreAdapter._parse_identity_declaration(
-        "Soy REDACTED_d296a64095dd, qué sabes de mí"
-    ) == ("REDACTED_d296a64095dd", "qué sabes de mí")
+        "Soy Vega, qué sabes de mí"
+    ) == ("Vega", "qué sabes de mí")
 
 
 def test_identity_parser_accepts_full_name():
     assert AtlasCoreAdapter._parse_identity_declaration(
-        "Soy REDACTED_91f6198b34bc, dónde vivo"
-    ) == ("REDACTED_91f6198b34bc", "dónde vivo")
+        "Soy Vega, dónde vivo"
+    ) == ("Vega", "dónde vivo")
 
 
 def test_safe_typing_correction_handles_com_and_ppsible():
     corrected = AtlasCoreAdapter._correct_typing(
-        "Com quien vive REDACTED_de9c80449aae y es ppsible avisarle"
+        "Com quien vive Diego y es ppsible avisarle"
     )
     assert corrected.startswith("con quien")
     assert "posible" in corrected

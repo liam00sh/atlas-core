@@ -72,12 +72,12 @@ def test_response_modes_are_persistent_and_isolated_by_atlas_user(storage):
 def test_gateway_consumes_mode_command_without_calling_core_and_keeps_users_isolated(gateway, linker, storage):
     modes = TelegramResponseModeStore(storage)
     gateway.response_mode_store = modes
-    link_user(linker, user_id="100", chat_id="200", atlas_user="REDACTED_bc04a68d9192")
+    link_user(linker, user_id="100", chat_id="200", atlas_user="Vega")
     response = gateway.handle(make_message("MODO VOZ", user_id="100", chat_id="200"))
     assert "responderé por voz" in response.text
-    assert not response.text.startswith("REDACTED_bc04a68d9192:")
-    assert modes.get("REDACTED_bc04a68d9192") is TelegramResponseMode.AUDIO_ONLY
-    assert modes.get("REDACTED_2c7b6821719d") is TelegramResponseMode.AUTOMATIC
+    assert not response.text.startswith("Vega:")
+    assert modes.get("Vega") is TelegramResponseMode.AUDIO_ONLY
+    assert modes.get("Alex") is TelegramResponseMode.AUTOMATIC
 
 
 def test_automatic_uses_voice_only_for_audio_input():

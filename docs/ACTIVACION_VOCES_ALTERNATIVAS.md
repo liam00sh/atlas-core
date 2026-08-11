@@ -14,7 +14,7 @@ setx ATLAS_VOICE_ENABLED "true"
 setx ATLAS_DAXTER_VOICE "daxter_official"
 setx ATLAS_COCO_VOICE "coco_official"
 setx ATLAS_VOICE_SPEAK_CONSOLE_OUTPUT "true"
-setx ATLAS_KOKORO_COMMAND '"REDACTED_ad35dfb21264\Emuladores\02 - Voz alternativa\01 - Laboratorio\.venv\Scripts\python.exe" "C:\Proyectos\Atlas\atlas_core\tools\kokoro_bridge.py"'
+setx ATLAS_KOKORO_COMMAND '"C:\Users\ExampleUser\Emuladores\02 - Voz alternativa\01 - Laboratorio\.venv\Scripts\python.exe" "C:\Proyectos\Atlas\atlas_core\tools\kokoro_bridge.py"'
 ```
 
 Después de usar `setx`, se debe cerrar y volver a abrir PowerShell o reiniciar

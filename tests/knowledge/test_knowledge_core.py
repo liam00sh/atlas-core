@@ -31,7 +31,7 @@ def test_combines_sources_limits_and_removes_duplicates():
             source("drive_document", [fragment("drive_document", "doc", "Constitucion de privacidad")]),
         ]
     )
-    results = retriever.retrieve("privacidad", user_id="REDACTED_2c7b6821719d", limit=2)
+    results = retriever.retrieve("privacidad", user_id="Alex", limit=2)
     assert len(results) == 2
     assert {item.source_type for item in results} == {"memory", "drive_document"}
 
@@ -39,11 +39,11 @@ def test_combines_sources_limits_and_removes_duplicates():
 def test_verified_relationship_has_priority_over_document():
     retriever = KnowledgeRetriever(
         [
-            source("drive_document", [fragment("drive_document", "old", "REDACTED_bc04a68d9192 era amiga", score=99)]),
-            source("relationship", [fragment("relationship", "rel", "REDACTED_bc04a68d9192 es pareja", verified=True)]),
+            source("drive_document", [fragment("drive_document", "old", "Vega era amiga", score=99)]),
+            source("relationship", [fragment("relationship", "rel", "Vega es pareja", verified=True)]),
         ]
     )
-    results = retriever.retrieve("REDACTED_bc04a68d9192", user_id="REDACTED_2c7b6821719d")
+    results = retriever.retrieve("Vega", user_id="Alex")
     assert results[0].source_type == "relationship"
 
 
@@ -54,7 +54,7 @@ def test_current_document_has_priority_over_old_document():
             fragment("drive_document", "new", "decision actual", metadata={"current": True}),
         ])]
     )
-    results = retriever.retrieve("decision", user_id="REDACTED_2c7b6821719d")
+    results = retriever.retrieve("decision", user_id="Alex")
     assert results[0].source_id == "new"
 
 
@@ -70,12 +70,12 @@ def test_privacy_classifies_excludes_and_masks():
 
 def test_conflict_resolution_prefers_verified_source():
     verified = fragment(
-        "relationship", "rel", "REDACTED_bc04a68d9192 es pareja de REDACTED_2c7b6821719d", score=10,
-        verified=True, metadata={"subject": "REDACTED_bc04a68d9192", "predicate": "relation", "value": "partner"},
+        "relationship", "rel", "Vega es pareja de Alex", score=10,
+        verified=True, metadata={"subject": "Vega", "predicate": "relation", "value": "partner"},
     )
     old = fragment(
-        "drive_document", "old", "REDACTED_bc04a68d9192 era amiga de REDACTED_2c7b6821719d", score=1,
-        metadata={"subject": "REDACTED_bc04a68d9192", "predicate": "relation", "value": "friend"},
+        "drive_document", "old", "Vega era amiga de Alex", score=1,
+        metadata={"subject": "Vega", "predicate": "relation", "value": "friend"},
     )
     conflict = detect_conflicts([old, verified])[0]
     assert conflict.requires_confirmation is False
@@ -115,7 +115,7 @@ def test_broken_source_is_isolated_and_reported_without_secrets():
 
     results = retriever.retrieve(
         "fuente",
-        user_id="REDACTED_2c7b6821719d",
+        user_id="Alex",
     )
 
     assert len(results) == 1
@@ -141,7 +141,7 @@ def test_drive_scope_is_forwarded_only_to_scope_aware_sources():
 
     results = KnowledgeRetriever([ScopedSource()]).retrieve(
         "local",
-        user_id="REDACTED_2c7b6821719d",
+        user_id="Alex",
         drive_scope={"type": "subtree", "target_id": "folder"},
     )
 

@@ -28,7 +28,7 @@ def _client() -> InMemoryGoogleDriveClient:
     return client
 
 
-def _services(tmp_path: Path, user: str = "REDACTED_f73137d930c3"):
+def _services(tmp_path: Path, user: str = "Alex"):
     index = GoogleDriveStructureIndex(tmp_path / "structure.json", ttl_seconds=60)
     index.sync(
         _client(), user_id=user, drive_account_id="account-a",
@@ -37,7 +37,7 @@ def _services(tmp_path: Path, user: str = "REDACTED_f73137d930c3"):
     return index, DriveNavigationService(index)
 
 
-def _identity(user: str = "REDACTED_f73137d930c3", session: str = "s1") -> dict[str, str]:
+def _identity(user: str = "Alex", session: str = "s1") -> dict[str, str]:
     return {
         "user_id": user,
         "session_id": session,
@@ -89,9 +89,9 @@ def test_location_is_isolated_between_sessions(tmp_path: Path) -> None:
 
 
 def test_structure_is_isolated_between_users(tmp_path: Path) -> None:
-    index, navigation = _services(tmp_path, user="REDACTED_f73137d930c3")
-    assert navigation.resolve_path("04 - Python", **_identity(user="REDACTED_7b9528898599")).status == "missing_index"
-    assert index.entries(user_id="REDACTED_7b9528898599", drive_account_id="account-a", root_folder_id=ROOT) == {}
+    index, navigation = _services(tmp_path, user="Alex")
+    assert navigation.resolve_path("04 - Python", **_identity(user="Vega")).status == "missing_index"
+    assert index.entries(user_id="Vega", drive_account_id="account-a", root_folder_id=ROOT) == {}
 
 
 def test_tree_honours_depth_and_file_filter(tmp_path: Path) -> None:
@@ -106,10 +106,10 @@ def test_tree_honours_depth_and_file_filter(tmp_path: Path) -> None:
 def test_structure_cache_can_be_forced_and_invalidated(tmp_path: Path) -> None:
     client = _client()
     index = GoogleDriveStructureIndex(tmp_path / "structure.json", ttl_seconds=60)
-    first = index.sync(client, user_id="REDACTED_f73137d930c3", drive_account_id="a", root_folder_id=ROOT)
-    cached = index.sync(client, user_id="REDACTED_f73137d930c3", drive_account_id="a", root_folder_id=ROOT)
+    first = index.sync(client, user_id="Alex", drive_account_id="a", root_folder_id=ROOT)
+    cached = index.sync(client, user_id="Alex", drive_account_id="a", root_folder_id=ROOT)
     assert first["cached"] is False
     assert cached["cached"] is True
-    index.invalidate(user_id="REDACTED_f73137d930c3", drive_account_id="a", root_folder_id=ROOT)
-    refreshed = index.sync(client, user_id="REDACTED_f73137d930c3", drive_account_id="a", root_folder_id=ROOT)
+    index.invalidate(user_id="Alex", drive_account_id="a", root_folder_id=ROOT)
+    refreshed = index.sync(client, user_id="Alex", drive_account_id="a", root_folder_id=ROOT)
     assert refreshed["cached"] is False

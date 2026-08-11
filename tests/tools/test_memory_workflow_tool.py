@@ -17,12 +17,12 @@ def test_tool_proposes_then_confirms_without_double_write(tmp_path):
         MemoryManager(tmp_path / "memory"), data_folder=tmp_path / "workflow"
     )
     tool = MemoryWorkflowTool(service)
-    context = ToolContext(requested_by="REDACTED_2c7b6821719d", permissions=PERMISSIONS)
+    context = ToolContext(requested_by="Alex", permissions=PERMISSIONS)
     proposed = tool.execute(
         Capability("memory.propose"), {"text": "Mi color favorito es el azul"}, context
     )
     assert proposed.success
-    assert service.memory.count_memories("REDACTED_2c7b6821719d") == 0
+    assert service.memory.count_memories("Alex") == 0
     proposal_id = proposed.data["proposal"]["proposal_id"]
     first = tool.execute(
         Capability("memory.confirm"), {"proposal_id": proposal_id}, context
@@ -31,7 +31,7 @@ def test_tool_proposes_then_confirms_without_double_write(tmp_path):
         Capability("memory.confirm"), {"proposal_id": proposal_id}, context
     )
     assert first.success and second.success
-    assert service.memory.count_memories("REDACTED_2c7b6821719d") == 1
+    assert service.memory.count_memories("Alex") == 1
 
 
 def test_tool_converts_permission_failure_to_structured_result(tmp_path):

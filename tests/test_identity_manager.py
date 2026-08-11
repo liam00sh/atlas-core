@@ -14,13 +14,13 @@ class IdentityManagerTests(unittest.TestCase):
         self.temp_dir = tempfile.TemporaryDirectory()
         self.path = Path(self.temp_dir.name) / "preferences.json"
         self.manager = IdentityManager(preferences_path=self.path)
-        self.manager.load_user("REDACTED_2c7b6821719d")
+        self.manager.load_user("Alex")
 
     def tearDown(self):
         self.temp_dir.cleanup()
 
     def test_default_state(self):
-        self.assertEqual(self.manager.get_current_user(), "REDACTED_f73137d930c3")
+        self.assertEqual(self.manager.get_current_user(), "alex")
         self.assertEqual(self.manager.get_active_identity_name(), "daxter")
         self.assertEqual(self.manager.get_active_mode_name(), CLASSIC_MODE)
         self.assertFalse(self.manager.is_manual_mode_locked())
@@ -30,7 +30,7 @@ class IdentityManagerTests(unittest.TestCase):
     def test_identity_change_persists(self):
         self.assertTrue(self.manager.change_identity("coco"))
         reloaded = IdentityManager(preferences_path=self.path)
-        reloaded.load_user("REDACTED_2c7b6821719d")
+        reloaded.load_user("Alex")
         self.assertEqual(reloaded.get_active_identity_name(), "coco")
         self.assertEqual(reloaded.get_active_mode_name(), CLASSIC_MODE)
 
@@ -80,14 +80,14 @@ class IdentityManagerTests(unittest.TestCase):
         self.manager.change_identity("coco")
         self.manager.set_mode(FUN_MODE, manual=True)
 
-        self.manager.load_user("REDACTED_bc04a68d9192")
+        self.manager.load_user("Vega")
         self.assertEqual(self.manager.get_active_identity_name(), "daxter")
         self.assertEqual(self.manager.get_active_mode_name(), CLASSIC_MODE)
 
-        self.manager.load_user("REDACTED_2c7b6821719d")
+        self.manager.load_user("Alex")
         self.assertEqual(self.manager.get_active_identity_name(), "coco")
         self.assertEqual(self.manager.get_active_mode_name(), FUN_MODE)
-        self.assertIn("REDACTED_f73137d930c3", json.loads(self.path.read_text(encoding="utf-8")))
+        self.assertIn("alex", json.loads(self.path.read_text(encoding="utf-8")))
 
     def test_both_identities_support_all_modes_and_context(self):
         for identity_name in ("daxter", "coco"):

@@ -867,7 +867,7 @@ class Atlas(AtlasAIMixin,
 
         Los perfiles de ``UserManager`` son diccionarios y almacenan sus
         privilegios en ``roles``. La implementación anterior intentaba leer
-        atributos de objeto (``profile.role``), por lo que REDACTED_2c7b6821719d acababa con rol
+        atributos de objeto (``profile.role``), por lo que Alex acababa con rol
         vacío y la ayuda lo trataba como usuario normal o invitado.
 
         El propietario principal de Atlas siempre conserva acceso administrativo

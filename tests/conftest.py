@@ -8,6 +8,24 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
+EXAMPLE_RUNTIME = ROOT / "examples" / "private_runtime"
+EXAMPLE_IDENTITY_DATA = EXAMPLE_RUNTIME / "identity"
+EXAMPLE_FAMILY_DATA = EXAMPLE_RUNTIME / "family.example.json"
+EXAMPLE_USER_PROFILES = EXAMPLE_RUNTIME / "users.example.json"
+EXAMPLE_HOUSEHOLDS = EXAMPLE_RUNTIME / "households.example.json"
+
+# These declarative modules load their configured JSON at import time.  Pytest
+# imports test modules before calling ``pytest_configure``, so establish the
+# public example sources here, before collection can import Atlas modules.
+_EARLY_ENVIRONMENT = {
+    "ATLAS_FAMILY_DATA_FILE": str(EXAMPLE_FAMILY_DATA),
+    "ATLAS_USER_PROFILES_FILE": str(EXAMPLE_USER_PROFILES),
+    "ATLAS_HOUSEHOLD_DATA_FILE": str(EXAMPLE_HOUSEHOLDS),
+}
+_EARLY_PREVIOUS_ENVIRONMENT = {
+    name: os.environ.get(name) for name in _EARLY_ENVIRONMENT
+}
+os.environ.update(_EARLY_ENVIRONMENT)
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
@@ -87,12 +105,15 @@ def pytest_configure(config):
     identity_data = sandbox_root / "identity"
     user_data = sandbox_root / "users"
 
-    shutil.copytree(ROOT / "identity" / "data", identity_data)
+    shutil.copytree(EXAMPLE_IDENTITY_DATA, identity_data)
     user_data.mkdir(parents=True, exist_ok=True)
 
     environment = {
         "ATLAS_IDENTITY_DATA_DIR": str(identity_data),
         "ATLAS_USER_DATA_DIR": str(user_data),
+        "ATLAS_FAMILY_DATA_FILE": str(EXAMPLE_FAMILY_DATA),
+        "ATLAS_USER_PROFILES_FILE": str(EXAMPLE_USER_PROFILES),
+        "ATLAS_HOUSEHOLD_DATA_FILE": str(EXAMPLE_HOUSEHOLDS),
         "ATLAS_TELEGRAM_DATA_DIR": str(sandbox_root / "telegram"),
         "ATLAS_KNOWLEDGE_DATA_DIR": str(sandbox_root / "knowledge"),
         "ATLAS_INCIDENTS_PATH": str(sandbox_root / "monitoring" / "incidents.json"),
@@ -101,7 +122,7 @@ def pytest_configure(config):
         ),
     }
     previous_environment = {
-        name: os.environ.get(name)
+        name: _EARLY_PREVIOUS_ENVIRONMENT.get(name, os.environ.get(name))
         for name in environment
     }
     os.environ.update(environment)
@@ -117,12 +138,15 @@ def isolate_persistent_data(tmp_path, monkeypatch):
     identity_data = tmp_path / "identity"
     user_data = tmp_path / "users"
     monitoring_data = tmp_path / "monitoring"
-    shutil.copytree(ROOT / "identity" / "data", identity_data)
+    shutil.copytree(EXAMPLE_IDENTITY_DATA, identity_data)
     user_data.mkdir(parents=True, exist_ok=True)
     monitoring_data.mkdir(parents=True, exist_ok=True)
 
     monkeypatch.setenv("ATLAS_IDENTITY_DATA_DIR", str(identity_data))
     monkeypatch.setenv("ATLAS_USER_DATA_DIR", str(user_data))
+    monkeypatch.setenv("ATLAS_FAMILY_DATA_FILE", str(EXAMPLE_FAMILY_DATA))
+    monkeypatch.setenv("ATLAS_USER_PROFILES_FILE", str(EXAMPLE_USER_PROFILES))
+    monkeypatch.setenv("ATLAS_HOUSEHOLD_DATA_FILE", str(EXAMPLE_HOUSEHOLDS))
     monkeypatch.setenv("ATLAS_TELEGRAM_DATA_DIR", str(tmp_path / "telegram"))
     monkeypatch.setenv("ATLAS_KNOWLEDGE_DATA_DIR", str(tmp_path / "knowledge"))
     monkeypatch.setenv(

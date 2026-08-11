@@ -13,13 +13,13 @@ def test_read_virtual_sensor(tmp_path):
     env = build_stage_e_simulation(tmp_path / "automations.json")
     automation = env.manager.create(
         action_id="home.state.read",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={"entity_id": "sensor.atlas_temperature"},
     )
     result = env.manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
     )
     assert result.success is True
@@ -30,13 +30,13 @@ def test_virtual_light_does_not_require_confirmation(tmp_path):
     env = build_stage_e_simulation(tmp_path / "automations.json")
     automation = env.manager.create(
         action_id="home.light.turn_on",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={"entity_id": "light.atlas_virtual"},
     )
     result = env.manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
     )
     assert result.success is True
@@ -47,13 +47,13 @@ def test_virtual_switch_executes_without_confirmation(tmp_path):
     env = build_stage_e_simulation(tmp_path / "automations.json")
     automation = env.manager.create(
         action_id="home.switch.turn_on",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={"entity_id": "switch.atlas_virtual"},
     )
     first = env.manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
     )
     assert first.success is True
@@ -62,7 +62,7 @@ def test_virtual_switch_executes_without_confirmation(tmp_path):
 
     confirmed = env.manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
         confirmed=True,
     )
@@ -74,8 +74,8 @@ def test_guest_cannot_control_light(tmp_path):
     env = build_stage_e_simulation(tmp_path / "automations.json")
     automation = env.manager.create(
         action_id="home.light.turn_on",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={"entity_id": "light.atlas_virtual"},
         shared_user_ids=["guest"],
     )
@@ -92,13 +92,13 @@ def test_unknown_entity_is_rejected_and_audited_as_failure(tmp_path):
     env = build_stage_e_simulation(tmp_path / "automations.json")
     automation = env.manager.create(
         action_id="home.state.read",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={"entity_id": "lock.front_door"},
     )
     result = env.manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
     )
     assert result.success is False
@@ -110,13 +110,13 @@ def test_sensor_cannot_be_written(tmp_path):
     env = build_stage_e_simulation(tmp_path / "automations.json")
     automation = env.manager.create(
         action_id="home.light.turn_on",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={"entity_id": "sensor.atlas_temperature"},
     )
     result = env.manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
     )
     assert result.success is False
@@ -127,8 +127,8 @@ def test_audit_redacts_secrets(tmp_path):
     env = build_stage_e_simulation(tmp_path / "automations.json")
     automation = env.manager.create(
         action_id="home.light.turn_on",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
         parameters={
             "entity_id": "light.atlas_virtual",
             "service_data": {"token": "secret-value", "brightness": 80},
@@ -136,7 +136,7 @@ def test_audit_redacts_secrets(tmp_path):
     )
     env.manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
     )
     events = env.manager.audit.read_all()

@@ -64,7 +64,7 @@ def main() -> int:
     }
     comparison = [
         "# Comparativa local de voz Daxter — Ronda A", "",
-        "No se declara ganador. Los WAV y las puntuaciones humanas en blanco son la evidencia para que REDACTED_2c7b6821719d elija.", "",
+        "No se declara ganador. Los WAV y las puntuaciones humanas en blanco son la evidencia para que Alex elija.", "",
         "## Ejecuciones reales", "",
         "| Motor | Enfoque | WAV válidos | Inicio (s) | RTF medio | RTF mediano | VRAM pico (MB) | Similitud ECAPA media |",
         "|---|---|---:|---:|---:|---:|---:|---:|",
@@ -78,7 +78,7 @@ def main() -> int:
         "- Chatterbox produjo duraciones anómalas en `09_confiado.wav` (9,16 s) y `12_numeros_nombres.wav` (34,8 s); pueden indicar pausas largas, repetición o alucinación.",
         "- OpenVoice conserva prácticamente la duración de la fuente, por lo que también hereda esas anomalías de contenido/ritmo.",
         "- Las trece salidas de ambos motores son WAV mono PCM de 16 bits, no vacíos y reproducibles.",
-        "- Ronda B (adaptación ligera) queda deliberadamente sin ejecutar hasta que REDACTED_2c7b6821719d valore la Ronda A.",
+        "- Ronda B (adaptación ligera) queda deliberadamente sin ejecutar hasta que Alex valore la Ronda A.",
         "- Ronda C (entrenamiento largo) no se inicia.",
         "", "## Tamaño local observado", "", f"```json\n{json.dumps(model_sizes, indent=2)}\n```", "",
         "## Investigación y descarte práctico", "",

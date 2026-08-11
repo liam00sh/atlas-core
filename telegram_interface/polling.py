@@ -45,7 +45,7 @@ class TelegramPoller:
         progress_message_factory: Callable[[TelegramMessage], str] | None = None,
         delivery_dispatcher=None,
         scheduler: ConversationScheduler | None = None,
-        owner_user_id: str = "REDACTED_2c7b6821719d",
+        owner_user_id: str = "Alex",
         lifecycle_notifier=None,
         media_root: str | Path | None = None,
         media_max_bytes: int | None = None,

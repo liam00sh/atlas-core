@@ -97,5 +97,5 @@ def test_bootstrap_runs_failure_recovery_and_clean_shutdown(
     assert "simulated-token-must-not-leak" not in incidents_text
     assert "simulated-token-must-not-leak" not in status_text
     assert len(notifications) == 2
-    assert notifications[0][0] == "REDACTED_f73137d930c3"
+    assert notifications[0][0] == "Alex"
     assert "Recuperado" in notifications[1][1]

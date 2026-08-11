@@ -248,9 +248,9 @@ def main() -> int:
         "    project_root = Path(__file__).resolve().parents[1]\n"
         "    voice_renderer = TelegramVoiceRenderer(\n"
         "        project_root=project_root,\n"
-        "        user_provider=lambda: getattr(voice_renderer, '_current_user', 'REDACTED_2c7b6821719d'),\n"
+        "        user_provider=lambda: getattr(voice_renderer, '_current_user', 'Alex'),\n"
         "        personality_provider=lambda: gateway.core.active_personality(\n"
-        "            getattr(voice_renderer, '_current_user', 'REDACTED_2c7b6821719d')\n"
+        "            getattr(voice_renderer, '_current_user', 'Alex')\n"
         "        ),\n"
         "    )\n"
         "    poller = TelegramPoller(\n"
@@ -259,8 +259,8 @@ def main() -> int:
 
     replace_once(
         runtime,
-        "        owner_user_id=\"REDACTED_2c7b6821719d\",\n    )\n",
-        "        owner_user_id=\"REDACTED_2c7b6821719d\",\n"
+        "        owner_user_id=\"Alex\",\n    )\n",
+        "        owner_user_id=\"Alex\",\n"
         "        voice_renderer=voice_renderer,\n"
         "        response_mode_store=response_modes,\n"
         "    )\n",

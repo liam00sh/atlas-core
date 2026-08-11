@@ -1,0 +1,113 @@
+{
+  "people": [
+    {
+      "name": "Alex Romero",
+      "aliases": [
+        "Alex",
+        "Alias Anterior Ejemplo"
+      ],
+      "grammatical_gender": "masculine",
+      "user_profile": "Alex",
+      "summary": "Usuario principal completamente ficticio."
+    },
+    {
+      "name": "Vega Ferrer",
+      "aliases": [
+        "Vega"
+      ],
+      "grammatical_gender": "feminine",
+      "user_profile": "Vega",
+      "summary": "Persona de ejemplo completamente ficticia."
+    },
+    {
+      "name": "Carla Romero",
+      "aliases": [
+        "Carla"
+      ],
+      "grammatical_gender": "feminine",
+      "user_profile": null,
+      "summary": "Familiar de ejemplo completamente ficticio."
+    },
+    {
+      "name": "Diego Romero",
+      "aliases": [
+        "Diego"
+      ],
+      "grammatical_gender": "masculine",
+      "user_profile": null,
+      "summary": "Familiar de ejemplo completamente ficticio."
+    }
+  ],
+  "animals": [
+    {
+      "name": "Nube",
+      "aliases": [
+        "Nube Ejemplo"
+      ],
+      "grammatical_gender": "feminine",
+      "sex": "female",
+      "species": "cat",
+      "summary": "Mascota ficticia."
+    },
+    {
+      "name": "Brisa",
+      "aliases": [
+        "Brisa Ejemplo"
+      ],
+      "grammatical_gender": "feminine",
+      "sex": "female",
+      "species": "dog",
+      "summary": "Mascota ficticia."
+    }
+  ],
+  "relationships": [
+    {
+      "source": "Alex Romero",
+      "target": "Vega Ferrer",
+      "relationship_type": "partner",
+      "source_type": "person",
+      "target_type": "person",
+      "notes": "Relaci?n ficticia."
+    },
+    {
+      "source": "Carla Romero",
+      "target": "Alex Romero",
+      "relationship_type": "mother",
+      "source_type": "person",
+      "target_type": "person",
+      "notes": "Relaci?n ficticia."
+    },
+    {
+      "source": "Diego Romero",
+      "target": "Alex Romero",
+      "relationship_type": "brother",
+      "source_type": "person",
+      "target_type": "person",
+      "notes": "Relaci?n ficticia."
+    },
+    {
+      "source": "Alex Romero",
+      "target": "Nube",
+      "relationship_type": "pet_owner",
+      "source_type": "person",
+      "target_type": "animal",
+      "notes": "Relaci?n ficticia."
+    },
+    {
+      "source": "Vega Ferrer",
+      "target": "Nube",
+      "relationship_type": "cares_for",
+      "source_type": "person",
+      "target_type": "animal",
+      "notes": "Relaci?n ficticia."
+    },
+    {
+      "source": "Carla Romero",
+      "target": "Brisa",
+      "relationship_type": "pet_owner",
+      "source_type": "person",
+      "target_type": "animal",
+      "notes": "Relaci?n ficticia."
+    }
+  ]
+}

@@ -6,8 +6,8 @@ from knowledge.truth import TruthClaim, TruthResolver, TruthSource
 
 def test_verified_relationship_beats_model_inference():
     result = TruthResolver().resolve([
-        TruthClaim("REDACTED_bc04a68d9192", "relationship:REDACTED_2c7b6821719d", "cousin", TruthSource.MODEL_INFERENCE),
-        TruthClaim("REDACTED_bc04a68d9192", "relationship:REDACTED_2c7b6821719d", "partner", TruthSource.VERIFIED_PERSONAL, verified=True),
+        TruthClaim("Vega", "relationship:Alex", "cousin", TruthSource.MODEL_INFERENCE),
+        TruthClaim("Vega", "relationship:Alex", "partner", TruthSource.VERIFIED_PERSONAL, verified=True),
     ])
     assert result.sufficient is True
     assert result.claim.value == "partner"
@@ -15,7 +15,7 @@ def test_verified_relationship_beats_model_inference():
 
 def test_inference_alone_is_not_sufficient_truth():
     result = TruthResolver().resolve([
-        TruthClaim("REDACTED_2c7b6821719d", "location", "Madrid", TruthSource.MODEL_INFERENCE),
+        TruthClaim("Alex", "location", "Madrid", TruthSource.MODEL_INFERENCE),
     ])
     assert result.sufficient is False
     assert result.reason == "inference_only"

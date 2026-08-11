@@ -30,8 +30,8 @@ Ahora evalúa expresiones recursivas de hasta ocho pasos:
 mi novia
 hermano de mi novia
 madre de mi novia
-tía de REDACTED_bc04a68d9192
-hija de la tía de REDACTED_bc04a68d9192
+tía de Vega
+hija de la tía de Vega
 ```
 
 Cada paso se valida contra `RelationshipEngine`; no se deducen nombres mediante

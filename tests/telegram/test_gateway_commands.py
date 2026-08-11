@@ -15,7 +15,7 @@ from tests.telegram.conftest import link_user, make_message
 def test_start_unknown_produces_temporary_code_without_private_data(gateway, storage):
     response = gateway.handle(make_message("/start"))
     assert "Atlas es privado" in response.text
-    assert "REDACTED_2c7b6821719d" not in response.text
+    assert "Alex" not in response.text
     assert storage.section("link_codes")
 
 
@@ -50,25 +50,25 @@ def test_unlinked_normal_text_never_reaches_core(config, storage, linker, tmp_pa
 
 def test_linked_start_status_whoami_and_assistant(gateway, linker):
     link_user(linker)
-    assert "vinculado a REDACTED_2c7b6821719d" in gateway.handle(make_message("/start")).text
-    assert "Usuario: REDACTED_2c7b6821719d" in gateway.handle(make_message("/status")).text
-    assert "usuario REDACTED_2c7b6821719d" in gateway.handle(make_message("/whoami")).text
+    assert "vinculado a Alex" in gateway.handle(make_message("/start")).text
+    assert "Usuario: Alex" in gateway.handle(make_message("/status")).text
+    assert "usuario Alex" in gateway.handle(make_message("/whoami")).text
     assert "Daxter" in gateway.handle(make_message("/assistant")).text
 
 
 def test_normal_message_uses_linked_user_context(gateway, linker):
     link_user(linker)
-    assert gateway.handle(make_message("hola")).text == "REDACTED_2c7b6821719d:hola"
+    assert gateway.handle(make_message("hola")).text == "Alex:hola"
 
 
 def test_personalities_are_independent(gateway, linker, personalities):
-    link_user(linker, user_id="100", chat_id="200", atlas_user="REDACTED_2c7b6821719d")
-    link_user(linker, user_id="101", chat_id="201", atlas_user="REDACTED_bc04a68d9192")
+    link_user(linker, user_id="100", chat_id="200", atlas_user="Alex")
+    link_user(linker, user_id="101", chat_id="201", atlas_user="Vega")
     assert "Coco" in gateway.handle(make_message("/coco", user_id="100", chat_id="200")).text
-    assert personalities == {"REDACTED_2c7b6821719d": "coco", "REDACTED_bc04a68d9192": "coco"}
+    assert personalities == {"Alex": "coco", "Vega": "coco"}
     assert "Coco" in gateway.handle(make_message("/assistant", user_id="101", chat_id="201")).text
     gateway.handle(make_message("/daxter", user_id="100", chat_id="200"))
-    assert personalities == {"REDACTED_2c7b6821719d": "daxter", "REDACTED_bc04a68d9192": "coco"}
+    assert personalities == {"Alex": "daxter", "Vega": "coco"}
 
 
 def test_unlink_requires_explicit_confirmation(gateway, linker):
@@ -171,8 +171,8 @@ def test_two_messages_same_session_never_run_core_simultaneously(config, storage
 
 
 def test_two_users_have_independent_sessions(config, storage, linker, tmp_path):
-    link_user(linker, user_id="100", chat_id="200", atlas_user="REDACTED_2c7b6821719d")
-    link_user(linker, user_id="101", chat_id="201", atlas_user="REDACTED_bc04a68d9192")
+    link_user(linker, user_id="100", chat_id="200", atlas_user="Alex")
+    link_user(linker, user_id="101", chat_id="201", atlas_user="Vega")
     seen = []
     def handler(text, context):
         seen.append((context.atlas_user_id, context.session_id, text))
@@ -185,7 +185,7 @@ def test_two_users_have_independent_sessions(config, storage, linker, tmp_path):
     try:
         gateway.handle(make_message("uno", user_id="100", chat_id="200"))
         gateway.handle(make_message("dos", user_id="101", chat_id="201"))
-        assert seen[0][0] == "REDACTED_2c7b6821719d" and seen[1][0] == "REDACTED_bc04a68d9192"
+        assert seen[0][0] == "Alex" and seen[1][0] == "Vega"
         assert seen[0][1] != seen[1][1]
     finally:
         gateway.close()

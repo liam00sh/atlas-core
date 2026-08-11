@@ -14,7 +14,7 @@ class FakeAtlas:
         self.tools_enabled = tools_enabled
 
     def get_user(self) -> str:
-        return "REDACTED_2c7b6821719d"
+        return "Alex"
 
     def get_name(self) -> str:
         return "Daxter"
@@ -36,7 +36,7 @@ class FakePeopleManager:
         self.status = status
 
     def find_person_by_user_profile(self, user_profile: str):
-        assert user_profile == "REDACTED_2c7b6821719d"
+        assert user_profile == "Alex"
         return FakePerson(self.status) if self.status is not None else None
 
 
@@ -57,7 +57,7 @@ def test_adapter_builds_safe_context() -> None:
         metadata={"source": "sprint_3"},
     )
 
-    assert context.requested_by == "REDACTED_2c7b6821719d"
+    assert context.requested_by == "Alex"
     assert context.channel == "test"
     assert context.has_permission("system.status.read")
     assert context.metadata["assistant_name"] == "Daxter"
@@ -74,7 +74,7 @@ def test_adapter_executes_registered_capability() -> None:
     assert result.success is True
     assert result.tool_id == "system.status"
     assert result.capability == "system.status.read"
-    assert result.data["requested_by"] == "REDACTED_2c7b6821719d"
+    assert result.data["requested_by"] == "Alex"
 
 
 def test_adapter_blocks_execution_when_tools_are_disabled() -> None:

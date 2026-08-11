@@ -122,9 +122,9 @@ def _extract_entity_query(query: str) -> str:
     """Extrae la entidad principal sin confundir verbos con el nombre.
 
     Ejemplos:
-      - ``cuántos habitantes tiene REDACTED_a77d7bb7adbf`` -> ``REDACTED_a77d7bb7adbf``
-      - ``en qué comunidad está REDACTED_039ed2c608a5`` -> ``REDACTED_039ed2c608a5``
-      - ``dónde está REDACTED_1e76780f0c8b`` -> ``REDACTED_1e76780f0c8b``
+      - ``cuántos habitantes tiene VillaEjemplo`` -> ``VillaEjemplo``
+      - ``en qué comunidad está VillaEjemplo`` -> ``VillaEjemplo``
+      - ``dónde está VillaEjemplo`` -> ``VillaEjemplo``
     """
     clean = " ".join(str(query).strip().split())
     patterns = (
@@ -512,7 +512,7 @@ def search_internet(
     for source in sources:
         if source.url.casefold() in seen:
             continue
-        # Evita que una consulta sobre REDACTED_a77d7bb7adbf termine usando REDACTED_039ed2c608a5, REDACTED_49a799c6beb3
+        # Evita que una consulta sobre VillaEjemplo termine usando VillaEjemplo, Provincia Ejemplo
         # u otra localidad por contaminación del historial o una búsqueda ambigua.
         # Las consultas geográficas exigen coincidencia estricta para evitar
         # mezclar localidades. En búsquedas generales y comparativas se acepta

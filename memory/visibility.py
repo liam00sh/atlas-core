@@ -67,7 +67,7 @@ PRIVATE = "private"
 #
 # Actualmente:
 #
-#     REDACTED_2c7b6821719d
+#     Alex
 ADMIN_MANAGED = "admin_managed"
 
 # Puede acceder la pareja autorizada.

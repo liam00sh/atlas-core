@@ -3,7 +3,7 @@ from telegram_interface.lifecycle import TelegramLifecycleNotifier
 
 class Storage:
     def __init__(self):
-        self.data = {"accounts": {"1": {"state": "linked", "chat_id": "10", "atlas_user_id": "REDACTED_2c7b6821719d"}}, "lifecycle": {}}
+        self.data = {"accounts": {"1": {"state": "linked", "chat_id": "10", "atlas_user_id": "Alex"}}, "lifecycle": {}}
     def section(self, name):
         return dict(self.data.get(name, {}))
     def update(self, mutator):

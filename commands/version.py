@@ -80,7 +80,7 @@ COMMAND = {
     "category": "Sistema",
 
     # Autor.
-    "author": "REDACTED_2c7b6821719d",
+    "author": "Alex",
 
     # Versión del propio comando.
     "version": "1.0",

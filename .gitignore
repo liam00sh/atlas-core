@@ -18,10 +18,15 @@
 *.cer
 
 credentials.json
+credentials*
 client_secret*.json
+client_secret*
 token.json
 tokens.json
+tokens*
 secrets.json
+secrets*
+privacy_blocklist.txt
 
 # -----------------------------------------------------------------------------
 # Python
@@ -41,6 +46,7 @@ coverage.xml
 
 # Entornos virtuales
 .venv/
+.venv-*/
 venv/
 env/
 ENV/
@@ -70,6 +76,9 @@ desktop.ini
 # -----------------------------------------------------------------------------
 logs/
 *.log
+*.log.*
+*.out
+*.err
 
 temp/
 tmp/
@@ -106,16 +115,24 @@ data/telegram_media/
 data/voice/stt/
 data/face/
 data/biometrics/
+data/private/
+/private_runtime/
 
 # Estado cotidiano y ubicación temporal por usuario (datos locales privados)
 data/daily_life/state.json
 data/conversation/continuity.json
+data/conversation/*.json
+data/family/*.json
+data/automation/**/*.json
+data/automation/**/*.jsonl
 data/knowledge/personal_memory_semantic.json
 data/launcher/*_status.json
 data/monitoring/health_history.json
 data/monitoring/incidents.json
 data/monitoring/supervisor_status.json
 data/voice/status.json
+data/voice/*.json
+data/voice/*.jsonl
 runtime/voice/*.wav
 
 # -----------------------------------------------------------------------------
@@ -125,6 +142,7 @@ data/users/
 identity/data/people.json
 identity/data/animals.json
 identity/data/relationships.json
+identity/data/*.json
 
 memory/data/memories.json
 memory/data/legacy/
@@ -141,6 +159,12 @@ data/monitoring/pc_status.json
 data/incidents/
 data/runtime/
 data/sessions/
+data/integrations/google_drive/structure_index.json
+data/integrations/telegram/backup_migracion/
+data/performance/
+data/stage_e*.json
+data/stage_e*.jsonl
+data/people_relationships.json
 
 # -----------------------------------------------------------------------------
 # Índices locales, RAG y bases vectoriales
@@ -175,6 +199,7 @@ data/faiss/
 # -----------------------------------------------------------------------------
 backups/
 releases/
+Releases/
 *.zip
 *.7z
 *.rar
@@ -187,6 +212,15 @@ releases/
 test_output/
 test_results/
 reports/local/
+pytest_temp*/
+pytest_result*.txt
+pytest_results*.xml
+test_results*.log
+test_results*.txt
+.audit_pytest_*
+CAMBIOS_ANTES_LIMPIEZA_*.patch
+CAMBIOS_INDEX_ANTES_LIMPIEZA_*.patch
+ESTADO_ANTES_LIMPIEZA_*.txt
 
 # -----------------------------------------------------------------------------
 # Instaladores y ejecutables

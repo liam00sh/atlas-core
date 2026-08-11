@@ -8,13 +8,13 @@ from identity.animal import ACTIVE, CAT, FEMALE, MALE, Animal
 class AnimalTests(unittest.TestCase):
     def test_normalization_aliases_and_matching(self):
         animal = Animal(
-            name="  REDACTED_c0240dd983fa  ",
+            name="  Nube  ",
             species=" CAT ",
             aliases=["Funció", " función ", "Funció"],
             sex=MALE,
             status=ACTIVE,
         )
-        self.assertEqual(animal.name, "REDACTED_c0240dd983fa")
+        self.assertEqual(animal.name, "Nube")
         self.assertEqual(animal.species, CAT)
         self.assertEqual(animal.aliases, ["Funció", "función"])
         self.assertTrue(animal.matches_name("FUNCIÓ"))
@@ -23,15 +23,15 @@ class AnimalTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             Animal(name="", species=CAT)
         with self.assertRaises(ValueError):
-            Animal(name="REDACTED_06768d0d9b38", species="")
+            Animal(name="Brisa", species="")
         with self.assertRaises(ValueError):
-            Animal(name="REDACTED_06768d0d9b38", species="dog", sex="invalid")
+            Animal(name="Brisa", species="dog", sex="invalid")
         with self.assertRaises(ValueError):
-            Animal(name="REDACTED_06768d0d9b38", species="dog", encounter_count=-1)
+            Animal(name="Brisa", species="dog", encounter_count=-1)
 
     def test_updates_and_serialization(self):
-        animal = Animal(name="REDACTED_06768d0d9b38", species="dog", sex=FEMALE)
-        animal.update_summary("Perra de los abuelos de REDACTED_bc04a68d9192")
+        animal = Animal(name="Brisa", species="dog", sex=FEMALE)
+        animal.update_summary("Perra de los abuelos de Vega")
         animal.register_encounter("2026-07-14T12:00:00")
         restored = Animal.from_dict(animal.to_dict())
         self.assertEqual(restored.to_dict(), animal.to_dict())

@@ -31,13 +31,13 @@ python -m pytest -q tests/test_voice_catalog.py tests/test_voice_preferences.py 
 
 PRUEBA DE PREFERENCIAS
 ----------------------
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --show
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --identity daxter --voice daxter_alex
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --show
+python -m tools.voice_preferences_cli --user Alex --show
+python -m tools.voice_preferences_cli --user Alex --identity daxter --voice daxter_alex
+python -m tools.voice_preferences_cli --user Alex --show
 
 PRUEBA DE PROSODIA
 ------------------
-python -m tools.test_voice_runtime --identity daxter --voice daxter_alex "Hola, REDACTED_2c7b6821719d. Vamos a comprobar las pausas. Primero, una pausa corta; después, una pausa media. Ahora termina el párrafo.
+python -m tools.test_voice_runtime --identity daxter --voice daxter_alex "Hola, Alex. Vamos a comprobar las pausas. Primero, una pausa corta; después, una pausa media. Ahora termina el párrafo.
 
 Este es un párrafo nuevo. Debería escucharse una pausa más larga."
 

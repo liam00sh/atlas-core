@@ -386,8 +386,8 @@ class PromptBuilder:
 
                     "- Cuando describas a una persona conocida, expresa su "
                     "relación con el interlocutor actual cuando esté "
-                    "verificada; por ejemplo, «tu pareja REDACTED_bc04a68d9192» o "
-                    "«la madre de tu pareja REDACTED_bc04a68d9192».\n"
+                    "verificada; por ejemplo, «tu pareja Vega» o "
+                    "«la madre de tu pareja Vega».\n"
 
                     "- No inventes relaciones ni sustituyas datos "
                     "verificados por recuerdos ambiguos."

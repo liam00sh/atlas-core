@@ -2,10 +2,10 @@ from commands import admin_policy
 from console.command_help import render_help_for_user
 
 
-def test_REDACTED_f73137d930c3_owner_sees_admin_commands():
+def test_Alex_owner_sees_admin_commands():
     result = render_help_for_user(
         {
-            "name": "REDACTED_2c7b6821719d",
+            "name": "Alex",
             "role": "owner",
             "roles": ["owner", "admin"],
             "profile_exists": True,
@@ -25,7 +25,7 @@ def test_REDACTED_f73137d930c3_owner_sees_admin_commands():
 def test_non_admin_does_not_see_owner_commands():
     result = render_help_for_user(
         {
-            "name": "REDACTED_aebac53c46bb",
+            "name": "Carla",
             "role": "family",
             "roles": ["family", "known"],
             "profile_exists": True,
@@ -60,7 +60,7 @@ def test_guest_and_missing_context_do_not_see_owner_commands():
 def test_family_permissions_show_only_authorized_help():
     result = render_help_for_user(
         {
-            "name": "REDACTED_aebac53c46bb",
+            "name": "Carla",
             "role": "family",
             "profile_exists": True,
             "permissions": ["internet_lookup"],
@@ -75,7 +75,7 @@ def test_family_permissions_show_only_authorized_help():
 def test_owner_identity_is_not_inferred_from_an_approximate_name():
     result = render_help_for_user(
         {
-            "name": "REDACTED_2c7b6821719d invitado",
+            "name": "Alex invitado",
             "role": "user",
             "profile_exists": True,
             "permissions": ["conversation", "help"],
@@ -106,14 +106,14 @@ def test_admin_visibility_and_owner_execution_use_verified_identity(monkeypatch)
     assert "reinicia atlas" not in admin_help
 
     class AtlasStub:
-        current_user_id = "REDACTED_f73137d930c3 invitado"
+        current_user_id = "Alex invitado"
 
         @staticmethod
         def get_main_user():
-            return "REDACTED_2c7b6821719d"
+            return "Alex"
 
     monkeypatch.setattr(admin_policy.context, "atlas", AtlasStub())
     assert admin_policy.is_admin_user() is False
 
-    AtlasStub.current_user_id = "REDACTED_f73137d930c3"
+    AtlasStub.current_user_id = "Alex"
     assert admin_policy.is_admin_user() is True

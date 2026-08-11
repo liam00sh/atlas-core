@@ -78,7 +78,7 @@ class ConversationJobClassifier:
         "reindexa", "informe completo", "analiza este documento", "documento largo",
     )
 
-    def __init__(self, owner_user_id: str = "REDACTED_2c7b6821719d") -> None:
+    def __init__(self, owner_user_id: str = "Alex") -> None:
         self.owner_user_id = owner_user_id.casefold()
 
     def classify(self, text: str, user_id: str) -> JobProfile:
@@ -112,13 +112,13 @@ class ConversationScheduler:
     - lane ``core``: un worker, porque AtlasCoreAdapter protege un núcleo mutable.
     - lane ``quick``: dos workers para respuestas deterministas que no usan Ollama.
     - aging: cada segundo de espera aumenta ligeramente la prioridad.
-    - owner bonus: REDACTED_2c7b6821719d gana empates de coste/prioridad, pero no bloquea tareas rápidas.
+    - owner bonus: Alex gana empates de coste/prioridad, pero no bloquea tareas rápidas.
     """
 
     def __init__(
         self,
         *,
-        owner_user_id: str = "REDACTED_2c7b6821719d",
+        owner_user_id: str = "Alex",
         quick_workers: int = 2,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:

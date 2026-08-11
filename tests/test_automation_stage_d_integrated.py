@@ -21,7 +21,7 @@ def _manager(tmp_path: Path):
     permissions = AutomationPermissions()
     permissions.set_user(
         UserAccess(
-            user_id="REDACTED_f73137d930c3",
+            user_id="Alex",
             roles={"owner"},
             permissions={
                 "windows.status.read",
@@ -32,7 +32,7 @@ def _manager(tmp_path: Path):
     )
     permissions.set_user(
         UserAccess(
-            user_id="REDACTED_7b9528898599",
+            user_id="Vega",
             roles={"family"},
             permissions={
                 "windows.status.read",
@@ -42,7 +42,7 @@ def _manager(tmp_path: Path):
     )
     permissions.set_user(
         UserAccess(
-            user_id="REDACTED_6915771be1c5",
+            user_id="Carla",
             roles={"family"},
             permissions=set(),
         )
@@ -66,17 +66,17 @@ def test_stage_d_catalog_matches_existing_contract() -> None:
     }
 
 
-def test_REDACTED_f73137d930c3_can_execute_system_info(tmp_path: Path) -> None:
+def test_Alex_can_execute_system_info(tmp_path: Path) -> None:
     manager = _manager(tmp_path)
     automation = manager.create(
         action_id="windows.system.info.read",
-        owner_user_id="REDACTED_f73137d930c3",
-        creator_user_id="REDACTED_f73137d930c3",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
     )
 
     result = manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_f73137d930c3",
+        requested_by_user_id="Alex",
         channel="test",
     )
 
@@ -84,44 +84,44 @@ def test_REDACTED_f73137d930c3_can_execute_system_info(tmp_path: Path) -> None:
     assert result.status is AutomationStatus.COMPLETED
 
 
-def test_REDACTED_7b9528898599_can_open_authorized_app_by_permission(tmp_path: Path) -> None:
+def test_Vega_can_open_authorized_app_by_permission(tmp_path: Path) -> None:
     manager = _manager(tmp_path)
     automation = manager.create(
         action_id="windows.application.open",
-        owner_user_id="REDACTED_7b9528898599",
-        creator_user_id="REDACTED_7b9528898599",
+        owner_user_id="Vega",
+        creator_user_id="Vega",
         parameters={"app_id": "notepad"},
     )
 
     if platform.system().casefold() == "windows":
         result = manager.execute(
             automation.automation_id,
-            requested_by_user_id="REDACTED_7b9528898599",
+            requested_by_user_id="Vega",
             channel="test",
         )
         assert result.success is True
     else:
         result = manager.execute(
             automation.automation_id,
-            requested_by_user_id="REDACTED_7b9528898599",
+            requested_by_user_id="Vega",
             channel="test",
         )
         assert result.success is False
         assert result.error_code == "WindowsActionError"
 
 
-def test_REDACTED_6915771be1c5_cannot_open_windows_apps(tmp_path: Path) -> None:
+def test_Carla_cannot_open_windows_apps(tmp_path: Path) -> None:
     manager = _manager(tmp_path)
     automation = manager.create(
         action_id="windows.application.open",
-        owner_user_id="REDACTED_6915771be1c5",
-        creator_user_id="REDACTED_6915771be1c5",
+        owner_user_id="Carla",
+        creator_user_id="Carla",
         parameters={"app_id": "calculator"},
     )
 
     result = manager.execute(
         automation.automation_id,
-        requested_by_user_id="REDACTED_6915771be1c5",
+        requested_by_user_id="Carla",
         channel="test",
     )
 
@@ -135,8 +135,8 @@ def test_family_user_cannot_create_technical_action(tmp_path: Path) -> None:
     with pytest.raises(PermissionError):
         manager.create(
             action_id="windows.process.status.read",
-            owner_user_id="REDACTED_7b9528898599",
-            creator_user_id="REDACTED_7b9528898599",
+            owner_user_id="Vega",
+            creator_user_id="Vega",
             parameters={"process_name": "python.exe"},
         )
 
@@ -147,8 +147,8 @@ def test_unknown_parameters_are_rejected_before_execution(tmp_path: Path) -> Non
     with pytest.raises(ValueError):
         manager.create(
             action_id="windows.application.open",
-            owner_user_id="REDACTED_f73137d930c3",
-            creator_user_id="REDACTED_f73137d930c3",
+            owner_user_id="Alex",
+            creator_user_id="Alex",
             parameters={
                 "app_id": "notepad",
                 "command": "powershell",

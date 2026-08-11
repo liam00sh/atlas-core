@@ -101,7 +101,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="test_confirmation",
             arguments={
@@ -123,7 +123,7 @@ class TestConfirmationManager(
 
         self.assertEqual(
             confirmation["user"],
-            "REDACTED_2c7b6821719d",
+            "Alex",
         )
 
         self.assertEqual(
@@ -157,7 +157,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="test_confirmation",
             arguments={},
@@ -165,13 +165,13 @@ class TestConfirmationManager(
 
         self.assertTrue(
             self.manager.belongs_to_user(
-                "REDACTED_2c7b6821719d"
+                "Alex"
             )
         )
 
         self.assertFalse(
             self.manager.belongs_to_user(
-                "REDACTED_bc04a68d9192"
+                "Vega"
             )
         )
 
@@ -184,7 +184,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="test_confirmation",
             arguments={},
@@ -192,19 +192,19 @@ class TestConfirmationManager(
 
         self.assertTrue(
             self.manager.belongs_to_user(
-                "REDACTED_f73137d930c3"
+                "Alex"
             )
         )
 
         self.assertTrue(
             self.manager.belongs_to_user(
-                "REDACTED_f73137d930c3"
+                "Alex"
             )
         )
 
         self.assertTrue(
             self.manager.belongs_to_user(
-                "REDACTED_f73137d930c3"
+                "Alex"
             )
         )
 
@@ -216,7 +216,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="test_confirmation",
             arguments={},
@@ -263,7 +263,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="first_action",
             arguments={
@@ -272,7 +272,7 @@ class TestConfirmationManager(
         )
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="second_action",
             arguments={
@@ -318,7 +318,7 @@ class TestConfirmationManager(
         }
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="example_action",
             arguments=arguments,
@@ -342,7 +342,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="test_confirmation",
             arguments={},
@@ -380,7 +380,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="test_confirmation",
             arguments={},
@@ -418,7 +418,7 @@ class TestConfirmationManager(
         )
 
         manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="tool",
             action_name="test_confirmation",
             arguments={},
@@ -451,7 +451,7 @@ class TestConfirmationManager(
 
         self.assertFalse(
             self.manager.belongs_to_user(
-                "REDACTED_2c7b6821719d"
+                "Alex"
             )
         )
 
@@ -467,7 +467,7 @@ class TestConfirmationManager(
         """
 
         self.manager.create_confirmation(
-            user="REDACTED_2c7b6821719d",
+            user="Alex",
             action_type="automation",
             action_name="example_automation",
             arguments={

@@ -32,7 +32,7 @@ Preguntas como estas no coincidían con los patrones deterministas:
 Quién es mi hermana
 Cómo se llama mi novia
 Quién es mi madre
-Cómo se llama el hermano de REDACTED_bc04a68d9192
+Cómo se llama el hermano de Vega
 Quiénes son mis hermanos
 ```
 

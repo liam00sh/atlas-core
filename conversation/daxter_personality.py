@@ -15,7 +15,7 @@ class PersonalityStrength(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class ResponseStyleContext:
-    user: str = "REDACTED_2c7b6821719d"
+    user: str = "Alex"
     channel: str = "cli"
     request_type: str = "general"
     risk_level: str = "low"

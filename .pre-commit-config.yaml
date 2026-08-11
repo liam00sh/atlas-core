@@ -1,0 +1,8 @@
+repos:
+  - repo: local
+    hooks:
+      - id: atlas-privacy-scan
+        name: Atlas privacy scan
+        entry: python scripts/privacy_scan.py --staged
+        language: system
+        pass_filenames: false

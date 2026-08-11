@@ -3,8 +3,8 @@ from core.guest_session import GuestSessionManager
 def test_guest_starts_classic_and_isolated():
     manager = GuestSessionManager()
     session = manager.start(
-        host_user="REDACTED_2c7b6821719d",
-        guest_name="REDACTED_0a0e53340b75",
+        host_user="Alex",
+        guest_name="Zoe",
         assistant_name="Daxter",
     )
     assert session.mode_name == "Clásico"
@@ -15,7 +15,7 @@ def test_guest_starts_classic_and_isolated():
 
 def test_guest_close():
     manager = GuestSessionManager()
-    manager.start(host_user="REDACTED_2c7b6821719d", guest_name="José", assistant_name="Daxter")
+    manager.start(host_user="Alex", guest_name="José", assistant_name="Daxter")
     manager.close()
     assert manager.get() is None
 

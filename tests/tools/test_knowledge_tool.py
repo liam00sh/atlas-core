@@ -26,7 +26,7 @@ def build_tool(provider=None, sensitive=False):
 
 
 def context(*permissions):
-    return ToolContext(requested_by="REDACTED_2c7b6821719d", channel="cli", permissions=set(permissions))
+    return ToolContext(requested_by="Alex", channel="cli", permissions=set(permissions))
 
 
 def test_retrieve_returns_structured_provenance():

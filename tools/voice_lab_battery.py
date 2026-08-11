@@ -11,7 +11,7 @@ from pathlib import Path
 
 BATTERY = (
     ("01_neutral", "Atlas está listo. Todo funciona con normalidad."),
-    ("02_sonriente", "¡Hola, REDACTED_2c7b6821719d! Me alegra verte por aquí."),
+    ("02_sonriente", "¡Hola, Alex! Me alegra verte por aquí."),
     ("03_travieso", "Je, je... seguro que este botón no hace nada peligroso."),
     ("04_sorprendido", "¡¿Qué?! ¡Eso sí que no me lo esperaba!"),
     ("05_emocionado", "¡Vamos, Jak! ¡Esta aventura acaba de empezar!"),
@@ -21,7 +21,7 @@ BATTERY = (
     ("09_confiado", "Tranquilo, lo tengo todo bajo control."),
     ("10_determinado", "No nos rendiremos; encontraremos una salida."),
     ("11_jugueton", "A que no me pillas, Jak. ¡Vamos, inténtalo!"),
-    ("12_numeros_nombres", "REDACTED_2c7b6821719d y REDACTED_bc04a68d9192 probarán Atlas el 9 de agosto de 2026, a las 18:45, con 1.300 muestras."),
+    ("12_numeros_nombres", "Alex y Vega probarán Atlas el 9 de agosto de 2026, a las 18:45, con 1.300 muestras."),
     ("13_larga", "Atlas procesa la petición localmente, conserva los permisos del núcleo y, si la voz principal falla, utiliza una alternativa española sin repetir acciones ni ocultar el error."),
 )
 

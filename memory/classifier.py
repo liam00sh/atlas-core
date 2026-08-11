@@ -89,12 +89,12 @@ HIGHLY_PRIVATE_KEYWORDS = {
 
 
 # =============================================================================
-# PALABRAS CLAVE DE INFORMACIÓN ADMINISTRADA POR REDACTED_f73137d930c3
+# PALABRAS CLAVE DE INFORMACIÓN ADMINISTRADA POR Alex
 # =============================================================================
 
 """
 Estos datos suelen corresponder a documentos oficiales o información
-que REDACTED_2c7b6821719d suele gestionar dentro de la familia.
+que Alex suele gestionar dentro de la familia.
 
 Por ejemplo:
 

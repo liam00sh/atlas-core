@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [string]$OldProjectRoot = 'REDACTED_001b039044f8\04 - Python\atlas_core'
+    [string]$OldProjectRoot = 'X:\Private\Atlas Project\04 - Python\atlas_core'
 )
 
 $ErrorActionPreference = 'Stop'

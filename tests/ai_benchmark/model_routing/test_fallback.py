@@ -28,10 +28,10 @@ def test_empty_fast_response_escalates_only_to_reasoning():
 
 
 def test_missing_information_does_not_authorize_bigger_model_to_invent():
-    result, _ = runtime((("REDACTED_2c7b6821719d está en Madrid",), ("inventado",), ("inventado",))).generate(
+    result, _ = runtime((("Alex está en Madrid",), ("inventado",), ("inventado",))).generate(
         "prompt",
-        RoutingRequest("¿Dónde está REDACTED_2c7b6821719d?"),
-        ValidationContext("¿Dónde está REDACTED_2c7b6821719d?", missing_required_data=True),
+        RoutingRequest("¿Dónde está Alex?"),
+        ValidationContext("¿Dónde está Alex?", missing_required_data=True),
     )
     assert result.attempts == ("fast",)
     assert result.validation == "missing_information"

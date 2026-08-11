@@ -18,14 +18,14 @@ Descripción:
 
     Ejemplos:
 
-        REDACTED_1b4b1a7f2126
-            └── brother ──> REDACTED_bc04a68d9192
+        Diego
+            └── brother ──> Vega
 
-        REDACTED_2c7b6821719d
+        Alex
             └── pet_owner ──> Nala
 
         Nala
-            └── pet_of ──> REDACTED_2c7b6821719d
+            └── pet_of ──> Alex
 
     Cada relación contiene:
 

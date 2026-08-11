@@ -305,11 +305,11 @@ excepción.
 
 ```text
 ¿Qué sabes sobre mi familia?
-¿Qué información tienes sobre REDACTED_bc04a68d9192?
+¿Qué información tienes sobre Vega?
 ¿Cómo quiero que funcione la memoria de Atlas?
 ¿Qué hemos decidido sobre la privacidad?
 Resume lo que sabes sobre la arquitectura de Atlas.
-Háblame de REDACTED_bc04a68d9192.
+Háblame de Vega.
 Dime todo lo que recuerdas sobre mi familia.
 Junta lo que sabes sobre el acceso a Internet.
 ¿Hay información contradictoria sobre esta persona?

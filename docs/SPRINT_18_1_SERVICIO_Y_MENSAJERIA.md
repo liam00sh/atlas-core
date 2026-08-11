@@ -10,10 +10,10 @@
 
 ## Ejemplos
 
-- `Recuérdale a REDACTED_bc04a68d9192 que compre pan.`
-- `Dile a REDACTED_2c7b6821719d que ya he llegado.`
-- `Recuerda a REDACTED_bc04a68d9192 a las 17 que vaya al mercado.`
-- `Recuérdale a REDACTED_d296a64095dd mañana a las 8:30 que lleve la mochila.`
+- `Recuérdale a Vega que compre pan.`
+- `Dile a Alex que ya he llegado.`
+- `Recuerda a Vega a las 17 que vaya al mercado.`
+- `Recuérdale a Vega mañana a las 8:30 que lleve la mochila.`
 
 Las asociaciones se resuelven mediante `atlas_user_id` y `telegram_user_id`; no
 hay nombres codificados en la implementación.

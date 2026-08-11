@@ -9,10 +9,10 @@ Descripción:
     Este comando tiene dos comportamientos distintos dependiendo del usuario
     que esté utilizando Atlas:
 
-    • Usuario principal (REDACTED_2c7b6821719d)
+    • Usuario principal (Alex)
         → Atlas finaliza completamente.
 
-    • Usuario temporal (REDACTED_bc04a68d9192, REDACTED_0392c3d1b4d3, etc.)
+    • Usuario temporal (Vega, Carla, etc.)
         → Atlas no se cierra.
         → Se despide del usuario temporal.
         → Vuelve automáticamente al usuario principal.
@@ -37,7 +37,7 @@ Flujo:
   Despedida final   Despedida temporal
           │          │
           ▼          ▼
-   return False   Volver a REDACTED_2c7b6821719d
+   return False   Volver a Alex
                      │
                      ▼
                 return True
@@ -79,7 +79,7 @@ COMMAND = {
     "category": "Sistema",
 
     # Autor del comando.
-    "author": "REDACTED_2c7b6821719d",
+    "author": "Alex",
 
     # Versión del propio comando.
     "version": "1.1",
@@ -129,13 +129,13 @@ def execute():
 
     REDACTED_0f38c2ded26fnamiento:
 
-        Si el usuario actual NO es REDACTED_2c7b6821719d:
+        Si el usuario actual NO es Alex:
 
             • Se despide del usuario.
             • Se vuelve automáticamente al usuario principal.
             • Atlas continúa funcionando.
 
-        Si el usuario actual es REDACTED_2c7b6821719d:
+        Si el usuario actual es Alex:
 
             • Se muestra la despedida final.
             • Atlas indica que debe cerrarse.
@@ -147,9 +147,9 @@ def execute():
     #
     # Ejemplo:
     #
-    # REDACTED_2c7b6821719d
-    # REDACTED_bc04a68d9192
-    # REDACTED_0392c3d1b4d3
+    # Alex
+    # Vega
+    # Carla
     # -------------------------------------------------------------------------
     current_user = context.atlas.get_user()
 
@@ -169,12 +169,12 @@ def execute():
 
         # Obtenemos el nombre del usuario principal.
         #
-        # Actualmente será REDACTED_2c7b6821719d.
+        # Actualmente será Alex.
         main_user = context.atlas.get_main_user()
 
         # Cerramos el perfil temporal sin simular una nueva bienvenida.
         # Atlas restaura internamente al usuario principal, pero no inicia
-        # una conversación nueva ni anuncia a REDACTED_2c7b6821719d si nadie ha hablado.
+        # una conversación nueva ni anuncia a Alex si nadie ha hablado.
         print(
             f"Adiós, {current_user}. Perfil temporal cerrado. "
             f"Has vuelto al perfil de {main_user}. "

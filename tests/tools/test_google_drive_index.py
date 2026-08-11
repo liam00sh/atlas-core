@@ -132,7 +132,7 @@ def test_tool_exposes_index_capabilities(tmp_path: Path) -> None:
         ),
     )
     context = ToolContext(
-        requested_by="REDACTED_2c7b6821719d",
+        requested_by="Alex",
         permissions={"google.drive.read"},
         channel="test",
     )

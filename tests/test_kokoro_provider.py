@@ -57,7 +57,7 @@ def test_provider_sends_unicode_to_subprocess_as_explicit_utf8(tmp_path, monkeyp
     monkeypatch.setattr("voice.providers.kokoro_provider.subprocess.run", fake_run)
     result = KokoroProvider(command="python bridge.py").synthesize(
         SynthesisRequest(
-            text="¡Hola, REDACTED_2c7b6821719d! 😄 Mañana quizá llueva en REDACTED_a77d7bb7adbf.",
+            text="¡Hola, Alex! 😄 Mañana quizá llueva en VillaEjemplo.",
             voice_id="daxter_alex", provider_voice_id="em_alex", output_path=output,
         )
     )

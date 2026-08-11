@@ -1,7 +1,7 @@
 def test_temporary_location_does_not_grant_home_assistant_permission(atlas_core, capsys):
-    assert atlas_core.change_user("REDACTED_bc04a68d9192") is True
+    assert atlas_core.change_user("Vega") is True
     capsys.readouterr()
-    atlas_core.process("Estoy en casa de REDACTED_2c7b6821719d unos días.")
+    atlas_core.process("Estoy en casa de Alex unos días.")
     capsys.readouterr()
     atlas_core.process("Apaga la luz del acuario pequeño.")
     answer = capsys.readouterr().out.casefold()

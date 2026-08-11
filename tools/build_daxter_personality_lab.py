@@ -12,7 +12,7 @@ from conversation.daxter_personality import PersonalityAdapter, PersonalityStren
 
 
 CASE_BLUEPRINTS = (
-    ("saludo", "greeting", "Hola, REDACTED_2c7b6821719d. Estoy listo.", "sonriente", "media", "normal"),
+    ("saludo", "greeting", "Hola, Alex. Estoy listo.", "sonriente", "media", "normal"),
     ("saludo_noche", "greeting", "Buenas noches. El sistema está disponible.", "cansado", "baja", "normal"),
     ("pregunta_normal", "general", "Madrid es la capital de España.", "neutral", "media", "normal"),
     ("pregunta_normal_2", "general", "La copia ocupa 2,4 gigabytes.", "neutral", "media", "low"),
@@ -27,7 +27,7 @@ CASE_BLUEPRINTS = (
     ("home_assistant_2", "success", "El termostato se ha ajustado a 21 grados.", "confiado", "media", "normal"),
     ("home_assistant_fallo", "error", "Home Assistant no confirmó la acción; la luz no se modificó.", "pensativo", "media", "low"),
     ("accion_completada", "success", "La copia de seguridad terminó correctamente.", "emocionado", "media", "high"),
-    ("accion_completada_2", "success", "El mensaje se entregó a REDACTED_bc04a68d9192.", "sonriente", "media", "normal"),
+    ("accion_completada_2", "success", "El mensaje se entregó a Vega.", "sonriente", "media", "normal"),
     ("accion_fallida", "error", "El mensaje no se envió porque Telegram no está disponible.", "pensativo", "media", "normal"),
     ("accion_fallida_2", "error", "No abrí la puerta porque falta confirmación.", "determinado", "media", "low"),
     ("aviso", "general", "Quedan diez minutos para la reunión.", "neutral", "media", "normal"),

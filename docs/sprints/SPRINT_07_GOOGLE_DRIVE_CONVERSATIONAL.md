@@ -77,7 +77,7 @@ Esto permite responder:
 Abre el primero
 ```
 
-sin mezclar resultados entre REDACTED_2c7b6821719d, REDACTED_bc04a68d9192 u otros usuarios.
+sin mezclar resultados entre Alex, Vega u otros usuarios.
 
 ## Límites de este Sprint
 

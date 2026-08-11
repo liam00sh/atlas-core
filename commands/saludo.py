@@ -8,7 +8,7 @@ COMMAND = {
     "name": "saludo",
     "description": "Saluda al usuario.",
     "category": "General",
-    "author": "REDACTED_2c7b6821719d",
+    "author": "Alex",
     "version": "1.1",
     "aliases": ["hola", "saludar", "buenas", "hey"],
     "examples": ["saludo", "hola", "buenas"],

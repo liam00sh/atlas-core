@@ -82,16 +82,16 @@ def test_disabled_backup_plan_is_blocked(tmp_path):
 def test_notification_adapter_validates_and_sends():
     provider = FakeNotifier()
     adapter = NotificationAdapter(provider)
-    receipt = adapter.send("REDACTED_2c7b6821719d", "Incidencia", "Telegram no responde")
+    receipt = adapter.send("Alex", "Incidencia", "Telegram no responde")
     assert receipt.delivered is True
-    assert provider.sent[0][0] == "REDACTED_2c7b6821719d"
+    assert provider.sent[0][0] == "Alex"
 
 
 def test_notification_rejects_empty_message():
     provider = FakeNotifier()
     adapter = NotificationAdapter(provider)
     with pytest.raises(ValueError):
-        adapter.send("REDACTED_2c7b6821719d", "Aviso", "")
+        adapter.send("Alex", "Aviso", "")
 
 
 def test_technical_routine_stops_on_error():
@@ -141,14 +141,14 @@ def test_stage_c_catalog_registers_five_actions(tmp_path, monitor):
 
 def test_permissions_can_distinguish_status_and_backup():
     permissions = AutomationPermissions({
-        "REDACTED_aebac53c46bb": UserAccess(
-            "REDACTED_aebac53c46bb",
+        "Carla": UserAccess(
+            "Carla",
             permissions={"system.status.read"},
         ),
-        "REDACTED_2c7b6821719d": UserAccess(
-            "REDACTED_2c7b6821719d",
+        "Alex": UserAccess(
+            "Alex",
             roles={"owner"},
         ),
     })
-    assert "system.status.read" in permissions.get_user("REDACTED_aebac53c46bb").permissions
-    assert permissions.get_user("REDACTED_2c7b6821719d").is_admin is True
+    assert "system.status.read" in permissions.get_user("Carla").permissions
+    assert permissions.get_user("Alex").is_admin is True

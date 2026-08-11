@@ -72,10 +72,10 @@ def _service(tmp_path: Path) -> WindowsIntentService:
     return WindowsIntentService(manager)
 
 
-def test_REDACTED_f73137d930c3_can_request_disk_space(tmp_path: Path) -> None:
+def test_Alex_can_request_disk_space(tmp_path: Path) -> None:
     result = _service(tmp_path).handle(
         "Cuánto espacio libre tengo",
-        user_id="REDACTED_f73137d930c3",
+        user_id="Alex",
         channel="test",
     )
 
@@ -84,10 +84,10 @@ def test_REDACTED_f73137d930c3_can_request_disk_space(tmp_path: Path) -> None:
     assert result.action_id == "windows.disk.space.read"
 
 
-def test_REDACTED_6915771be1c5_is_blocked_from_opening_apps(tmp_path: Path) -> None:
+def test_Carla_is_blocked_from_opening_apps(tmp_path: Path) -> None:
     result = _service(tmp_path).handle(
         "Abre la calculadora",
-        user_id="REDACTED_6915771be1c5",
+        user_id="Carla",
         channel="test",
     )
 
@@ -99,7 +99,7 @@ def test_REDACTED_6915771be1c5_is_blocked_from_opening_apps(tmp_path: Path) -> N
 def test_unknown_text_falls_through(tmp_path: Path) -> None:
     result = _service(tmp_path).handle(
         "Qué tiempo hace",
-        user_id="REDACTED_f73137d930c3",
+        user_id="Alex",
         channel="test",
     )
 
@@ -110,10 +110,10 @@ def test_unknown_text_falls_through(tmp_path: Path) -> None:
     platform.system().casefold() != "windows",
     reason="La apertura real solo se valida en Windows.",
 )
-def test_REDACTED_f73137d930c3_can_open_calculator_on_windows(tmp_path: Path) -> None:
+def test_Alex_can_open_calculator_on_windows(tmp_path: Path) -> None:
     result = _service(tmp_path).handle(
         "Daxter, abre la calculadora",
-        user_id="REDACTED_f73137d930c3",
+        user_id="Alex",
         channel="test",
     )
 

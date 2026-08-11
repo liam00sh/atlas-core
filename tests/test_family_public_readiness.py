@@ -16,8 +16,8 @@ def test_nontrivial_message_uses_perceptible_threshold():
 def test_profile_essentials_are_detected():
     assert MemoryService._essential_category("Mi fecha de nacimiento es 1 de enero") == "birth"
     assert MemoryService._essential_category("Trabajo como administrador") == "work"
-    assert MemoryService._essential_category("Vivo en REDACTED_a77d7bb7adbf") == "residence"
-    assert MemoryService._essential_category("Tengo un gato llamado REDACTED_0f38c2ded26f") == "pets"
+    assert MemoryService._essential_category("Vivo en VillaEjemplo") == "residence"
+    assert MemoryService._essential_category("Tengo un gato llamado Nube") == "pets"
 
 
 def test_comparison_query_and_context():

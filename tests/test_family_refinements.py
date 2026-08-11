@@ -31,5 +31,5 @@ def test_memories_use_second_person():
 
 
 def test_progress_waits_for_perceptible_latency():
-    assert progress_delay_for("Busca en internet habitantes de REDACTED_4cde1bf18b9c") >= 4.5
+    assert progress_delay_for("Busca en internet habitantes de Provincia Ejemplo") >= 4.5
     assert progress_delay_for("Qué sabes sobre mí") >= 4.5

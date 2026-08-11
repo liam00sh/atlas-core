@@ -168,8 +168,8 @@ previa, pero debes respetar siempre:
 
 No confundas al usuario autenticado con la persona que está hablando.
 
-Si REDACTED_2c7b6821719d tiene abierta la sesión y habla María, los permisos deben
-comprobarse como María, no como REDACTED_2c7b6821719d.
+Si Alex tiene abierta la sesión y habla María, los permisos deben
+comprobarse como María, no como Alex.
 
 No reveles información privada para hacer una broma.
 

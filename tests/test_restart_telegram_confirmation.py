@@ -27,7 +27,7 @@ def atlas(tmp_path, monkeypatch):
     environment = build_stage_e_simulation(tmp_path / "stage_e.json")
     monkeypatch.setattr(atlas_module, "build_stage_e_environment", lambda *a, **k: environment)
     instance = Atlas(ai_provider=NoLLM())
-    instance.users.current_user = "REDACTED_2c7b6821719d"
+    instance.users.current_user = "Alex"
     context.atlas = instance
     return instance
 
@@ -47,7 +47,7 @@ def test_restart_creates_pending_and_exact_confirmation_executes_before_llm(
     assert "confirmo reiniciar telegram" in first.casefold()
     pending = atlas.confirmations.get_confirmation()
     assert pending["action_name"] == "restart_telegram"
-    assert pending["user"] == "REDACTED_2c7b6821719d"
+    assert pending["user"] == "Alex"
 
     second = _run(atlas, capsys, "confirmo reiniciar telegram")
     assert launched == [True]
@@ -82,22 +82,22 @@ def _telegram_context(user, session):
     )
 
 
-def test_telegram_REDACTED_f73137d930c3_can_confirm_but_family_and_claimed_identity_cannot(
+def test_telegram_Alex_can_confirm_but_family_and_claimed_identity_cannot(
     atlas, monkeypatch
 ):
     launched = []
     monkeypatch.setattr("commands.restart_telegram.execute_confirmed", lambda: launched.append(True) or True)
     adapter = AtlasCoreAdapter(atlas)
-    REDACTED_f73137d930c3 = _telegram_context("REDACTED_2c7b6821719d", "telegram:REDACTED_f73137d930c3")
-    assert "confirmo reiniciar telegram" in adapter.process("Reinicia Telegram", REDACTED_f73137d930c3).casefold()
-    assert adapter.process("confirmo reiniciar telegram", REDACTED_f73137d930c3)
+    Alex = _telegram_context("Alex", "telegram:Alex")
+    assert "confirmo reiniciar telegram" in adapter.process("Reinicia Telegram", Alex).casefold()
+    assert adapter.process("confirmo reiniciar telegram", Alex)
     assert launched == [True]
 
-    for family in ("REDACTED_bc04a68d9192", "REDACTED_0392c3d1b4d3", "REDACTED_aebac53c46bb"):
+    for family in ("Vega", "Carla", "Carla"):
         request = _telegram_context(family, f"telegram:{family}")
         denied = adapter.process("Reinicia Telegram", request)
-        assert "solo REDACTED_f73137d930c3" in denied.casefold()
-        adapter.process("soy REDACTED_2c7b6821719d", request)
+        assert "solo alex" in denied.casefold()
+        adapter.process("soy Alex", request)
         denied_again = adapter.process("Reinicia Telegram", request)
-        assert "solo REDACTED_f73137d930c3" in denied_again.casefold()
+        assert "solo alex" in denied_again.casefold()
     assert launched == [True]

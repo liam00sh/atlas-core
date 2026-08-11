@@ -11,7 +11,7 @@
 
 ## Escalado de usuarios
 
-No existe una lista codificada de REDACTED_2c7b6821719d, REDACTED_bc04a68d9192, REDACTED_0392c3d1b4d3 o REDACTED_d296a64095dd. Cada cuenta se
+No existe una lista codificada de Alex, Vega, Carla o Vega. Cada cuenta se
 vincula mediante `telegram_user_id -> atlas_user_id`. Para añadir otra persona:
 
 1. Crear previamente su usuario Atlas.

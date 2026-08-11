@@ -43,36 +43,36 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_REDACTED_f73137d930c3_session_with_REDACTED_7b9528898599_speaking_keeps_scopes_separate(self):
-        self.conversation.set_authenticated_user("REDACTED_2c7b6821719d")
-        self.conversation.identify_person("REDACTED_bc04a68d9192")
+    def test_Alex_session_with_Vega_speaking_keeps_scopes_separate(self):
+        self.conversation.set_authenticated_user("Alex")
+        self.conversation.identify_person("Vega")
         self.assistant.load_user(self.conversation.get_authenticated_user())
-        self.assertEqual(self.conversation.get_authenticated_user(), "REDACTED_2c7b6821719d")
-        self.assertEqual(self.conversation.get_permission_viewer(), "REDACTED_bc04a68d9192")
-        self.assertEqual(self.assistant.get_current_user(), "REDACTED_f73137d930c3")
+        self.assertEqual(self.conversation.get_authenticated_user(), "Alex")
+        self.assertEqual(self.conversation.get_permission_viewer(), "Vega")
+        self.assertEqual(self.assistant.get_current_user(), "alex")
 
     def test_session_initialization_does_not_register_a_real_encounter(self):
-        person = self.people.find_person_by_name("REDACTED_bc04a68d9192")
+        person = self.people.find_person_by_name("Vega")
         before = person.encounter_count
 
         self.conversation.identify_person(
-            "REDACTED_bc04a68d9192",
+            "Vega",
             register_encounter=False,
         )
 
-        stored = self.people.find_person_by_name("REDACTED_bc04a68d9192")
+        stored = self.people.find_person_by_name("Vega")
         self.assertEqual(stored.encounter_count, before)
 
     def test_family_and_identity_survive_reinitialization(self):
-        REDACTED_f73137d930c3 = self.people.find_person_by_name("REDACTED_e97345c31916")
-        self.assertEqual(REDACTED_f73137d930c3.name, "REDACTED_46087f8d7037")
+        Alex = self.people.find_person_by_name("Alex")
+        self.assertEqual(Alex.name, "Alex Romero")
         first_count = self.relationships.get_relationship_count()
         FamilyInitializer(self.people, self.relationships).initialize()
         self.assertEqual(self.relationships.get_relationship_count(), first_count)
-        self.assertTrue(self.family.describe_person_family("REDACTED_46087f8d7037"))
+        self.assertTrue(self.family.describe_person_family("Alex Romero"))
 
     def test_assistant_identity_and_mode_context_is_dynamic(self):
-        self.assistant.load_user("REDACTED_2c7b6821719d")
+        self.assistant.load_user("Alex")
         self.assistant.change_identity("coco")
         self.assistant.set_mode(WORK_MODE, manual=True)
         context = self.assistant.build_prompt_context()
@@ -80,7 +80,7 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
         self.assertIn("Trabajo", context)
 
     def test_identity_switch_does_not_leak_mode_between_daxter_and_coco(self):
-        self.assistant.load_user("REDACTED_2c7b6821719d")
+        self.assistant.load_user("Alex")
         self.assistant.set_mode(FUN_MODE, manual=True)
         self.assertEqual(self.assistant.get_active_mode_name(), FUN_MODE)
 
@@ -95,26 +95,27 @@ class AtlasSubsystemIntegrationTests(unittest.TestCase):
         self.assertEqual(self.assistant.get_active_mode_name(), CLASSIC_MODE)
 
     def test_person_and_animal_relations_are_queryable_together(self):
-        description = self.family.describe_person_family("REDACTED_46087f8d7037")
-        self.assertIn("REDACTED_bc04a68d9192", description)
-        self.assertIn("REDACTED_73007cb40c65", description)
+        description = self.family.describe_person_family("Alex Romero")
+        self.assertIn("Vega", description)
+        self.assertIn("Nube", description)
 
-        REDACTED_d9078313c20e_connections = self.family.find_connection("REDACTED_46087f8d7037", "REDACTED_06768d0d9b38")
-        self.assertIsInstance(REDACTED_d9078313c20e_connections, list)
+        pet_connections = self.family.find_connection("Alex Romero", "Nube")
+        self.assertIsInstance(pet_connections, list)
 
-    def test_REDACTED_7b9528898599_mother_relationship_is_available(self):
+    def test_Vega_partner_relationship_is_available(self):
         description = self.family.describe_person_family(
-            "REDACTED_bc04a68d9192"
+            "Vega"
         )
-        self.assertIn("REDACTED_e3b252570a2f es madre de REDACTED_bc04a68d9192", description)
+        self.assertIn("Alex Romero", description)
+        self.assertIn("pareja", description)
 
     def test_animals_are_not_people_or_user_profiles(self):
         self.assertIsNone(
-            self.people.find_person_by_name("REDACTED_0f38c2ded26f")
+            self.people.find_person_by_name("Nube")
         )
-        animal = self.people.find_animal_by_name("REDACTED_0f38c2ded26f")
+        animal = self.people.find_animal_by_name("Nube")
         self.assertIsNotNone(animal)
-        self.assertEqual(animal.name, "REDACTED_c0240dd983fa")
+        self.assertEqual(animal.name, "Nube")
 
     def test_common_identity_typo_is_normalized(self):
         self.assertEqual(

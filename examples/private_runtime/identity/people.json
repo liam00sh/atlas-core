@@ -1,0 +1,71 @@
+[
+    {
+        "id": "f4332b7a-ef5d-47db-ae51-d38ff057169b",
+        "name": "Alex Romero",
+        "aliases": [
+            "Alex",
+            "Alias Anterior Ejemplo"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "user",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Usuario principal completamente ficticio.",
+        "user_profile": "Alex",
+        "created_at": "2026-08-11T16:29:30",
+        "updated_at": "2026-08-11T16:29:30"
+    },
+    {
+        "id": "53ee7a2b-a248-4c54-8059-aafd4fa391bc",
+        "name": "Vega Ferrer",
+        "aliases": [
+            "Vega"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "user",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Persona de ejemplo completamente ficticia.",
+        "user_profile": "Vega",
+        "created_at": "2026-08-11T16:29:30",
+        "updated_at": "2026-08-11T16:29:30"
+    },
+    {
+        "id": "ea3e0448-27fa-470c-a68b-c56080846780",
+        "name": "Carla Romero",
+        "aliases": [
+            "Carla"
+        ],
+        "grammatical_gender": "feminine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Familiar de ejemplo completamente ficticio.",
+        "user_profile": null,
+        "created_at": "2026-08-11T16:29:30",
+        "updated_at": "2026-08-11T16:29:30"
+    },
+    {
+        "id": "d80817e1-fee8-42a9-a0e8-8aefef365bd7",
+        "name": "Diego Romero",
+        "aliases": [
+            "Diego"
+        ],
+        "grammatical_gender": "masculine",
+        "status": "guest",
+        "encounter_count": 0,
+        "first_seen_at": null,
+        "last_seen_at": null,
+        "introduced_by": null,
+        "summary": "Familiar de ejemplo completamente ficticio.",
+        "user_profile": null,
+        "created_at": "2026-08-11T16:29:30",
+        "updated_at": "2026-08-11T16:29:30"
+    }
+]

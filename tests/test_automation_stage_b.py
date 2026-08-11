@@ -20,19 +20,19 @@ from automation.models import (
 @pytest.fixture
 def permissions():
     return AutomationPermissions({
-        "REDACTED_2c7b6821719d": UserAccess(
-            "REDACTED_2c7b6821719d",
+        "Alex": UserAccess(
+            "Alex",
             roles={"owner"},
             permissions={"automation.execute.safe"},
             groups={"unidad_familiar"},
         ),
-        "REDACTED_bc04a68d9192": UserAccess(
-            "REDACTED_bc04a68d9192",
+        "Vega": UserAccess(
+            "Vega",
             permissions={"automation.execute.safe"},
             groups={"unidad_familiar"},
         ),
-        "REDACTED_aebac53c46bb": UserAccess(
-            "REDACTED_aebac53c46bb",
+        "Carla": UserAccess(
+            "Carla",
             permissions={"automation.execute.safe"},
             groups={"unidad_familiar"},
         ),
@@ -80,55 +80,55 @@ def manager(tmp_path, registry, permissions):
 def test_private_automation_isolated(manager):
     item = manager.create(
         action_id="reminder.create",
-        owner_user_id="REDACTED_aebac53c46bb",
-        creator_user_id="REDACTED_aebac53c46bb",
+        owner_user_id="Carla",
+        creator_user_id="Carla",
         parameters={"message": "Comprar pan"},
     )
-    assert manager.get(item.automation_id, "REDACTED_aebac53c46bb") is item
+    assert manager.get(item.automation_id, "Carla") is item
     with pytest.raises(PermissionError):
-        manager.get(item.automation_id, "REDACTED_bc04a68d9192")
+        manager.get(item.automation_id, "Vega")
 
 
 def test_family_group_can_view_shared_resource(manager):
     item = manager.create(
         action_id="reminder.create",
-        owner_user_id="REDACTED_aebac53c46bb",
-        creator_user_id="REDACTED_aebac53c46bb",
+        owner_user_id="Carla",
+        creator_user_id="Carla",
         parameters={"message": "Comprar champú"},
         visibility=Visibility.SHARED,
         shared_group_ids=["unidad_familiar"],
     )
-    assert manager.get(item.automation_id, "REDACTED_bc04a68d9192") is item
+    assert manager.get(item.automation_id, "Vega") is item
 
 
 def test_admin_can_view_private_automation(manager):
     item = manager.create(
         action_id="reminder.create",
-        owner_user_id="REDACTED_aebac53c46bb",
-        creator_user_id="REDACTED_aebac53c46bb",
+        owner_user_id="Carla",
+        creator_user_id="Carla",
         parameters={"message": "Privado"},
     )
-    assert manager.get(item.automation_id, "REDACTED_2c7b6821719d") is item
+    assert manager.get(item.automation_id, "Alex") is item
 
 
 def test_non_admin_cannot_create_technical_automation(manager):
     with pytest.raises(PermissionError):
         manager.create(
             action_id="service.telegram.restart",
-            owner_user_id="REDACTED_bc04a68d9192",
-            creator_user_id="REDACTED_bc04a68d9192",
+            owner_user_id="Vega",
+            creator_user_id="Vega",
         )
 
 
 def test_confirmation_is_required(manager):
     item = manager.create(
         action_id="service.telegram.restart",
-        owner_user_id="REDACTED_2c7b6821719d",
-        creator_user_id="REDACTED_2c7b6821719d",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
     )
     result = manager.execute(
         item.automation_id,
-        requested_by_user_id="REDACTED_2c7b6821719d",
+        requested_by_user_id="Alex",
         channel="telegram",
     )
     assert result.error_code == "confirmation_required"
@@ -138,12 +138,12 @@ def test_confirmation_is_required(manager):
 def test_confirmed_technical_action_executes(manager):
     item = manager.create(
         action_id="service.telegram.restart",
-        owner_user_id="REDACTED_2c7b6821719d",
-        creator_user_id="REDACTED_2c7b6821719d",
+        owner_user_id="Alex",
+        creator_user_id="Alex",
     )
     result = manager.execute(
         item.automation_id,
-        requested_by_user_id="REDACTED_2c7b6821719d",
+        requested_by_user_id="Alex",
         channel="telegram",
         confirmed=True,
     )
@@ -155,8 +155,8 @@ def test_parameters_outside_catalog_are_rejected(manager):
     with pytest.raises(ValueError):
         manager.create(
             action_id="reminder.create",
-            owner_user_id="REDACTED_aebac53c46bb",
-            creator_user_id="REDACTED_aebac53c46bb",
+            owner_user_id="Carla",
+            creator_user_id="Carla",
             parameters={
                 "message": "Comprar pan",
                 "shell": "rm -rf /",
@@ -169,20 +169,20 @@ def test_persistence_roundtrip(tmp_path, registry, permissions):
     first = AutomationManager(path, registry, permissions)
     item = first.create(
         action_id="reminder.create",
-        owner_user_id="REDACTED_aebac53c46bb",
-        creator_user_id="REDACTED_aebac53c46bb",
+        owner_user_id="Carla",
+        creator_user_id="Carla",
         parameters={"message": "Persistente"},
     )
     second = AutomationManager(path, registry, permissions)
-    loaded = second.get(item.automation_id, "REDACTED_aebac53c46bb")
+    loaded = second.get(item.automation_id, "Carla")
     assert loaded.parameters["message"] == "Persistente"
 
 
 def test_scheduler_executes_due_automation(manager):
     item = manager.create(
         action_id="reminder.create",
-        owner_user_id="REDACTED_aebac53c46bb",
-        creator_user_id="REDACTED_aebac53c46bb",
+        owner_user_id="Carla",
+        creator_user_id="Carla",
         parameters={"message": "Ahora"},
         scheduled_for=utc_now() - timedelta(seconds=1),
     )
@@ -194,8 +194,8 @@ def test_scheduler_executes_due_automation(manager):
 def test_audit_redacts_secrets(manager):
     item = manager.create(
         action_id="reminder.create",
-        owner_user_id="REDACTED_aebac53c46bb",
-        creator_user_id="REDACTED_aebac53c46bb",
+        owner_user_id="Carla",
+        creator_user_id="Carla",
         parameters={"message": "Sin secretos"},
         metadata={"password": "1234"},
     )
@@ -205,7 +205,7 @@ def test_audit_redacts_secrets(manager):
             automation_id=item.automation_id,
             action_id=item.action_id,
             owner_user_id=item.owner_user_id,
-            requested_by_user_id="REDACTED_aebac53c46bb",
+            requested_by_user_id="Carla",
             channel="test",
             details={"password": "1234", "safe": "ok"},
         )

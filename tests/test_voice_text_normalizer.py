@@ -3,9 +3,9 @@ from voice.text_normalizer import normalize_for_tts
 
 
 def test_visual_and_spoken_text_are_separate_for_vocatives() -> None:
-    visual = "REDACTED_0f38c2ded26fnando y atento, REDACTED_2c7b6821719d. ¿Cómo estás tú?"
-    assert normalize_for_tts(visual) == "REDACTED_0f38c2ded26fnando y atento REDACTED_2c7b6821719d. ¿Cómo estás tú?"
-    assert visual == "REDACTED_0f38c2ded26fnando y atento, REDACTED_2c7b6821719d. ¿Cómo estás tú?"
+    visual = "REDACTED_0f38c2ded26fnando y atento, Alex. ¿Cómo estás tú?"
+    assert normalize_for_tts(visual) == "REDACTED_0f38c2ded26fnando y atento Alex. ¿Cómo estás tú?"
+    assert visual == "REDACTED_0f38c2ded26fnando y atento, Alex. ¿Cómo estás tú?"
 
 
 def test_tts_normalizer_removes_markdown_emojis_and_raw_urls() -> None:
@@ -34,7 +34,7 @@ def test_tts_normalizer_softens_parentheses_and_dashes() -> None:
 
 
 def test_prosody_encodes_commas_colons_without_sending_symbols_to_engine() -> None:
-    segments = segment_text("Hola, REDACTED_2c7b6821719d: todo listo.")
+    segments = segment_text("Hola, Alex: todo listo.")
     assert segments
     assert all("," not in segment.text and ":" not in segment.text for segment in segments)
     assert any(segment.pause_after_ms > 0 for segment in segments[:-1])

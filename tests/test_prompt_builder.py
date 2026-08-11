@@ -12,15 +12,15 @@ class PromptBuilderTests(unittest.TestCase):
     def _build(self, assistant="Coco", identity_context="Identidad activa: Coco. Modo: Trabajo."):
         return self.builder.build(
             user_message="Ayúdame con Python",
-            user_name="REDACTED_bc04a68d9192",
+            user_name="Vega",
             project_name="Proyecto Atlas",
             assistant_name=assistant,
             atlas_version="0.3.1",
             capabilities={"ai": {"enabled": True, "description": "IA local"}},
             system_information="Sistema de prueba",
             identity_context=identity_context,
-            relevant_memories="REDACTED_bc04a68d9192 estudia en REDACTED_4cde1bf18b9c.",
-            conversation_context="REDACTED_bc04a68d9192: Hola",
+            relevant_memories="Vega estudia en Provincia Ejemplo.",
+            conversation_context="Vega: Hola",
         )
 
     def test_uses_dynamic_identity_not_hardcoded_daxter(self):
@@ -55,7 +55,7 @@ class PromptBuilderTests(unittest.TestCase):
 
     def test_rejects_required_empty_values(self):
         with self.assertRaises(ValueError):
-            self.builder.build("", "REDACTED_2c7b6821719d", "Atlas", "Daxter", "0.3", {})
+            self.builder.build("", "Alex", "Atlas", "Daxter", "0.3", {})
         with self.assertRaises(ValueError):
             self.builder.build("Hola", "", "Atlas", "Daxter", "0.3", {})
 

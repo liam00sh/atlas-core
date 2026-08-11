@@ -9,13 +9,13 @@ Descripción:
     Su objetivo es detectar consultas como:
 
         - "qué sabes de mí"
-        - "qué recuerdas de REDACTED_bc04a68d9192"
+        - "qué recuerdas de Vega"
         - "mis recuerdos"
 
     También admite errores frecuentes de escritura:
 
-        - "qeu sabea d REDACTED_7b9528898599"
-        - "que recuerads de Ruben"
+        - "qeu sabea d Vega"
+        - "que recuerads de Diego"
         - "que sabbes de mi"
 
     A diferencia de text_normalizer.py, este módulo es deliberadamente
@@ -54,7 +54,7 @@ Resultados posibles:
 
         {
             "type": "other",
-            "owner": "REDACTED_7b9528898599"
+            "owner": "Vega"
         }
 
     Consulta no reconocida:
@@ -85,7 +85,7 @@ import re
 # Ejemplo:
 #
 #     "qué" -> "que"
-#     "REDACTED_1b4b1a7f2126" -> "Ruben"
+#     "Diego" -> "Diego"
 import unicodedata
 
 
@@ -162,7 +162,7 @@ def remove_accents(
 
     Ejemplos:
         "qué"   -> "que"
-        "REDACTED_1b4b1a7f2126" -> "Ruben"
+        "Diego" -> "Diego"
 
     No convierte el texto a minúsculas ni elimina signos.
     Únicamente elimina los acentos.
@@ -227,8 +227,8 @@ def normalize_basic_text(
         No intenta corregir automáticamente los nombres.
 
     Ejemplo:
-        "¿QEU sabes d REDACTED_bc04a68d9192?"
-            -> "que sabes de REDACTED_7b9528898599"
+        "¿QEU sabes d Vega?"
+            -> "que sabes de Vega"
     """
 
     # Eliminamos espacios exteriores, convertimos a minúsculas
@@ -434,7 +434,7 @@ def parse_memory_query(
 
             {
                 "type": "other",
-                "owner": "REDACTED_7b9528898599"
+                "owner": "Vega"
             }
 
     Ejemplos reconocidos:
@@ -443,9 +443,9 @@ def parse_memory_query(
 
         "que sabes de mi"
 
-        "qeu sabea d REDACTED_7b9528898599"
+        "qeu sabea d Vega"
 
-        "que recuerads de Ruben"
+        "que recuerads de Diego"
     """
 
     # Normalizamos únicamente la estructura básica.
@@ -457,11 +457,11 @@ def parse_memory_query(
     #
     # Ejemplo:
     #
-    #     "que sabes de REDACTED_7b9528898599"
+    #     "que sabes de Vega"
     #
     # se convierte en:
     #
-    #     ["que", "sabes", "de", "REDACTED_7b9528898599"]
+    #     ["que", "sabes", "de", "Vega"]
     words = normalized_text.split()
 
     # -------------------------------------------------------------------------
@@ -509,7 +509,7 @@ def parse_memory_query(
     #
     # También puede tener más si el nombre es compuesto:
     #
-    #     que sabes de maria REDACTED_1ec4ed037766
+    #     que sabes de maria Zoe
     if len(words) < 4:
         return None
 
@@ -547,11 +547,11 @@ def parse_memory_query(
     #
     # Ejemplo:
     #
-    #     ["que", "sabes", "de", "maria", "REDACTED_1ec4ed037766"]
+    #     ["que", "sabes", "de", "maria", "Zoe"]
     #
     # owner:
     #
-    #     "maria REDACTED_1ec4ed037766"
+    #     "maria Zoe"
     owner = " ".join(
         words[3:]
     ).strip()

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from core import context
 
-ADMIN_USER_ID = "REDACTED_f73137d930c3"
+ADMIN_USER_ID = "alex"
 
 
 def current_user_id() -> str:
@@ -59,7 +59,7 @@ def is_admin_user() -> bool:
             if callable(getter):
                 configured_owner = str(getter() or "").strip().casefold()
 
-    owner_id = configured_owner or ADMIN_USER_ID
+    owner_id = (configured_owner or ADMIN_USER_ID).casefold()
     active_user_id = current_user_id()
     return bool(active_user_id) and active_user_id == owner_id
 
@@ -70,5 +70,5 @@ def require_admin_user() -> bool:
 
     print()
     print("Esta es una función administrativa esencial de Atlas.")
-    print("Solo REDACTED_2c7b6821719d puede utilizarla.")
+    print("Solo Alex puede utilizarla.")
     return False

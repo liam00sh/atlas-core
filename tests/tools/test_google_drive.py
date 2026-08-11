@@ -64,7 +64,7 @@ def build_manager() -> ToolManager:
 
 def build_context() -> ToolContext:
     return ToolContext(
-        requested_by="REDACTED_2c7b6821719d",
+        requested_by="Alex",
         channel="test",
         permissions={"google.drive.read"},
     )

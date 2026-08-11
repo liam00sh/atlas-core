@@ -34,17 +34,17 @@ La novia de  es...
 
 ```text
 Quién es mi hermana
-→ Tu hermana es REDACTED_65dc3df1f2c0.
+→ Tu hermana es Carla.
 
 Quién es mi madre
-→ Tu madre es REDACTED_ba2c2b03ba9a.
+→ Tu madre es Carla.
 
 Cómo se llama mi novia
-→ Tu novia es REDACTED_8762331d93e2.
+→ Tu novia es Vega Ferrer.
 
-Cómo se llama el hermano de REDACTED_bc04a68d9192
-→ El hermano de REDACTED_8762331d93e2 es REDACTED_7b2ab41fc4b5.
+Cómo se llama el hermano de Vega
+→ El hermano de Vega Ferrer es Diego.
 
-Cómo se llama la hija de la tía de REDACTED_bc04a68d9192
-→ La hija de la tía de REDACTED_8762331d93e2 es REDACTED_91f6198b34bc.
+Cómo se llama la hija de la tía de Vega
+→ La hija de la tía de Vega Ferrer es Vega.
 ```

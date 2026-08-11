@@ -14,14 +14,14 @@ Descripción:
 
     Gracias al sistema de usuarios, Atlas puede diferenciar entre:
 
-    - Usuario principal (REDACTED_2c7b6821719d)
-    - Usuarios temporales (REDACTED_bc04a68d9192, REDACTED_0392c3d1b4d3, etc.)
+    - Usuario principal (Alex)
+    - Usuarios temporales (Vega, Carla, etc.)
 
 Ejemplo:
 
     Atlas > usuario
 
-        Usuario activo: REDACTED_2c7b6821719d
+        Usuario activo: Alex
 
 Flujo:
 
@@ -77,7 +77,7 @@ COMMAND = {
     "category": "Sistema",
 
     # Autor.
-    "author": "REDACTED_2c7b6821719d",
+    "author": "Alex",
 
     # Versión del comando.
     "version": "1.1",
@@ -132,9 +132,9 @@ def execute():
     #
     # Ejemplos:
     #
-    # Usuario activo: REDACTED_2c7b6821719d
-    # Usuario activo: REDACTED_bc04a68d9192
-    # Usuario activo: REDACTED_0392c3d1b4d3
+    # Usuario activo: Alex
+    # Usuario activo: Vega
+    # Usuario activo: Carla
     print(
         current_user_identity(
             user=context.atlas.get_user(),

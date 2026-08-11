@@ -20,7 +20,7 @@ class _SocialAtlas(AtlasSocialMixin):
         self.guest_sessions = GuestSessionManager()
         if guest_name:
             self.guest_sessions.start(
-                host_user="REDACTED_2c7b6821719d",
+                host_user="Alex",
                 guest_name=guest_name,
                 assistant_name="Daxter",
             )
@@ -32,15 +32,15 @@ class _SocialAtlas(AtlasSocialMixin):
         guest = self.guest_sessions.get()
         if guest is not None:
             return guest.guest_name
-        return "REDACTED_2c7b6821719d"
+        return "Alex"
 
     def get_user(self):
-        return "REDACTED_2c7b6821719d"
+        return "Alex"
 
 
 class _DailyGreetingAtlas(AtlasDailyBriefMixin):
     def get_user(self):
-        return "REDACTED_2c7b6821719d"
+        return "Alex"
 
     def _brief_reminders(self, owner, *, tomorrow=False):
         return []
@@ -81,26 +81,26 @@ def test_identified_and_guest_greetings_use_the_injected_session_state():
     identified = _SocialAtlas()
     guest = _SocialAtlas(guest_name="José")
 
-    assert "REDACTED_2c7b6821719d" in _greeting_output("Hola", social=identified)[1]
+    assert "Alex" in _greeting_output("Hola", social=identified)[1]
     assert "José" in _greeting_output("Hola", social=guest)[1]
 
 
 def test_new_existing_and_pending_guest_sessions_do_not_leak_state():
     new_session = _SocialAtlas()
-    pending_session = _SocialAtlas(pending_guest="REDACTED_aebac53c46bb")
-    existing_session = _SocialAtlas(guest_name="REDACTED_bc04a68d9192")
+    pending_session = _SocialAtlas(pending_guest="Carla")
+    existing_session = _SocialAtlas(guest_name="Vega")
 
     assert new_session.guest_sessions.get() is None
-    assert pending_session.guest_sessions.get_pending_guest() == "REDACTED_aebac53c46bb"
-    assert existing_session.guest_sessions.get().guest_name == "REDACTED_bc04a68d9192"
-    assert "REDACTED_2c7b6821719d" in _greeting_output("Buenas tardes", social=pending_session)[1]
-    assert "REDACTED_bc04a68d9192" in _greeting_output("Buenas tardes", social=existing_session)[1]
+    assert pending_session.guest_sessions.get_pending_guest() == "Carla"
+    assert existing_session.guest_sessions.get().guest_name == "Vega"
+    assert "Alex" in _greeting_output("Buenas tardes", social=pending_session)[1]
+    assert "Vega" in _greeting_output("Buenas tardes", social=existing_session)[1]
 
 
 def test_explicit_internet_query_is_extracted_without_reasking_permission():
     assert AtlasAIMixin._extract_explicit_internet_query(
-        "Busca en Internet cuántos habitantes tiene REDACTED_a77d7bb7adbf"
-    ) == "cuantos habitantes tiene REDACTED_fddd19092a14"
+        "Busca en Internet cuántos habitantes tiene VillaEjemplo"
+    ) == "cuantos habitantes tiene villaejemplo"
 
 
 def test_translation_languages_include_requested_common_languages():

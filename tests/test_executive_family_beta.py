@@ -22,12 +22,12 @@ def _message(*, text: str, media_type: str | None = None) -> TelegramMessage:
 
 def test_photo_caption_is_not_sent_to_ai_as_visual_fact() -> None:
     response = TelegramGateway._handle_media_message(
-        _message(text="Mira, este es REDACTED_0f38c2ded26f", media_type="photo")
+        _message(text="Mira, este es Nube", media_type="photo")
     )
     assert "He recibido la foto" in response.text
     assert "todavía no puedo ver la imagen" in response.text
-    assert "tu gato de" not in response.text
-    assert "REDACTED_0392c3d1b4d3" not in response.text
+    assert "tu Nube de" not in response.text
+    assert "Carla" not in response.text
 
 
 def test_executive_summarizes_long_explanations() -> None:

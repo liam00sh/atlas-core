@@ -128,17 +128,17 @@ def main() -> None:
         recorder = BenchmarkRecorder()
 
         run_turn(atlas, recorder, "Hola", "saludo breve")
-        atlas.change_user("REDACTED_bc04a68d9192")
-        run_turn(atlas, recorder, "¿Quién soy?", "identidad REDACTED_bc04a68d9192")
+        atlas.change_user("Vega")
+        run_turn(atlas, recorder, "¿Quién soy?", "identidad Vega")
         run_turn(atlas, recorder, "¿Quiénes son mis primos?", "relaciones verificadas")
         run_turn(atlas, recorder, "¿Qué sabes sobre mí?", "memoria autorizada o insuficiencia")
-        run_turn(atlas, recorder, "He venido a casa de REDACTED_2c7b6821719d unos días", "ubicación temporal")
-        run_turn(atlas, recorder, "¿Dónde estoy ahora?", "casa de REDACTED_2c7b6821719d")
-        run_turn(atlas, recorder, "¿Dónde vivo?", "domicilio habitual REDACTED_4cde1bf18b9c")
+        run_turn(atlas, recorder, "He venido a casa de Alex unos días", "ubicación temporal")
+        run_turn(atlas, recorder, "¿Dónde estoy ahora?", "casa de Alex")
+        run_turn(atlas, recorder, "¿Dónde vivo?", "domicilio habitual Provincia Ejemplo")
         run_turn(atlas, recorder, "Ayúdame a decidir entre esa y la anterior", "ambigüedad con contexto")
         run_turn(atlas, recorder, "Planifica tres pasos para ordenar una tarea compleja", "reasoning")
         run_turn(atlas, recorder, "Apaga la luz del acuario pequeño", "denegación segura sin ejecución")
-        run_turn(atlas, recorder, "¿Cuál es la población actual de REDACTED_a77d7bb7adbf?", "oferta de búsqueda, sin ejecutarla")
+        run_turn(atlas, recorder, "¿Cuál es la población actual de VillaEjemplo?", "oferta de búsqueda, sin ejecutarla")
 
         atlas.ai_runtime.router = AIRouter(override="fast")
         run_turn(atlas, recorder, "Confirma brevemente que estás disponible", "override fast")
@@ -185,7 +185,7 @@ def main() -> None:
         event_messages = [
             generator.generate(
                 "started",
-                user="REDACTED_bc04a68d9192",
+                user="Vega",
                 assistant="Daxter",
                 channel="telegram",
                 hour=10,

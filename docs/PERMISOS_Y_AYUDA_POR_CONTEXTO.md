@@ -2,7 +2,7 @@
 
 ## Telegram
 - Usuario en su propio bot: permisos de su perfil.
-- REDACTED_2c7b6821719d en su propio bot: administrador.
+- Alex en su propio bot: administrador.
 - Cualquier persona desde el bot de otra persona: invitado temporal.
 
 ## PC

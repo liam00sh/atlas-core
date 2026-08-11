@@ -21,14 +21,14 @@ Descripción:
 Ejemplo:
 
     Recuerdo:
-        Propietario: REDACTED_2c7b6821719d
+        Propietario: Alex
         Visibilidad: partner
 
     Usuario que consulta:
-        REDACTED_bc04a68d9192
+        Vega
 
-    Perfil de REDACTED_bc04a68d9192:
-        partner_of: ["REDACTED_2c7b6821719d"]
+    Perfil de Vega:
+        partner_of: ["Alex"]
 
     Resultado:
         True
@@ -81,7 +81,7 @@ def _normalize(value: str) -> str:
             Texto sin espacios exteriores y en minúsculas.
 
     Ejemplo:
-        "  REDACTED_2c7b6821719d  " -> "REDACTED_f73137d930c3"
+        "  Alex  " -> "Alex"
 
     El guion bajo inicial indica que esta función está pensada
     para uso interno dentro de este módulo.
@@ -162,16 +162,16 @@ def _has_relationship(
             No existe.
 
     Ejemplo:
-        REDACTED_bc04a68d9192 tiene:
+        Vega tiene:
 
-            "partner_of": ["REDACTED_2c7b6821719d"]
+            "partner_of": ["Alex"]
 
         Entonces:
 
             _has_relationship(
-                perfil_REDACTED_7b9528898599,
+                perfil_Vega,
                 "partner_of",
-                "REDACTED_2c7b6821719d",
+                "Alex",
             )
 
         devuelve True.
@@ -225,7 +225,7 @@ def can_read_memory(
             Debe contener al menos:
 
                 {
-                    "owner": "REDACTED_2c7b6821719d",
+                    "owner": "Alex",
                     "visibility": "partner"
                 }
 
@@ -268,7 +268,7 @@ def can_read_memory(
     # Un perfil con rol "owner" puede consultar
     # toda la memoria gestionada por Atlas.
     #
-    # Actualmente REDACTED_2c7b6821719d tiene ese rol.
+    # Actualmente Alex tiene ese rol.
     if _has_role(
         viewer_profile,
         "owner",

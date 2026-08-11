@@ -34,7 +34,7 @@ Ejemplo:
 
 ```json
 {
-  "REDACTED_f73137d930c3": {
+  "Alex": {
     "daxter_voice_id": "daxter_alex",
     "coco_voice_id": "coco_dora",
     "fallback_enabled": true,
@@ -48,11 +48,11 @@ Ejemplo:
 ## Configuración local temporal mediante CLI
 
 ```powershell
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --show
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --identity daxter --voice daxter_alex
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --identity daxter --voice daxter_santa
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --identity coco --voice coco_dora
-python -m tools.voice_preferences_cli --user REDACTED_2c7b6821719d --fallback on
+python -m tools.voice_preferences_cli --user Alex --show
+python -m tools.voice_preferences_cli --user Alex --identity daxter --voice daxter_alex
+python -m tools.voice_preferences_cli --user Alex --identity daxter --voice daxter_santa
+python -m tools.voice_preferences_cli --user Alex --identity coco --voice coco_dora
+python -m tools.voice_preferences_cli --user Alex --fallback on
 ```
 
 La integración de estos cambios como comandos conversacionales internos de Atlas

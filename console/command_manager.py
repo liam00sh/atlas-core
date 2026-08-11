@@ -291,7 +291,7 @@ def resolve_command(
         resolve_command("versoin")
             -> "version"
 
-        resolve_command("qué sabes de REDACTED_bc04a68d9192")
+        resolve_command("qué sabes de Vega")
             -> None
     """
 
@@ -324,7 +324,7 @@ def resolve_command(
     #
     # Por ejemplo:
     #
-    # "que sabea de REDACTED_7b9528898599"
+    # "que sabea de Vega"
     #
     # no debería convertirse accidentalmente en:
     #
@@ -432,5 +432,5 @@ def execute(command_name):
     # Por ejemplo:
     #
     # True  -> un invitado se despide, pero Atlas continúa.
-    # False -> REDACTED_2c7b6821719d ejecuta "salir" y Atlas se cierra.
+    # False -> Alex ejecuta "salir" y Atlas se cierra.
     return result

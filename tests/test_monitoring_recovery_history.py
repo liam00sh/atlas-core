@@ -33,7 +33,7 @@ def test_common_health_result_exposes_uniform_contract():
 def test_recommendation_never_executes_action(tmp_path):
     calls = []
     coordinator = RecoveryCoordinator(
-        tmp_path / "recovery.json", is_owner=lambda user: user == "REDACTED_2c7b6821719d"
+        tmp_path / "recovery.json", is_owner=lambda user: user == "Alex"
     )
     coordinator.register(RecoveryAction(
         "service.telegram.restart", "Reiniciar Telegram", lambda: calls.append(1)
@@ -46,17 +46,17 @@ def test_recommendation_never_executes_action(tmp_path):
 def test_recovery_denied_to_normal_user_and_without_confirmation(tmp_path):
     calls = []
     coordinator = RecoveryCoordinator(
-        tmp_path / "recovery.json", is_owner=lambda user: user == "REDACTED_2c7b6821719d"
+        tmp_path / "recovery.json", is_owner=lambda user: user == "Alex"
     )
     coordinator.register(RecoveryAction(
         "service.telegram.restart", "Reiniciar Telegram", lambda: calls.append(1)
     ))
     denied_user = coordinator.execute(
-        "service.telegram.restart", requested_by="REDACTED_aebac53c46bb",
+        "service.telegram.restart", requested_by="Carla",
         confirmed=True, policy_allows=True,
     )
     denied_confirmation = coordinator.execute(
-        "service.telegram.restart", requested_by="REDACTED_2c7b6821719d",
+        "service.telegram.restart", requested_by="Alex",
         confirmed=False, policy_allows=True,
     )
     assert not denied_user.authorized
@@ -66,18 +66,18 @@ def test_recovery_denied_to_normal_user_and_without_confirmation(tmp_path):
 
 def test_owner_can_execute_explicitly_authorized_recovery(tmp_path):
     coordinator = RecoveryCoordinator(
-        tmp_path / "recovery.json", is_owner=lambda user: user.casefold() == "REDACTED_f73137d930c3"
+        tmp_path / "recovery.json", is_owner=lambda user: user.casefold() == "alex"
     )
     coordinator.register(RecoveryAction(
         "service.telegram.restart", "Reiniciar Telegram", lambda: "reiniciado"
     ))
     result = coordinator.execute(
-        "service.telegram.restart", requested_by="REDACTED_f73137d930c3",
+        "service.telegram.restart", requested_by="Alex",
         confirmed=True, policy_allows=True,
     )
     assert result.authorized and result.success
     assert result.result == "reiniciado"
-    assert coordinator.history()[0]["requested_by"] == "REDACTED_f73137d930c3"
+    assert coordinator.history()[0]["requested_by"] == "Alex"
 
 
 def test_health_history_rotates_and_tolerates_corruption(tmp_path):

@@ -8,4 +8,4 @@
 - Añadido soporte para posesivos, singular, plural y referencias por nombre.
 - Evitada la delegación de relaciones verificables al modelo local.
 - Corregida la clasificación de preguntas «quién es mi novia/hermana».
-- Añadidas pruebas de regresión para hermana, pareja, madre y hermano de REDACTED_bc04a68d9192.
+- Añadidas pruebas de regresión para hermana, pareja, madre y hermano de Vega.

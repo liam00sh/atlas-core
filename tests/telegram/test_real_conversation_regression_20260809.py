@@ -51,7 +51,7 @@ def test_previous_turn_intent_routes_to_reasoning() -> None:
 def test_short_sentence_request_is_enforced_even_if_fast_model_rambles() -> None:
     response = AtlasAIMixin._apply_literal_response_constraints(
         "Dime una frase corta sobre el acuario",
-        "¡Ey REDACTED_2c7b6821719d, venga! El acuario pequeño parece un rincón tranquilo de casa. Después viví una aventura larguísima con peces dorados.",
+        "¡Ey Alex, venga! El acuario pequeño parece un rincón tranquilo de casa. Después viví una aventura larguísima con peces dorados.",
     )
     assert response == "El acuario pequeño parece un rincón tranquilo de casa."
     assert len(response.split()) <= 24

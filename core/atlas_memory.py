@@ -75,7 +75,7 @@ class AtlasMemoryMixin:
         )
 
         # Formas exhaustivas naturales que el parser heredado no reconocía,
-        # por ejemplo «dime todo lo que sepas de REDACTED_bc04a68d9192». Sin esta ruta, esas
+        # por ejemplo «dime todo lo que sepas de Vega». Sin esta ruta, esas
         # frases llegaban a la IA y podían producir relaciones inventadas.
         if memory_query is None:
             folded = "".join(

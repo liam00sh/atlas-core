@@ -100,7 +100,7 @@ class AtlasSelfKnowledgeMixin:
             "Para vincular a una persona con el bot de Telegram, esa persona debe abrir el bot desde su propia cuenta "
             "y completar el proceso de vinculación que muestra Atlas. La identidad se asocia al identificador real de "
             "Telegram, no solo al nombre que alguien escriba.\n\n"
-            "Desde la cuenta de REDACTED_2c7b6821719d puedes iniciar o administrar la vinculación con los comandos de administración "
+            "Desde la cuenta de Alex puedes iniciar o administrar la vinculación con los comandos de administración "
             "habilitados en Atlas. Si me indicas qué pantalla o mensaje aparece, te guío paso a paso sin inventar datos."
         )
 
