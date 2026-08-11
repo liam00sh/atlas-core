@@ -1,0 +1,1357 @@
+{
+  "catalog_id": "daxter_emotions_final_v1",
+  "version": "1.0.0",
+  "status": "human_validated_with_safe_fallbacks",
+  "source_metadata_sha256": "cc461a9e38e4ec13d9a80b726d5b9c6572a6b4a47eff293ea018d23d6cbc5f13",
+  "winner_profile": "daxter_es_jak2",
+  "parameter_basis": {
+    "low": "B1 neutral/confident human-tested anchor, exaggeration 0.45",
+    "high": "B1 expressive human-tested anchor, exaggeration 0.65",
+    "medium": "deterministic midpoint 0.55; pending direct human intensity validation",
+    "other_controls": "Frozen B1 values; no random per-emotion tuning"
+  },
+  "emotions": [
+    {
+      "id": "neutral",
+      "display_name": "Neutral",
+      "dataset_evidence": {
+        "examples": 121,
+        "minutes": 4.4185,
+        "energy_counts": {
+          "media": 47,
+          "alta": 46,
+          "baja": 28
+        },
+        "intensity_counts": {
+          "media": 46,
+          "alta": 7,
+          "baja": 68
+        },
+        "intention_counts": {
+          "explicacion": 47,
+          "orden": 32,
+          "afirmacion": 20,
+          "aviso": 10,
+          "exclamacion": 3,
+          "narracion": 2,
+          "indeterminada": 2,
+          "queja": 1,
+          "reaccion": 1,
+          "despedida": 1,
+          "saludo": 1,
+          "relleno_interjeccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0373_jak2_ds199",
+          "audio_file": "jak2__DS199.wav",
+          "duration_seconds": 0.9054,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0350_jak2_ds176",
+          "audio_file": "jak2__DS176.wav",
+          "duration_seconds": 0.4933,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0094_jak1_sksp0099",
+          "audio_file": "jak1__SKSP0099.wav",
+          "duration_seconds": 3.0199,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0105_jak1_sksp0104",
+          "audio_file": "jak1__SKSP0104.wav",
+          "duration_seconds": 1.7902,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_1047_jak3_dax720",
+          "audio_file": "jak3__DAX720.wav",
+          "duration_seconds": 1.68,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "media",
+      "supported_intensities": [
+        "baja",
+        "media",
+        "alta"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "approved",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La estrategia B1 diversa alcanza el umbral humano de identidad, emoción, naturalidad e integridad.",
+        "next_validation": null
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "sonriente",
+      "display_name": "Sonriente",
+      "dataset_evidence": {
+        "examples": 37,
+        "minutes": 1.1346,
+        "energy_counts": {
+          "baja": 2,
+          "alta": 20,
+          "media": 15
+        },
+        "intensity_counts": {
+          "media": 27,
+          "alta": 9,
+          "baja": 1
+        },
+        "intention_counts": {
+          "celebracion": 20,
+          "afirmacion": 9,
+          "reaccion": 3,
+          "exclamacion": 3,
+          "aviso": 1,
+          "burla": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0364_jak2_ds190",
+          "audio_file": "jak2__DS190.wav",
+          "duration_seconds": 1.1898,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0384_jak2_ds210",
+          "audio_file": "jak2__DS210.wav",
+          "duration_seconds": 1.0216,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0320_jak2_ds115",
+          "audio_file": "jak2__DS115.wav",
+          "duration_seconds": 2.6641,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_1011_jak3_dax679",
+          "audio_file": "jak3__DAX679.wav",
+          "duration_seconds": 2.4203,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0995_jak3_dax662",
+          "audio_file": "jak3__DAX662.wav",
+          "duration_seconds": 2.1359,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "needs_adjustment",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La evaluación humana detecta identidad, emoción, naturalidad, prosodia o artefactos por debajo del umbral final.",
+        "next_validation": "mini-ronda dirigida: una toma B1 ajustada frente al fallback neutral"
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "picaro",
+      "display_name": "Pícaro",
+      "dataset_evidence": {
+        "examples": 149,
+        "minutes": 8.0302,
+        "energy_counts": {
+          "media": 62,
+          "alta": 84,
+          "baja": 3
+        },
+        "intensity_counts": {
+          "media": 88,
+          "alta": 57,
+          "baja": 4
+        },
+        "intention_counts": {
+          "burla": 29,
+          "afirmacion": 27,
+          "exclamacion": 25,
+          "pregunta": 20,
+          "explicacion": 11,
+          "orden": 9,
+          "narracion": 7,
+          "queja": 6,
+          "aviso": 5,
+          "despedida": 5,
+          "saludo": 2,
+          "celebracion": 2,
+          "reaccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0381_jak2_ds207",
+          "audio_file": "jak2__DS207.wav",
+          "duration_seconds": 1.313,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_1190_jakx_dax174r",
+          "audio_file": "jakx__DAX174R.wav",
+          "duration_seconds": 3.1728,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0338_jak2_ds160",
+          "audio_file": "jak2__DS160.wav",
+          "duration_seconds": 3.2679,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0395_jak2_ds221",
+          "audio_file": "jak2__DS221.wav",
+          "duration_seconds": 3.2159,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0372_jak2_ds198",
+          "audio_file": "jak2__DS198.wav",
+          "duration_seconds": 1.6076,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media",
+        "alta"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "approved",
+        "runtime_emotion": "picaro",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La estrategia B1 diversa alcanza el umbral humano de identidad, emoción, naturalidad e integridad.",
+        "next_validation": null
+      },
+      "runtime_emotion": "picaro"
+    },
+    {
+      "id": "sorprendido",
+      "display_name": "Sorprendido",
+      "dataset_evidence": {
+        "examples": 58,
+        "minutes": 1.9236,
+        "energy_counts": {
+          "alta": 38,
+          "media": 19,
+          "baja": 1
+        },
+        "intensity_counts": {
+          "media": 34,
+          "alta": 23,
+          "baja": 1
+        },
+        "intention_counts": {
+          "reaccion": 17,
+          "aviso": 17,
+          "exclamacion": 12,
+          "pregunta": 6,
+          "explicacion": 2,
+          "queja": 2,
+          "afirmacion": 1,
+          "relleno_interjeccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0477_jak2_ds353",
+          "audio_file": "jak2__DS353.wav",
+          "duration_seconds": 2.7225,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0348_jak2_ds174",
+          "audio_file": "jak2__DS174.wav",
+          "duration_seconds": 1.0749,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0347_jak2_ds173",
+          "audio_file": "jak2__DS173.wav",
+          "duration_seconds": 0.6559,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0429_jak2_ds255",
+          "audio_file": "jak2__DS255.wav",
+          "duration_seconds": 1.3359,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0366_jak2_ds192",
+          "audio_file": "jak2__DS192.wav",
+          "duration_seconds": 0.847,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "media",
+        "alta"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "approved",
+        "runtime_emotion": "sorprendido",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La estrategia B1 diversa alcanza el umbral humano de identidad, emoción, naturalidad e integridad.",
+        "next_validation": null
+      },
+      "runtime_emotion": "sorprendido"
+    },
+    {
+      "id": "pensativo",
+      "display_name": "Pensativo",
+      "dataset_evidence": {
+        "examples": 35,
+        "minutes": 2.8579,
+        "energy_counts": {
+          "alta": 14,
+          "media": 19,
+          "baja": 2
+        },
+        "intensity_counts": {
+          "alta": 1,
+          "baja": 24,
+          "media": 10
+        },
+        "intention_counts": {
+          "explicacion": 27,
+          "aviso": 2,
+          "afirmacion": 2,
+          "narracion": 1,
+          "indeterminada": 1,
+          "exclamacion": 1,
+          "pregunta": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0354_jak2_ds180",
+          "audio_file": "jak2__DS180.wav",
+          "duration_seconds": 0.9924,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0361_jak2_ds187",
+          "audio_file": "jak2__DS187.wav",
+          "duration_seconds": 0.7283,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0009_jak1_grsdsacr",
+          "audio_file": "jak1__GRSDSACR.wav",
+          "duration_seconds": 57.9693,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0131_jak1_sksp0130",
+          "audio_file": "jak1__SKSP0130.wav",
+          "duration_seconds": 3.3524,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0149_jak1_sksp0149",
+          "audio_file": "jak1__SKSP0149.wav",
+          "duration_seconds": 3.6499,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "media",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "needs_adjustment",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La evaluación humana detecta identidad, emoción, naturalidad, prosodia o artefactos por debajo del umbral final.",
+        "next_validation": "mini-ronda dirigida: una toma B1 ajustada frente al fallback neutral"
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "emocionado",
+      "display_name": "Emocionado",
+      "dataset_evidence": {
+        "examples": 293,
+        "minutes": 10.3801,
+        "energy_counts": {
+          "alta": 240,
+          "media": 48,
+          "baja": 5
+        },
+        "intensity_counts": {
+          "media": 126,
+          "alta": 162,
+          "baja": 5
+        },
+        "intention_counts": {
+          "orden": 78,
+          "celebracion": 74,
+          "exclamacion": 68,
+          "aviso": 26,
+          "afirmacion": 23,
+          "explicacion": 11,
+          "reaccion": 7,
+          "narracion": 3,
+          "despedida": 1,
+          "pregunta": 1,
+          "burla": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0055_jak1_sksp0052",
+          "audio_file": "jak1__SKSP0052.wav",
+          "duration_seconds": 2.3928,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0146_jak1_sksp0146",
+          "audio_file": "jak1__SKSP0146.wav",
+          "duration_seconds": 1.8328,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_1026_jak3_dax698",
+          "audio_file": "jak3__DAX698.wav",
+          "duration_seconds": 1.3854,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0413_jak2_ds239",
+          "audio_file": "jak2__DS239.wav",
+          "duration_seconds": 1.1092,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0433_jak2_ds260",
+          "audio_file": "jak2__DS260.wav",
+          "duration_seconds": 1.0216,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media",
+        "alta"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "approved",
+        "runtime_emotion": "emocionado",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La estrategia B1 diversa alcanza el umbral humano de identidad, emoción, naturalidad e integridad.",
+        "next_validation": null
+      },
+      "runtime_emotion": "emocionado"
+    },
+    {
+      "id": "asustado",
+      "display_name": "Asustado",
+      "dataset_evidence": {
+        "examples": 200,
+        "minutes": 6.5688,
+        "energy_counts": {
+          "alta": 161,
+          "media": 38,
+          "baja": 1
+        },
+        "intensity_counts": {
+          "alta": 130,
+          "media": 66,
+          "baja": 4
+        },
+        "intention_counts": {
+          "aviso": 111,
+          "queja": 27,
+          "orden": 24,
+          "exclamacion": 12,
+          "reaccion": 10,
+          "afirmacion": 7,
+          "pregunta": 7,
+          "explicacion": 1,
+          "relleno_interjeccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0553_jak2_dsek009",
+          "audio_file": "jak2__DSEK009.wav",
+          "duration_seconds": 2.1943,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_1249_jakx_dax301r",
+          "audio_file": "jakx__DAX301R.wav",
+          "duration_seconds": 1.7815,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0919_jak3_dax548",
+          "audio_file": "jak3__DAX548.wav",
+          "duration_seconds": 1.6571,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0519_jak2_ds484",
+          "audio_file": "jak2__DS484.wav",
+          "duration_seconds": 1.3524,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0103_jak1_sksp0102",
+          "audio_file": "jak1__SKSP0102.wav",
+          "duration_seconds": 2.8951,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "needs_adjustment",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La evaluación humana detecta identidad, emoción, naturalidad, prosodia o artefactos por debajo del umbral final.",
+        "next_validation": "mini-ronda dirigida: una toma B1 ajustada frente al fallback neutral"
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "enfadado",
+      "display_name": "Enfadado",
+      "dataset_evidence": {
+        "examples": 52,
+        "minutes": 2.0747,
+        "energy_counts": {
+          "alta": 44,
+          "baja": 1,
+          "media": 7
+        },
+        "intensity_counts": {
+          "alta": 33,
+          "media": 18,
+          "baja": 1
+        },
+        "intention_counts": {
+          "queja": 27,
+          "orden": 14,
+          "aviso": 4,
+          "exclamacion": 2,
+          "burla": 2,
+          "pregunta": 1,
+          "explicacion": 1,
+          "reaccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0317_jak2_ds112",
+          "audio_file": "jak2__DS112.wav",
+          "duration_seconds": 2.2521,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0263_jak1_sksp0b42",
+          "audio_file": "jak1__SKSP0B42.wav",
+          "duration_seconds": 5.1223,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0946_jak3_dax591",
+          "audio_file": "jak3__DAX591.wav",
+          "duration_seconds": 1.8413,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0761_jak3_dax322",
+          "audio_file": "jak3__DAX322.wav",
+          "duration_seconds": 1.0311,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0367_jak2_ds193",
+          "audio_file": "jak2__DS193.wav",
+          "duration_seconds": 1.7702,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "needs_adjustment",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La evaluación humana detecta identidad, emoción, naturalidad, prosodia o artefactos por debajo del umbral final.",
+        "next_validation": "mini-ronda dirigida: una toma B1 ajustada frente al fallback neutral"
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "curioso",
+      "display_name": "Curioso",
+      "dataset_evidence": {
+        "examples": 27,
+        "minutes": 1.2224,
+        "energy_counts": {
+          "media": 10,
+          "alta": 16,
+          "baja": 1
+        },
+        "intensity_counts": {
+          "media": 16,
+          "alta": 1,
+          "baja": 10
+        },
+        "intention_counts": {
+          "pregunta": 17,
+          "explicacion": 4,
+          "exclamacion": 2,
+          "afirmacion": 2,
+          "aviso": 1,
+          "reaccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0360_jak2_ds186",
+          "audio_file": "jak2__DS186.wav",
+          "duration_seconds": 0.9924,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0352_jak2_ds178",
+          "audio_file": "jak2__DS178.wav",
+          "duration_seconds": 0.8425,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0043_jak1_sksp0039",
+          "audio_file": "jak1__SKSP0039.wav",
+          "duration_seconds": 7.0939,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0345_jak2_ds167",
+          "audio_file": "jak2__DS167.wav",
+          "duration_seconds": 4.2787,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0339_jak2_ds161",
+          "audio_file": "jak2__DS161.wav",
+          "duration_seconds": 2.6756,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "needs_adjustment",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La evaluación humana detecta identidad, emoción, naturalidad, prosodia o artefactos por debajo del umbral final.",
+        "next_validation": "mini-ronda dirigida: una toma B1 ajustada frente al fallback neutral"
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "confiado",
+      "display_name": "Confiado",
+      "dataset_evidence": {
+        "examples": 75,
+        "minutes": 2.9189,
+        "energy_counts": {
+          "media": 17,
+          "alta": 54,
+          "baja": 4
+        },
+        "intensity_counts": {
+          "media": 35,
+          "baja": 5,
+          "alta": 35
+        },
+        "intention_counts": {
+          "afirmacion": 23,
+          "celebracion": 20,
+          "exclamacion": 13,
+          "explicacion": 7,
+          "aviso": 5,
+          "orden": 3,
+          "pregunta": 2,
+          "reaccion": 1,
+          "relleno_interjeccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0904_jak3_dax522",
+          "audio_file": "jak3__DAX522.wav",
+          "duration_seconds": 1.7651,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0693_jak3_dax242",
+          "audio_file": "jak3__DAX242.wav",
+          "duration_seconds": 1.6279,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0390_jak2_ds216",
+          "audio_file": "jak2__DS216.wav",
+          "duration_seconds": 1.9156,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0389_jak2_ds215",
+          "audio_file": "jak2__DS215.wav",
+          "duration_seconds": 1.6254,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0343_jak2_ds165",
+          "audio_file": "jak2__DS165.wav",
+          "duration_seconds": 6.1765,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media",
+        "alta"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "approved",
+        "runtime_emotion": "confiado",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La estrategia B1 diversa alcanza el umbral humano de identidad, emoción, naturalidad e integridad.",
+        "next_validation": null
+      },
+      "runtime_emotion": "confiado"
+    },
+    {
+      "id": "risa",
+      "display_name": "Risa",
+      "dataset_evidence": {
+        "examples": 4,
+        "minutes": 0.1126,
+        "energy_counts": {
+          "media": 2,
+          "baja": 1,
+          "alta": 1
+        },
+        "intensity_counts": {
+          "media": 2,
+          "baja": 1,
+          "alta": 1
+        },
+        "intention_counts": {
+          "queja": 1,
+          "burla": 1,
+          "afirmacion": 1,
+          "reaccion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0782_jak3_dax349",
+          "audio_file": "jak3__DAX349.wav",
+          "duration_seconds": 2.1283,
+          "quality": "buena",
+          "emotion_confidence": "media"
+        },
+        {
+          "sample_id": "daxter_1217_jakx_dax213r",
+          "audio_file": "jakx__DAX213R.wav",
+          "duration_seconds": 1.8428,
+          "quality": "buena",
+          "emotion_confidence": "media"
+        },
+        {
+          "sample_id": "daxter_0779_jak3_dax346",
+          "audio_file": "jak3__DAX346.wav",
+          "duration_seconds": 1.6686,
+          "quality": "buena",
+          "emotion_confidence": "media"
+        },
+        {
+          "sample_id": "daxter_0949_jak3_dax595",
+          "audio_file": "jak3__DAX595.wav",
+          "duration_seconds": 1.1162,
+          "quality": "buena",
+          "emotion_confidence": "baja"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "media",
+      "supported_intensities": [
+        "media"
+      ],
+      "fallback_emotion": "sonriente",
+      "notes": [
+        "Sólo hay cuatro muestras; se usan interjecciones breves, nunca carcajadas largas sintetizadas.",
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "approved",
+        "runtime_emotion": "risa",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La estrategia B1 diversa alcanza el umbral humano de identidad, emoción, naturalidad e integridad.",
+        "next_validation": null
+      },
+      "runtime_emotion": "risa"
+    },
+    {
+      "id": "cansado",
+      "display_name": "Cansado",
+      "dataset_evidence": {
+        "examples": 10,
+        "minutes": 0.3241,
+        "energy_counts": {
+          "media": 5,
+          "alta": 2,
+          "baja": 3
+        },
+        "intensity_counts": {
+          "alta": 3,
+          "baja": 4,
+          "media": 3
+        },
+        "intention_counts": {
+          "queja": 5,
+          "exclamacion": 1,
+          "celebracion": 1,
+          "pregunta": 1,
+          "orden": 1,
+          "explicacion": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0357_jak2_ds183",
+          "audio_file": "jak2__DS183.wav",
+          "duration_seconds": 0.894,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0557_jak2_dsek013",
+          "audio_file": "jak2__DSEK013.wav",
+          "duration_seconds": 2.6584,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0851_jak3_dax427",
+          "audio_file": "jak3__DAX427.wav",
+          "duration_seconds": 2.3708,
+          "quality": "buena",
+          "emotion_confidence": "baja"
+        },
+        {
+          "sample_id": "daxter_0206_jak1_sksp0359",
+          "audio_file": "jak1__SKSP0359.wav",
+          "duration_seconds": 1.4093,
+          "quality": "buena",
+          "emotion_confidence": "media"
+        },
+        {
+          "sample_id": "daxter_0992_jak3_dax659",
+          "audio_file": "jak3__DAX659.wav",
+          "duration_seconds": 1.2597,
+          "quality": "buena",
+          "emotion_confidence": "baja"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "media",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "needs_adjustment",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La evaluación humana detecta identidad, emoción, naturalidad, prosodia o artefactos por debajo del umbral final.",
+        "next_validation": "mini-ronda dirigida: una toma B1 ajustada frente al fallback neutral"
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "sonoliento",
+      "display_name": "Soñoliento",
+      "dataset_evidence": {
+        "examples": 0,
+        "minutes": 0.0,
+        "energy_counts": {},
+        "intensity_counts": {},
+        "intention_counts": {}
+      },
+      "reference_samples": [],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "baja",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "No existen muestras etiquetadas como sonoliento; usa fallback cansado y requiere validación humana.",
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "fallback",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "El fallback cansado no equilibra identidad y emoción; se usa neutral baja hasta una mini-prueba directa.",
+        "next_validation": "mini-ronda dirigida sonoliento: B1 baja frente a referencia cansado ajustada"
+      },
+      "runtime_emotion": "neutral"
+    },
+    {
+      "id": "determinado",
+      "display_name": "Determinado",
+      "dataset_evidence": {
+        "examples": 232,
+        "minutes": 6.9859,
+        "energy_counts": {
+          "media": 77,
+          "alta": 148,
+          "baja": 7
+        },
+        "intensity_counts": {
+          "media": 156,
+          "alta": 63,
+          "baja": 13
+        },
+        "intention_counts": {
+          "orden": 144,
+          "aviso": 29,
+          "explicacion": 22,
+          "afirmacion": 19,
+          "exclamacion": 16,
+          "queja": 1,
+          "pregunta": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0236_jak1_sksp0399",
+          "audio_file": "jak1__SKSP0399.wav",
+          "duration_seconds": 1.3102,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0365_jak2_ds191",
+          "audio_file": "jak2__DS191.wav",
+          "duration_seconds": 0.7314,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0971_jak3_dax628",
+          "audio_file": "jak3__DAX628.wav",
+          "duration_seconds": 1.5416,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0445_jak2_ds272",
+          "audio_file": "jak2__DS272.wav",
+          "duration_seconds": 1.0502,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0414_jak2_ds240",
+          "audio_file": "jak2__DS240.wav",
+          "duration_seconds": 0.8952,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media",
+        "alta"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "approved",
+        "runtime_emotion": "determinado",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La estrategia B1 diversa alcanza el umbral humano de identidad, emoción, naturalidad e integridad.",
+        "next_validation": null
+      },
+      "runtime_emotion": "determinado"
+    },
+    {
+      "id": "travieso",
+      "display_name": "Travieso",
+      "dataset_evidence": {
+        "examples": 7,
+        "minutes": 0.2557,
+        "energy_counts": {
+          "alta": 6,
+          "media": 1
+        },
+        "intensity_counts": {
+          "media": 4,
+          "alta": 3
+        },
+        "intention_counts": {
+          "exclamacion": 2,
+          "burla": 1,
+          "relleno_interjeccion": 1,
+          "celebracion": 1,
+          "indeterminada": 1,
+          "aviso": 1
+        }
+      },
+      "reference_samples": [
+        {
+          "sample_id": "daxter_0902_jak3_dax520",
+          "audio_file": "jak3__DAX520.wav",
+          "duration_seconds": 3.7575,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0060_jak1_sksp0057",
+          "audio_file": "jak1__SKSP0057.wav",
+          "duration_seconds": 1.3172,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0003_jak1_de0186",
+          "audio_file": "jak1__DE0186.wav",
+          "duration_seconds": 3.0351,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_0858_jak3_dax451",
+          "audio_file": "jak3__DAX451.wav",
+          "duration_seconds": 2.3581,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        },
+        {
+          "sample_id": "daxter_1242_jakx_dax282r",
+          "audio_file": "jakx__DAX282R.wav",
+          "duration_seconds": 1.967,
+          "quality": "buena",
+          "emotion_confidence": "alta"
+        }
+      ],
+      "reference_audio_strategy": "winner_jak2_diverse_identity_first",
+      "exaggeration": {
+        "baja": 0.45,
+        "media": 0.55,
+        "alta": 0.65
+      },
+      "cfg_weight": 0.35,
+      "temperature": 0.8,
+      "repetition_penalty": 2.0,
+      "min_p": 0.05,
+      "top_p": 1.0,
+      "preferred_energy": "alta",
+      "supported_intensities": [
+        "baja",
+        "media"
+      ],
+      "fallback_emotion": "neutral",
+      "notes": [
+        "La referencia activa sigue siendo la diversa ganadora B1: B3 demostró que referencias emocionales dinámicas reducían identidad."
+      ],
+      "human_validation": {
+        "status": "needs_adjustment",
+        "runtime_emotion": "neutral",
+        "runtime_fallback_emotion": "neutral",
+        "reason": "La evaluación humana detecta identidad, emoción, naturalidad, prosodia o artefactos por debajo del umbral final.",
+        "next_validation": "mini-ronda dirigida: una toma B1 ajustada frente al fallback neutral"
+      },
+      "runtime_emotion": "neutral"
+    }
+  ],
+  "human_results_sha256": "d163d1ff99ed66fe15f9feb3ebe0666a3308254544c1c4c968bebd48b200e02e",
+  "active_reference_strategy": "winner_jak2_diverse_identity_first",
+  "experimental_reference_strategy": "rejected_for_runtime_identity_loss"
+}
