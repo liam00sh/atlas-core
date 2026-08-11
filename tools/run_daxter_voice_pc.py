@@ -17,6 +17,26 @@ from voice.service import VoiceService
 from voice.stt import AudioConverter, FasterWhisperSTTProvider, STTConfig, STTService
 
 
+def choose_microphone(recorder: ManualMicrophoneRecorder, *, input_func=input) -> str:
+    if recorder.device_name:
+        return recorder.device_name
+    devices = recorder.list_devices()
+    if not devices:
+        return recorder.selected_device()
+    if len(devices) == 1:
+        recorder.device_name = devices[0]
+        return devices[0]
+    print("Micrófonos detectados:")
+    for index, device in enumerate(devices, 1):
+        print(f"  {index}. {device}")
+    while True:
+        selected = input_func("Elige el número de los cascos Bluetooth: ").strip()
+        if selected.isdigit() and 1 <= int(selected) <= len(devices):
+            recorder.device_name = devices[int(selected) - 1]
+            return recorder.device_name
+        print("Selección no válida.")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Habla manualmente con Daxter usando micrófono local.")
     parser.add_argument("--list-devices", action="store_true", help="Muestra los micrófonos detectados y termina.")
@@ -27,6 +47,7 @@ def main() -> int:
         for device in recorder.list_devices():
             print(device)
         return 0
+    selected_device = choose_microphone(recorder)
     config = STTConfig.from_env()
     stt = STTService(
         FasterWhisperSTTProvider(config),
@@ -41,7 +62,7 @@ def main() -> int:
         voice_service=VoiceService(),
         work_dir=ROOT / "runtime" / "voice" / "input",
     )
-    print(f"Micrófono: {recorder.selected_device()}")
+    print(f"Micrófono: {selected_device}")
     print("Modo manual: Atlas solo graba entre las dos pulsaciones de Enter. Ctrl+C cancela.")
     try:
         running = True
