@@ -3185,6 +3185,18 @@ class AtlasAIMixin:
             "no inventes parentescos, propietarios, lugares ni anécdotas."
         )
 
+        request_context = getattr(self, "channel_request_context", None)
+        if getattr(request_context, "channel", None) == "pc_voice":
+            prompt += (
+                "\n\nPOLITICA ESPECIFICA PARA PC_VOICE\n"
+                "Responde normalmente en una o dos frases completas y como maximo en tres. "
+                "Da primero la conclusion o el resultado de la accion. Evita parrafos, "
+                "preguntas adicionales, repetir el nombre del usuario y remates largos. "
+                "Si el usuario pide detalle, resume oralmente lo esencial; la consola "
+                "puede conservar una explicacion mas amplia. No inventes aventuras pasadas "
+                "ni recuerdos compartidos: cualquier exageracion debe empezar como hipotesis."
+            )
+
         try:
 
             response = self._generate_varied_response(

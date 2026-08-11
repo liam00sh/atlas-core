@@ -107,6 +107,24 @@ class HomeIntentResolver:
             return ResolvedHomeIntent(HomeIntentType.TURN_OFF_SWITCH, "home.switch.turn_off", {"entity_id": self.switch_entity_id})
         return None
 
+    @staticmethod
+    def clarification_for(text: str) -> str | None:
+        normalized = normalize_text(text)
+        has_action = any(
+            word in normalized.split()
+            for word in (
+                "enciende", "encender", "activa", "activar",
+                "apaga", "apagar", "desactiva", "desactivar",
+            )
+        )
+        if has_action:
+            return None
+        if "luz" in normalized and "acuario" in normalized:
+            return "¿Quieres que la encienda o la apague?"
+        if "oxigeno" in normalized and "acuario" in normalized:
+            return "¿Quieres que active o desactive el oxígeno del acuario?"
+        return None
+
 
 
     @staticmethod

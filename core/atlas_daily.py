@@ -718,8 +718,16 @@ class AtlasDailyMixin:
                 return True
             state["last_reminder_id"] = result["id"]
             local = parsed.due_at_utc.astimezone(self.personal_reminder_parser.timezone)
-            day = "hoy" if local.date() == datetime.now(self.personal_reminder_parser.timezone).date() else local.strftime("el %d/%m/%Y")
-            self._print(f"Hecho. Te lo recordaré {day} a las {local:%H:%M}.")
+            today = datetime.now(self.personal_reminder_parser.timezone).date()
+            if local.date() == today:
+                day = "hoy"
+            elif local.date() == today + timedelta(days=1):
+                day = "mañana"
+            else:
+                day = local.strftime("el %d/%m/%Y")
+            self._print(
+                f"Hecho. Te recordaré {day} a las {local:%H:%M} que {parsed.message}."
+            )
             return True
 
         if re.search(r"\b(?:que|cuales)\s+recordatorios\s+tengo\b|\bmis\s+recordatorios\b", plain):
@@ -757,7 +765,6 @@ class AtlasDailyMixin:
             old_due = datetime.fromisoformat(str(target["due_at"]))
             local = old_due.astimezone(self.personal_reminder_parser.timezone).replace(hour=int(hour_text), minute=int(minute_text or 0))
             if local.astimezone(UTC) <= datetime.now(UTC):
-                from datetime import timedelta
                 local += timedelta(days=1)
             if queue.update_delivery(owner, target["id"], due_at_utc=local.astimezone(UTC)):
                 state["last_reminder_id"] = target["id"]

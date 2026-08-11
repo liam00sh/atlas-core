@@ -221,6 +221,9 @@ class HomeIntentService:
         intent = self.resolver.resolve(text)
 
         if intent is None:
+            clarification = self.resolver.clarification_for(text)
+            if clarification:
+                return HomeIntentResponse(handled=True, message=clarification)
             return HomeIntentResponse(handled=False)
 
 

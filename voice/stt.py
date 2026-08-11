@@ -14,11 +14,25 @@ import shutil
 import subprocess
 from time import perf_counter
 from typing import Iterable
+import inspect
 import unicodedata
 import wave
 
 
 logger = logging.getLogger(__name__)
+
+
+CONTEXT_HOTWORDS = {
+    "general": "Daxter Atlas Telegram Docker",
+    "home_assistant": "enciende apaga acuario pequeño luz Home Assistant",
+    "confirmation": "confirmar cancelar cancelado cancela no déjalo",
+    "reminder": "recuérdame mañana horas Atlas",
+}
+
+
+def contextual_hotwords(context_hint: str, fallback: str = "") -> str:
+    selected = CONTEXT_HOTWORDS.get(str(context_hint).strip().casefold())
+    return selected or fallback
 
 
 def _repair_utf8_mojibake(value: str) -> str:
@@ -240,7 +254,13 @@ class BaseSTTProvider(ABC):
     def is_available(self) -> bool: ...
 
     @abstractmethod
-    def transcribe(self, path: str | Path, language_hint: str | None = None) -> STTResult: ...
+    def transcribe(
+        self,
+        path: str | Path,
+        language_hint: str | None = None,
+        *,
+        hotwords: str | None = None,
+    ) -> STTResult: ...
 
     @abstractmethod
     def health(self) -> dict[str, object]: ...
@@ -282,7 +302,13 @@ class FasterWhisperSTTProvider(BaseSTTProvider):
     def supported_languages(self) -> Iterable[str]:
         return ("auto", "es", "ca", "en")
 
-    def transcribe(self, path: str | Path, language_hint: str | None = None) -> STTResult:
+    def transcribe(
+        self,
+        path: str | Path,
+        language_hint: str | None = None,
+        *,
+        hotwords: str | None = None,
+    ) -> STTResult:
         if not self.is_available():
             raise STTError("stt_unavailable", "El reconocimiento de voz local no está disponible.")
         try:
@@ -296,7 +322,7 @@ class FasterWhisperSTTProvider(BaseSTTProvider):
                 temperature=0.0,
                 condition_on_previous_text=False,
                 initial_prompt=_repair_utf8_mojibake(self._initial_prompt) or None,
-                hotwords=self.config.hotwords or None,
+                hotwords=hotwords or self.config.hotwords or None,
             )
             segments = list(segments_iter)
         except (OSError, RuntimeError) as exc:
@@ -316,7 +342,7 @@ class FasterWhisperSTTProvider(BaseSTTProvider):
                     temperature=0.0,
                     condition_on_previous_text=False,
                     initial_prompt=_repair_utf8_mojibake(self._initial_prompt) or None,
-                    hotwords=self.config.hotwords or None,
+                    hotwords=hotwords or self.config.hotwords or None,
                 )
                 segments = list(segments_iter)
             except (OSError, RuntimeError) as cpu_exc:
@@ -454,7 +480,13 @@ class STTService:
         self.work_dir = Path(work_dir)
         self.clock = clock
 
-    def transcribe(self, source: str | Path, *, language_hint: str | None = None) -> tuple[STTResult, dict[str, float]]:
+    def transcribe(
+        self,
+        source: str | Path,
+        *,
+        language_hint: str | None = None,
+        context_hint: str = "general",
+    ) -> tuple[STTResult, dict[str, float]]:
         if not self.provider.is_available():
             raise STTError("stt_unavailable", "El reconocimiento de voz local no está disponible.")
         self.work_dir.mkdir(parents=True, exist_ok=True)
@@ -469,7 +501,17 @@ class STTService:
             timings["audio.convert"] = round((self.clock() - started) * 1000, 3)
             started = self.clock()
             executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="atlas-stt")
-            future = executor.submit(self.provider.transcribe, wav_path, language_hint)
+            provider_parameters = inspect.signature(self.provider.transcribe).parameters
+            hotwords = contextual_hotwords(context_hint, self.config.hotwords)
+            if "hotwords" in provider_parameters:
+                future = executor.submit(
+                    self.provider.transcribe,
+                    wav_path,
+                    language_hint,
+                    hotwords=hotwords,
+                )
+            else:
+                future = executor.submit(self.provider.transcribe, wav_path, language_hint)
             try:
                 result = future.result(timeout=self.config.timeout_seconds)
             except FutureTimeout as exc:

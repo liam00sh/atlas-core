@@ -30,6 +30,7 @@ class STTIntentContext:
     immediate_history: tuple[str, ...] = ()
     pending_slots: tuple[str, ...] = ()
     has_temporary_memory: bool = False
+    pending_confirmation: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +101,11 @@ class AtlasIntentConfidenceResolver:
         normalized = _plain(text)
         if not normalized:
             return IntentResolution(IntentConfidence.LOW, "empty", "¿Puedes repetir lo que necesitas?")
+        if context.pending_confirmation and normalized in {
+            "si", "confirmar", "confirmo", "adelante",
+            "no", "cancelar", "cancelado", "cancelada", "cancela", "dejalo",
+        }:
+            return IntentResolution(IntentConfidence.HIGH, "pending_confirmation_answer")
         if question := missing_required_slot(text):
             return IntentResolution(IntentConfidence.LOW, "incomplete_command", question)
         tokens = normalized.split()

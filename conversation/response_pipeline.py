@@ -91,6 +91,8 @@ class DaxterResponsePipeline:
         seed: int = 0,
     ) -> StyledResponse:
         base = base_response if isinstance(base_response, BaseResponse) else BaseResponse.from_text(base_response)
+        if channel == "pc_voice" and strength == PersonalityStrength.NORMAL:
+            strength = PersonalityStrength.LOW
         kind = request_type or self.infer_request_type(base.text, request_text)
         intent = self.emotion_resolver.resolve(kind, base.text, risk_level)
         voice_style = self.style_selector.resolve(intent.emotion, intent.intensity)
@@ -104,6 +106,7 @@ class DaxterResponsePipeline:
                 suggested_emotion=voice_style.emotion,
                 suggested_intensity=voice_style.intensity.value,
                 personality_strength=strength,
+                max_length=320 if channel == "pc_voice" else 500,
                 previous_styled_text=previous_styled_text,
             ),
             seed=seed,
