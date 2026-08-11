@@ -56,3 +56,10 @@ class SynthesisResult:
     latency_ms: float | None = None
     emotion: str | None = None
     intensity: str | None = None
+    chars_sent_to_tts: int = 0
+    chars_synthesized: int = 0
+    synthesized_samples: int = 0
+    wav_duration_ms: float = 0.0
+    playback_duration_ms: float = 0.0
+    playback_completed: bool | None = None
+    playback_interrupted: bool = False

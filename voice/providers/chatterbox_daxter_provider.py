@@ -37,6 +37,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         cache_dir: Path | None = None,
         timeout_seconds: float = VOICE_PROVIDER_TIMEOUT_SECONDS,
         postprocess: bool = True,
+        postprocess_options: dict[str, object] | None = None,
     ) -> None:
         root = Path(__file__).resolve().parents[2]
         self.profile_path = Path(profile_path or root / "voice_profiles" / "daxter_es_jak2.json")
@@ -57,6 +58,14 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         self.cache_dir = Path(cache_dir or os.getenv("ATLAS_TTS_CACHE_DIR", root / "runtime" / "voice" / "cache"))
         self.timeout_seconds = timeout_seconds
         self.postprocess = bool(postprocess)
+        self.postprocess_options = dict(postprocess_options or {
+            "trim_start": False,
+            "trim_end": True,
+            "threshold": 0.0005,
+            "end_padding_ms": 80,
+            "ensure_end_padding": True,
+            "fade_ms": 5,
+        })
         self._process: subprocess.Popen[str] | None = None
         self._lock = threading.RLock()
 
@@ -81,10 +90,30 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "emotion": request.emotion,
             "intensity": request.intensity,
             "profile_version": request.profile_version,
-            "postprocess_version": "trim-fade-v1" if self.postprocess else "none",
+            "synthesis_version": "semantic-units-v2",
+            "postprocess_version": self.postprocess_options if self.postprocess else "none",
         }
         encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
+
+    @staticmethod
+    def _generation_seed(request: SynthesisRequest) -> int:
+        payload = {
+            "text": " ".join(request.text.split()),
+            "voice": request.voice_profile_id or request.provider_voice_id,
+            "emotion": request.emotion,
+            "intensity": request.intensity,
+            "profile_version": request.profile_version,
+        }
+        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
+        return int(hashlib.sha256(encoded).hexdigest()[:8], 16)
+
+    @staticmethod
+    def _wav_metrics(path: Path) -> tuple[int, float]:
+        with wave.open(str(path), "rb") as audio:
+            samples = audio.getnframes() * audio.getnchannels()
+            duration_ms = audio.getnframes() / float(audio.getframerate()) * 1000
+        return samples, round(duration_ms, 3)
 
     @staticmethod
     def _valid_wav(path: Path) -> bool:
@@ -105,11 +134,14 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         request.output_path.parent.mkdir(parents=True, exist_ok=True)
         if self._valid_wav(cached):
             shutil.copy2(cached, request.output_path)
+            samples, duration_ms = self._wav_metrics(request.output_path)
             logger.info("TTS B1 cache hit key=%s", key[:12])
             return SynthesisResult(
                 True, request.output_path, request.voice_id, self.provider_id,
                 cache_hit=True, latency_ms=round((perf_counter() - started) * 1000, 3),
                 emotion=request.emotion, intensity=request.intensity,
+                chars_sent_to_tts=len(request.text), chars_synthesized=len(request.text),
+                synthesized_samples=samples, wav_duration_ms=duration_ms,
             )
 
         payload = {
@@ -120,8 +152,9 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "reference_path": str(self.reference_path.resolve()),
             "emotion": request.emotion,
             "intensity": request.intensity,
-            "seed": int(key[:8], 16),
+            "seed": self._generation_seed(request),
             "postprocess": self.postprocess,
+            "postprocess_options": self.postprocess_options,
         }
         try:
             response = self._request_worker(payload)
@@ -136,11 +169,16 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         temporary = self.cache_dir / f".{key}.{os.getpid()}.tmp"
         shutil.copy2(request.output_path, temporary)
         temporary.replace(cached)
+        samples, duration_ms = self._wav_metrics(request.output_path)
         logger.info("TTS B1 generated key=%s latency_ms=%.3f", key[:12], (perf_counter() - started) * 1000)
         return SynthesisResult(
             True, request.output_path, request.voice_id, self.provider_id,
             cache_hit=False, latency_ms=round((perf_counter() - started) * 1000, 3),
             emotion=request.emotion, intensity=request.intensity,
+            chars_sent_to_tts=len(request.text),
+            chars_synthesized=int(response.get("chars_synthesized", len(request.text))),
+            synthesized_samples=int(response.get("synthesized_samples", samples)),
+            wav_duration_ms=float(response.get("wav_duration_ms", duration_ms)),
         )
 
     def _request_worker(self, payload: dict) -> dict:
@@ -175,6 +213,8 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         env["HF_HUB_OFFLINE"] = "1"
         env["TRANSFORMERS_OFFLINE"] = "1"
         env["NO_PROXY"] = "*"
+        env["PYTHONIOENCODING"] = "utf-8"
+        env["PYTHONUTF8"] = "1"
         self._process = subprocess.Popen(
             self.worker_command,
             stdin=subprocess.PIPE,

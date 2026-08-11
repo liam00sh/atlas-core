@@ -29,6 +29,7 @@ class VoiceTurnResult:
     synthesis: SynthesisResult | None
     timings_ms: dict[str, float] = field(default_factory=dict)
     recoverable_error: str | None = None
+    trace: dict[str, object] = field(default_factory=dict)
 
 
 class ManualVoiceSession:
@@ -61,7 +62,13 @@ class ManualVoiceSession:
         total_started = perf_counter()
         timings = {"recording": round(recording_ms, 3)}
         try:
-            transcript, stt_timings = self.stt.transcribe(source, language_hint="es")
+            pending_confirmation = self._has_pending_confirmation()
+            context_hint = "confirmation" if pending_confirmation else "general"
+            transcript, stt_timings = self._transcribe(
+                source,
+                language_hint="es",
+                context_hint=context_hint,
+            )
         except STTError as exc:
             timings["total"] = round((perf_counter() - total_started) * 1000 + recording_ms, 3)
             message = self._stt_error_message(exc.code)
@@ -73,10 +80,16 @@ class ManualVoiceSession:
 
         timings.update(stt_timings)
         policy_started = perf_counter()
-        normalized = ContextualTranscriptNormalizer.normalize(transcript)
+        normalized = ContextualTranscriptNormalizer.normalize(
+            transcript,
+            pending_confirmation=pending_confirmation,
+        )
         decision = self.stt_policy.evaluate(
             normalized,
-            STTIntentContext(has_temporary_memory=bool(self.previous_styled_text)),
+            STTIntentContext(
+                has_temporary_memory=bool(self.previous_styled_text),
+                pending_confirmation=pending_confirmation,
+            ),
         )
         timings["stt.policy"] = round((perf_counter() - policy_started) * 1000, 3)
         if decision.kind is not STTDecisionKind.PROCESS:
@@ -117,7 +130,11 @@ class ManualVoiceSession:
         timings["personality"] = round((perf_counter() - style_started) * 1000, 3)
         self.previous_styled_text = styled.styled_text
         speech_started = perf_counter()
-        spoken_response = SpeechTextNormalizer.normalize(styled.styled_text, max_sentences=3)
+        spoken_response = SpeechTextNormalizer.normalize(
+            styled.styled_text,
+            max_sentences=2,
+            max_chars=360,
+        )
         timings["speech.normalize"] = round((perf_counter() - speech_started) * 1000, 3)
         tts_started = perf_counter()
         tts_stages: dict[str, float] = {}
@@ -130,8 +147,40 @@ class ManualVoiceSession:
         timings.update({f"tts.{key}": value for key, value in tts_stages.items()})
         timings["tts_and_playback"] = round((perf_counter() - tts_started) * 1000, 3)
         timings["total"] = round((perf_counter() - total_started) * 1000 + recording_ms, 3)
+        timings["total_without_recording"] = round((perf_counter() - total_started) * 1000, 3)
         error = None if synthesis is None or synthesis.success else synthesis.error
-        return VoiceTurnResult(decision.text, styled.styled_text, spoken_response, running, synthesis, timings, error)
+        trace = {
+            "visible_text": styled.styled_text,
+            "spoken_text": spoken_response,
+            "chars_sent_to_tts": len(spoken_response),
+            "chars_synthesized": getattr(synthesis, "chars_synthesized", 0) if synthesis else 0,
+            "synthesized_samples": getattr(synthesis, "synthesized_samples", 0) if synthesis else 0,
+            "wav_duration_ms": getattr(synthesis, "wav_duration_ms", 0.0) if synthesis else 0.0,
+            "playback_duration_ms": getattr(synthesis, "playback_duration_ms", 0.0) if synthesis else 0.0,
+            "playback_completed": getattr(synthesis, "playback_completed", None) if synthesis else None,
+            "playback_interrupted": getattr(synthesis, "playback_interrupted", False) if synthesis else False,
+        }
+        return VoiceTurnResult(
+            decision.text, styled.styled_text, spoken_response, running,
+            synthesis, timings, error, trace,
+        )
+
+    def _has_pending_confirmation(self) -> bool:
+        confirmations = getattr(self.atlas, "confirmations", None)
+        checker = getattr(confirmations, "has_pending_confirmation", None)
+        return bool(checker()) if callable(checker) else False
+
+    def _transcribe(self, source, *, language_hint: str, context_hint: str):
+        import inspect
+
+        parameters = inspect.signature(self.stt.transcribe).parameters
+        if "context_hint" in parameters:
+            return self.stt.transcribe(
+                source,
+                language_hint=language_hint,
+                context_hint=context_hint,
+            )
+        return self.stt.transcribe(source, language_hint=language_hint)
 
     def _process_with_pc_context(self, text: str) -> bool:
         previous_context = getattr(self.atlas, "channel_request_context", None)

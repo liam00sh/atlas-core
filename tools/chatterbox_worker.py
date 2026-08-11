@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import random
+import re
 import sys
 from contextlib import redirect_stdout
 
@@ -20,20 +21,86 @@ if str(ROOT) not in sys.path:
 _MODEL = None
 
 
-def _trim_and_fade(audio, sample_rate: int):
-    """Trim peripheral silence and soften endpoints without touching the center."""
+def _split_tts_units(text: str, *, max_chars: int = 220) -> list[str]:
+    """Split long input at linguistic boundaries before the model sees it."""
+    sentences = [
+        item.strip()
+        for item in re.findall(r".*?(?:[.!?](?=\s|$)|$)", text, flags=re.DOTALL)
+        if item.strip()
+    ]
+    parts: list[str] = []
+    for sentence in sentences:
+        if len(sentence) <= max_chars:
+            parts.append(sentence)
+            continue
+        clauses = [item.strip() for item in re.split(r"(?<=[,;:])\s+", sentence) if item.strip()]
+        current = ""
+        for clause in clauses:
+            if len(clause) > max_chars:
+                words = clause.split()
+                word_chunk = ""
+                for word in words:
+                    word_candidate = f"{word_chunk} {word}".strip()
+                    if word_chunk and len(word_candidate) > max_chars:
+                        if current:
+                            parts.append(current)
+                            current = ""
+                        parts.append(word_chunk)
+                        word_chunk = word
+                    else:
+                        word_chunk = word_candidate
+                clause = word_chunk
+            candidate = f"{current} {clause}".strip()
+            if current and len(candidate) > max_chars:
+                parts.append(current)
+                current = clause
+            else:
+                current = candidate
+        if current:
+            parts.append(current)
+
+    units: list[str] = []
+    current = ""
+    for part in parts:
+        candidate = f"{current} {part}".strip()
+        if current and len(candidate) > max_chars:
+            units.append(current)
+            current = part
+        else:
+            current = candidate
+    if current:
+        units.append(current)
+    return units or [text.strip()]
+
+
+def _trim_and_fade(audio, sample_rate: int, options: dict | None = None):
+    """Conservatively protect phonemes and only fade inside retained padding."""
     import torch
 
+    options = dict(options or {})
+    trim_start = bool(options.get("trim_start", False))
+    trim_end = bool(options.get("trim_end", True))
+    threshold = max(0.0, float(options.get("threshold", 0.0005)))
+    start_padding = int(sample_rate * max(0.0, float(options.get("start_padding_ms", 80))) / 1000)
+    end_padding = int(sample_rate * max(0.0, float(options.get("end_padding_ms", 80))) / 1000)
+    ensure_end_padding = bool(options.get("ensure_end_padding", True))
+    fade_ms = max(0.0, float(options.get("fade_ms", 5)))
     if audio.ndim == 1:
         audio = audio.unsqueeze(0)
     mono_peak = audio.abs().amax(dim=0)
-    active = torch.nonzero(mono_peak > 0.003, as_tuple=False).flatten()
+    active = torch.nonzero(mono_peak > threshold, as_tuple=False).flatten()
     if active.numel():
-        padding = int(sample_rate * 0.03)
-        start = max(0, int(active[0]) - padding)
-        end = min(audio.shape[-1], int(active[-1]) + padding + 1)
+        start = max(0, int(active[0]) - start_padding) if trim_start else 0
+        desired_end = int(active[-1]) + end_padding + 1
+        end = min(audio.shape[-1], desired_end) if trim_end else audio.shape[-1]
         audio = audio[:, start:end]
-    fade = min(int(sample_rate * 0.015), audio.shape[-1] // 2)
+        if trim_end and ensure_end_padding and desired_end > end:
+            missing = desired_end - end
+            audio = torch.cat(
+                (audio, torch.zeros((audio.shape[0], missing), device=audio.device)),
+                dim=-1,
+            )
+    fade = min(int(sample_rate * fade_ms / 1000), audio.shape[-1] // 2)
     if fade > 1:
         audio[:, :fade] *= torch.linspace(0.0, 1.0, fade, device=audio.device)
         audio[:, -fade:] *= torch.linspace(1.0, 0.0, fade, device=audio.device)
@@ -67,24 +134,53 @@ def synthesize(payload: dict) -> dict:
     controls = adapter.to_tts_style(style)
     output = Path(payload["output_path"])
     output.parent.mkdir(parents=True, exist_ok=True)
-    audio = _MODEL.generate(
-        adapter.normalize_text(payload["text"]),
-        language_id=controls["language_id"],
-        audio_prompt_path=payload["reference_path"],
-        exaggeration=controls["exaggeration"],
-        cfg_weight=controls["cfg_weight"],
-        temperature=controls["temperature"],
-        repetition_penalty=controls["repetition_penalty"],
-        min_p=controls["min_p"],
-        top_p=controls["top_p"],
-    )
+    normalized_text = adapter.normalize_text(payload["text"])
+    units = _split_tts_units(normalized_text)
+    generated = []
+    for index, unit in enumerate(units):
+        unit_seed = seed + index
+        random.seed(unit_seed)
+        np.random.seed(unit_seed % (2**32 - 1))
+        torch.manual_seed(unit_seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(unit_seed)
+        generated.append(_MODEL.generate(
+            unit,
+            language_id=controls["language_id"],
+            audio_prompt_path=payload["reference_path"],
+            exaggeration=controls["exaggeration"],
+            cfg_weight=controls["cfg_weight"],
+            temperature=controls["temperature"],
+            repetition_penalty=controls["repetition_penalty"],
+            min_p=controls["min_p"],
+            top_p=controls["top_p"],
+        ))
+    gap = torch.zeros((generated[0].shape[0], int(_MODEL.sr * 0.06)), device=generated[0].device)
+    parts = []
+    for index, item in enumerate(generated):
+        if index:
+            parts.append(gap)
+        parts.append(item)
+    audio = torch.cat(parts, dim=-1)
     if payload.get("postprocess", True):
-        audio = _trim_and_fade(audio, _MODEL.sr)
+        audio = _trim_and_fade(audio, _MODEL.sr, payload.get("postprocess_options"))
     torchaudio.save(str(output), audio.cpu(), _MODEL.sr, encoding="PCM_S", bits_per_sample=16)
-    return {"success": True, "emotion": style.emotion, "intensity": style.intensity.value}
+    return {
+        "success": True,
+        "emotion": style.emotion,
+        "intensity": style.intensity.value,
+        "chars_synthesized": len(normalized_text),
+        "synthesized_samples": int(audio.shape[-1]),
+        "wav_duration_ms": round(audio.shape[-1] / _MODEL.sr * 1000, 3),
+        "tts_units": len(units),
+    }
 
 
 def main() -> int:
+    for stream in (sys.stdin, sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="strict")
     for line in sys.stdin:
         try:
             payload = json.loads(line)

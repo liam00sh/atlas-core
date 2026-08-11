@@ -115,20 +115,85 @@ class VoiceService:
                 latency_ms=raw.latency_ms,
                 emotion=raw.emotion or emotion,
                 intensity=raw.intensity or intensity,
+                chars_sent_to_tts=len(clean_text),
+                chars_synthesized=raw.chars_synthesized,
+                synthesized_samples=raw.synthesized_samples,
+                wav_duration_ms=raw.wav_duration_ms,
             )
+            timings["spoken_chars"] = result.chars_sent_to_tts
+            timings["chars_synthesized"] = result.chars_synthesized
+            timings["synthesized_samples"] = result.synthesized_samples
+            timings["wav_duration_ms"] = result.wav_duration_ms
             if play_audio and result.output_path is not None:
                 playback_started = time.perf_counter()
                 if queue_audio:
                     self.playback_queue.enqueue(result.output_path)
                 elif not self.player.play(result.output_path):
-                    timings["playback"] = round((time.perf_counter() - playback_started) * 1000, 3)
+                    elapsed_ms = round((time.perf_counter() - playback_started) * 1000, 3)
+                    timings["playback"] = elapsed_ms
+                    timings["playback_duration_ms"] = elapsed_ms
+                    timings["playback_completed"] = False
+                    timings["playback_interrupted"] = False
                     return SynthesisResult(
-                        False, result.output_path, result.voice_id, result.provider_id,
-                        "No se pudo reproducir el WAV.", requested,
-                        result.fallback_used, result.selection_reason,
-                        result.cache_hit, result.latency_ms, result.emotion, result.intensity,
+                        success=False,
+                        output_path=result.output_path,
+                        voice_id=result.voice_id,
+                        provider_id=result.provider_id,
+                        error="No se pudo reproducir el WAV.",
+                        requested_voice_id=requested,
+                        fallback_used=result.fallback_used,
+                        selection_reason=result.selection_reason,
+                        cache_hit=result.cache_hit,
+                        latency_ms=result.latency_ms,
+                        emotion=result.emotion,
+                        intensity=result.intensity,
+                        chars_sent_to_tts=result.chars_sent_to_tts,
+                        chars_synthesized=result.chars_synthesized,
+                        synthesized_samples=result.synthesized_samples,
+                        wav_duration_ms=result.wav_duration_ms,
+                        playback_duration_ms=elapsed_ms,
+                        playback_completed=False,
                     )
-                timings["playback"] = round((time.perf_counter() - playback_started) * 1000, 3)
+                elapsed_ms = round((time.perf_counter() - playback_started) * 1000, 3)
+                timings["playback"] = elapsed_ms
+                if queue_audio:
+                    playback_duration_ms = 0.0
+                    playback_completed = None
+                    playback_interrupted = False
+                else:
+                    playback_duration_ms = float(
+                        getattr(self.player, "last_playback_duration_ms", elapsed_ms)
+                    )
+                    playback_completed = bool(
+                        getattr(self.player, "last_playback_completed", True)
+                    )
+                    playback_interrupted = bool(
+                        getattr(self.player, "last_playback_interrupted", False)
+                    )
+                timings["playback_duration_ms"] = playback_duration_ms
+                timings["playback_completed"] = playback_completed
+                timings["playback_interrupted"] = playback_interrupted
+                result = SynthesisResult(
+                    success=result.success,
+                    output_path=result.output_path,
+                    voice_id=result.voice_id,
+                    provider_id=result.provider_id,
+                    error=result.error,
+                    requested_voice_id=result.requested_voice_id,
+                    fallback_used=result.fallback_used,
+                    selection_reason=result.selection_reason,
+                    cache_hit=result.cache_hit,
+                    latency_ms=result.latency_ms,
+                    emotion=result.emotion,
+                    intensity=result.intensity,
+                    chars_sent_to_tts=result.chars_sent_to_tts,
+                    chars_synthesized=result.chars_synthesized,
+                    synthesized_samples=result.synthesized_samples,
+                    wav_duration_ms=result.wav_duration_ms,
+                    playback_duration_ms=playback_duration_ms,
+                    playback_completed=playback_completed,
+                    playback_interrupted=playback_interrupted,
+                )
             return result
         detail = "; ".join(failures) if failures else "ninguna voz local compatible está disponible"
         return SynthesisResult(
