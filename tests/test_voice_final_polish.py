@@ -79,7 +79,7 @@ def test_home_service_returns_ambiguity_before_any_environment_action():
     service = HomeIntentService(SimpleNamespace(), resolver=Resolver())
     result = service.handle(
         "La luz del acuario pequeño",
-        user_id="liam",
+        user_id="owner",
         channel="pc_voice",
     )
     assert result.handled is True
@@ -127,7 +127,7 @@ def test_worker_splits_long_text_into_bounded_ordered_units():
 
 def test_generation_seed_is_independent_from_trim_and_fade(tmp_path):
     request = SynthesisRequest(
-        text="Hola, Liam.",
+        text="Hola, usuario.",
         voice_id="daxter_official",
         provider_voice_id="daxter_es_jak2",
         output_path=tmp_path / "one.wav",
