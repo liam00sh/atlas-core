@@ -298,7 +298,7 @@ class TestMemoryRetriever(
         """
 
         results = self.retriever.find(
-            query="¿Cuál es la capital de REDACTED_e7be6c6f309acia?",
+            query="¿Cuál es la capital de Francia?",
             owner="Alex",
             viewer="Alex",
             viewer_profile=self.viewer_profile,

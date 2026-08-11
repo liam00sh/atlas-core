@@ -111,7 +111,7 @@ def execute():
 
     No devuelve ningún valor.
 
-    REDACTED_0f38c2ded26fnamiento:
+    Funcionamiento:
 
         1. Obtiene la fecha y hora actuales.
         2. Las formatea como texto.

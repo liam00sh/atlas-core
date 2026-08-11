@@ -56,7 +56,7 @@ def check_docker():
         False
             Si no puede localizarlo.
 
-    REDACTED_0f38c2ded26fnamiento:
+    Funcionamiento:
 
         shutil.which("docker")
 

@@ -333,7 +333,7 @@ DAXTER_SUCCESS = (
     'Victoria limpia. Bueno, suficientemente limpia.',
     '¡Lo tenemos! El talento vuelve a derrotar a las probabilidades.',
     'Problema resuelto. La ciudad puede volver a respirar.',
-    '¡REDACTED_0f38c2ded26fnó! Nadie grite; quiero saborear este momento profesional.',
+    '¡Funcionó! Nadie grite; quiero saborear este momento profesional.',
     'Objetivo completado. Daxter uno, caos cero.',
     '¡Excelente! Eso merece una vuelta de celebración y quizá un contrato mejor.',
     'Listo. Fácil, elegante y solo ligeramente improvisado.',

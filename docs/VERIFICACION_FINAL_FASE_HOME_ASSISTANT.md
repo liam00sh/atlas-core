@@ -8,7 +8,7 @@
 - Programaciones horarias persistentes.
 - Activación y desactivación de horarios.
 - Temporizadores con apagado automático.
-- REDACTED_0f38c2ded26fnamiento por consola y Telegram.
+- Funcionamiento por consola y Telegram.
 - Tratamiento del falso HTTP 404.
 - Menú de ayuda ampliado.
 - Filtrado de ayuda según permisos.

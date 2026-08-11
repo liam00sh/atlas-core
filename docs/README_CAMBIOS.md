@@ -2,7 +2,7 @@
 
 Estado: concluida y validada.
 
-## REDACTED_0f38c2ded26fnes cerradas
+## Funciones cerradas
 
 - Control de la luz del acuario pequeño.
 - Control del oxígeno del acuario pequeño.

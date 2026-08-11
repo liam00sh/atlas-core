@@ -145,7 +145,7 @@ def load_commands():
 
     No devuelve ningún valor.
 
-    REDACTED_0f38c2ded26fnamiento:
+    Funcionamiento:
 
         1. Recorre la carpeta commands/.
         2. Importa cada módulo encontrado.

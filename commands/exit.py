@@ -127,7 +127,7 @@ def execute():
         False
             Atlas debe finalizar.
 
-    REDACTED_0f38c2ded26fnamiento:
+    Funcionamiento:
 
         Si el usuario actual NO es Alex:
 

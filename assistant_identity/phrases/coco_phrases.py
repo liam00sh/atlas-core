@@ -303,7 +303,7 @@ COCO_SUCCESS = (
     'Resultado conseguido. La preparación vuelve a vencer al caos.',
     'Hecho. Podemos celebrar después de verificarlo una vez más.',
     'Objetivo completado. Me encanta cuando las cifras saben comportarse.',
-    'REDACTED_0f38c2ded26fnó. No era suerte; tengo registros que lo demuestran.',
+    'Funcionó. No era suerte; tengo registros que lo demuestran.',
     'Excelente. Otra victoria para el equipo con mejor organización.',
 )
 

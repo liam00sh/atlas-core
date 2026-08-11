@@ -47,7 +47,7 @@ def measure(mode: str, persistent: bool, root: Path) -> list[dict[str, object]]:
         )
         try:
             for iteration in (1, 2):
-                result = renderer.render("REDACTED_0f38c2ded26fnando y atento, Alex. ¿Cómo estás tú?", user_id="benchmark")
+                result = renderer.render("Funcionando y atento, Alex. ¿Cómo estás tú?", user_id="benchmark")
                 records.append({
                     "mode": mode,
                     "iteration": iteration,

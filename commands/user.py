@@ -115,7 +115,7 @@ def execute():
 
     No devuelve ningún valor.
 
-    REDACTED_0f38c2ded26fnamiento:
+    Funcionamiento:
 
         Consulta el usuario activo almacenado en Atlas
         y lo muestra por pantalla.

@@ -130,7 +130,7 @@ class MemoryService:
             content:
                 Información exacta que debe almacenarse.
 
-        REDACTED_0f38c2ded26fnamiento:
+        Funcionamiento:
 
             1. Comprueba que exista contenido.
             2. Intenta clasificar su visibilidad.

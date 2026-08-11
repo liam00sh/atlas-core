@@ -4,8 +4,8 @@ La fase de integración doméstica inicial con Home Assistant queda cerrada.
 
 Criterios cumplidos:
 
-- REDACTED_0f38c2ded26fnamiento desde consola.
-- REDACTED_0f38c2ded26fnamiento desde Telegram.
+- Funcionamiento desde consola.
+- Funcionamiento desde Telegram.
 - Control individual y conjunto.
 - Horarios persistentes.
 - Temporizadores.

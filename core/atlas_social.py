@@ -870,7 +870,7 @@ class AtlasSocialMixin:
             print(); print(random.choice((
                 f"Estoy bien, {user}. No tengo cuerpo ni emociones humanas, pero estoy operativo y encantado de hablar contigo.",
                 f"Todo en orden por aquí, {user}. No tengo días buenos o malos como una persona, pero mis procesos vienen con ganas de charla.",
-                f"REDACTED_0f38c2ded26fnando y atento, {user}. ¿Cómo estás tú?",
+                f"Funcionando y atento, {user}. ¿Cómo estás tú?",
             ))); return True
 
         if normalized in {"que haces", "que estas haciendo", "que andas haciendo"}:

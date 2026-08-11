@@ -39,7 +39,7 @@ data/integrations/google_drive/token.json
 
 Ambos quedan excluidos de Git.
 
-## REDACTED_0f38c2ded26fnamiento del arranque
+## Funcionamiento del arranque
 
 1. Atlas registra inicialmente la herramienta de Drive desactivada.
 2. Intenta cargar un token existente de forma no interactiva.

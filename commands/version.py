@@ -116,7 +116,7 @@ def execute():
 
     No devuelve ningún valor.
 
-    REDACTED_0f38c2ded26fnamiento:
+    Funcionamiento:
 
         Muestra el nombre del proyecto y la versión
         actualmente instalada.

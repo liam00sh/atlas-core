@@ -3,9 +3,9 @@ from voice.text_normalizer import normalize_for_tts
 
 
 def test_visual_and_spoken_text_are_separate_for_vocatives() -> None:
-    visual = "REDACTED_0f38c2ded26fnando y atento, Alex. ¿Cómo estás tú?"
-    assert normalize_for_tts(visual) == "REDACTED_0f38c2ded26fnando y atento Alex. ¿Cómo estás tú?"
-    assert visual == "REDACTED_0f38c2ded26fnando y atento, Alex. ¿Cómo estás tú?"
+    visual = "Funcionando y atento, Alex. ¿Cómo estás tú?"
+    assert normalize_for_tts(visual) == "Funcionando y atento Alex. ¿Cómo estás tú?"
+    assert visual == "Funcionando y atento, Alex. ¿Cómo estás tú?"
 
 
 def test_tts_normalizer_removes_markdown_emojis_and_raw_urls() -> None:

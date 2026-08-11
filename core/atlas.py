@@ -1208,7 +1208,7 @@ class Atlas(AtlasAIMixin,
         if self._handle_family_assistance(original_text):
             return True
 
-        # REDACTED_0f38c2ded26fnes cotidianas: recordatorios propios, listas, cálculos,
+        # Funciones cotidianas: recordatorios propios, listas, cálculos,
         # redacción y gestión conversacional de memoria.
         if self._handle_daily_life(original_text):
             return True

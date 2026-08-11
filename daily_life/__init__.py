@@ -1,1 +1,1 @@
-"""REDACTED_0f38c2ded26fnes cotidianas persistentes de Atlas."""
+"""Funciones cotidianas persistentes de Atlas."""

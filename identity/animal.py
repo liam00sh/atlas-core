@@ -11,7 +11,7 @@ Descripción:
     Puede utilizarse para representar:
 
     - Perros.
-    - REDACTED_a9baf529fb36s.
+    - Gatos.
     - Aves.
     - Peces.
     - Reptiles.

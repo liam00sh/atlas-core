@@ -1,4 +1,4 @@
-"""REDACTED_0f38c2ded26fnes cotidianas y gestión conversacional segura de Atlas.
+"""Funciones cotidianas y gestión conversacional segura de Atlas.
 
 Incluye normalización tolerante, recordatorios personales, listas, cálculos,
 redacción, ayuda cotidiana y gestión conversacional de memoria.
