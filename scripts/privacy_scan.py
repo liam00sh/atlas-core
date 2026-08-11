@@ -142,7 +142,9 @@ def scan_history() -> list[Finding]:
             path = line[6:]
             if any(pattern.search(path) for pattern in _blocklist()):
                 findings.append(Finding("private-path", path, 0, commit))
-            if any(pattern.search(path) for pattern in BLOCKED_PATHS):
+            if path != ".env.example" and any(
+                pattern.search(path) for pattern in BLOCKED_PATHS
+            ):
                 findings.append(Finding("blocked-path", path, 0, commit))
             continue
         if line.startswith("@@"):
