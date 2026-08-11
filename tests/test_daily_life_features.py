@@ -5,6 +5,7 @@ from daily_life.lists import PersonalListService
 from daily_life.reminders import PersonalReminderParser
 from daily_life.storage import DailyLifeStorage
 from utils.intent_normalizer import interpret_text
+from core.atlas_daily import PersonalReminderParser as CorePersonalReminderParser
 
 
 def test_typing_interpretation_is_conservative():
@@ -31,6 +32,15 @@ def test_absolute_reminder():
     assert result is not None
     assert result.message == "llame al médico"
     assert result.due_at_utc.isoformat().startswith("2026-07-22T08:00:00")
+
+
+def test_core_reminder_parser_accepts_voice_vocative_and_dotted_time():
+    parser = CorePersonalReminderParser("UTC")
+    now = datetime.fromisoformat("2026-08-11T05:00:00+00:00")
+    result = parser.parse("Daxter, recuerdame a las 6.30 revisar el acuario", now=now)
+    assert result is not None
+    assert result.message == "revisar el acuario"
+    assert result.due_at_utc.isoformat().startswith("2026-08-11T06:30:00")
 
 
 def test_personal_lists(tmp_path):

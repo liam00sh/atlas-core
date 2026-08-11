@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
+import time
 
 from automation.home_assistant_client import HomeAssistantTransport
 from automation.home_assistant_models import HomeEntityKind, HomeEntityState
@@ -71,7 +72,23 @@ class HomeAssistantAdapter:
             entity_id=entity.entity_id,
             data=service_data,
         )
-        return state.to_dict()
+        expected = "on" if service == "turn_on" else "off"
+        last_state = state
+        for attempt in range(3):
+            try:
+                last_state = self.transport.get_state(entity.entity_id)
+            except Exception:
+                if attempt == 2:
+                    raise
+            else:
+                if str(last_state.state).strip().casefold() == expected:
+                    return last_state.to_dict()
+            if attempt < 2:
+                time.sleep(0.2)
+        raise RuntimeError(
+            "He enviado la orden, pero el dispositivo sigue apareciendo "
+            + ("apagado." if expected == "on" else "encendido.")
+        )
 
     @staticmethod
     def _schedule_id(entity_id: str) -> str:

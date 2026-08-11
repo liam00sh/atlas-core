@@ -232,10 +232,17 @@ class PersonalReminderParser:
 
     def parse(self, text: str, now: datetime | None = None) -> PersonalReminder | None:
         original = " ".join(text.strip().split())
+        original = re.sub(r"^(?:oye\s+)?daxter[\s,.:;-]+", "", original, flags=re.I)
         plain = self.plain(original)
         if not re.match(r"^(?:recuerdame|avisame)\b", plain):
             return None
         tail_original = re.sub(r"^(?:recuérdame|recuerdame|avísame|avisame)\s+", "", original, flags=re.I)
+        tail_original = re.sub(
+            r"^que\s+(?=(?:hoy|ma\u00f1ana|manana)\b)",
+            "",
+            tail_original,
+            flags=re.I,
+        )
         tail_plain = self.plain(tail_original)
         current = now or datetime.now(self.timezone)
         if current.tzinfo is None:
@@ -252,7 +259,7 @@ class PersonalReminderParser:
             return PersonalReminder(body[:1500], (current + delta).astimezone(UTC))
 
         absolute = re.match(
-            r"^(?:(hoy|manana)\s+)?(?:a\s+)?(?:las\s+)?([0-2]?\d)(?::([0-5]\d))?\s*(?:h|horas?)?\s+(?:de\s+)?(?:que\s+)?(.+)$",
+            r"^(?:(hoy|manana)\s+)?(?:a\s+)?(?:las\s+)?([0-2]?\d)(?:(?::|\.)([0-5]\d))?\s*(?:h|horas?)?\s+(?:de\s+)?(?:que\s+)?(.+)$",
             tail_plain,
         )
         if not absolute:

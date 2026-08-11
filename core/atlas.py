@@ -968,10 +968,11 @@ class Atlas(AtlasAIMixin,
         # manejadores conversacionales. De lo contrario, palabras como «ayuda»
         # pueden ser absorbidas por la conversación general y no ejecutar el
         # catálogo real de comandos.
-        command_result = self._handle_command(
-            original_text,
-            normalized_text,
-        )
+        with measure_stage("command_routing"):
+            command_result = self._handle_command(
+                original_text,
+                normalized_text,
+            )
         if command_result is not None:
             return command_result
 
@@ -1039,11 +1040,12 @@ class Atlas(AtlasAIMixin,
         request_context = getattr(self, "channel_request_context", None)
         request_channel = getattr(request_context, "channel", None) or "cli"
         request_user_id = self.get_user().casefold()
-        home_response = self.home_intent_service.handle(
-            original_text,
-            user_id=request_user_id,
-            channel=request_channel,
-        )
+        with measure_stage("home_routing"):
+            home_response = self.home_intent_service.handle(
+                original_text,
+                user_id=request_user_id,
+                channel=request_channel,
+            )
         if home_response.handled:
             if home_response.requires_confirmation:
                 self.confirmations.create_confirmation(

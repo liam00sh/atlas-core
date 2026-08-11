@@ -2358,7 +2358,9 @@ class AtlasAIMixin:
 
         normalized = cls._normalize_entity_text(user_message)
         continuity_patterns = (
-            r"^(?:y|entonces|ademas)\b",
+            r"^(?:y|entonces|ademas|pero)\b",
+            r"^(?:dime|cuentame|explicame)\s+mas\b",
+            r"^(?:por que|como asi|a que te refieres)\b",
             r"\b(?:el|ella|ellos|ellas)\b",
             r"\b(?:su|sus)\s+(?:madre|padre|hermana|hermano|tia|tio|pareja)\b",
             r"^(?:la|el)\s+(?:primera|primero|segunda|segundo|1|2)$",
@@ -2383,14 +2385,11 @@ class AtlasAIMixin:
         intercambio.
         """
 
-        if not self._is_entity_or_relationship_query(user_message):
-            return context.format_for_prompt()
-
         if not self._needs_conversation_continuity(user_message):
             return (
-                "Consulta factual independiente. No uses respuestas anteriores "
-                "para deducir nombres o relaciones; resuelve exclusivamente con "
-                "las entidades y relaciones verificadas del prompt actual."
+                "TEMA NUEVO E INDEPENDIENTE. No reutilices asuntos, ejemplos, "
+                "acciones, anecdotas ni respuestas de turnos anteriores. Resuelve "
+                "solo la peticion actual y los datos verificados de este turno."
             )
 
         try:
@@ -3023,7 +3022,7 @@ class AtlasAIMixin:
             )
         )
         continuity_store = getattr(self, "conversation_continuity", None)
-        if continuity_store is not None:
+        if continuity_store is not None and self._needs_conversation_continuity(original_text):
             shared_context = continuity_store.format_for_prompt(conversation_user)
             if shared_context:
                 conversation_context = (

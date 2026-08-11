@@ -147,6 +147,7 @@ class AtlasFamilyMixin:
         "empieza de nuevo", "reinicia la conversacion", "reinicia la conversación",
         "salir del juego", "sal del juego",
     }
+    _CANCEL_ALL |= {"cancela", "cancelado", "cancelada"}
     _YES = {"si", "sí", "vale", "confirmo", "confirmar", "adelante", "hazlo", "envialo", "envíalo"}
     _NO = {"no", "cancelar", "dejalo", "déjalo", "mejor no"}
 

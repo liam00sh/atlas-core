@@ -97,6 +97,8 @@ CONFIRMATION_CANCELLED = {
     "no",
     "cancelar",
     "cancela",
+    "cancelado",
+    "cancelada",
     "rechazar",
     "dejalo",
     "déjalo",
