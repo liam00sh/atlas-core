@@ -153,6 +153,8 @@ data/faiss/
 /voice_lab/
 /voice_lab_round_b/
 /training_dataset_chatterbox/
+/voice_lab_emotions/
+/personality_lab/
 *.gguf
 *.ggml
 *.bin
@@ -186,3 +188,7 @@ reports/local/
 
 .pytest_run_*/
 .pytest_round_b_*/
+.pytest_daxter_*/
+.pytest_emotion_lab/
+.pytest_personality_lab/
+.pytest_full_*/

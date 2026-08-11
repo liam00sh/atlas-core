@@ -1,6 +1,6 @@
 # Fase 6 — cierre del dataset Daxter y laboratorio TTS
 
-Estado: dataset cerrado; Chatterbox Multilingual V2 seleccionado por REDACTED_2c7b6821719d en Ronda A; Ronda B generada y pendiente de evaluación humana. No se ha integrado ninguna voz en Atlas.
+Estado: dataset cerrado; Ronda B resuelta por evaluación humana con B1 como configuración base ganadora; catálogo emocional y personalidad v1 construidos, ambos pendientes de validación humana. No se ha integrado de forma irreversible ninguna voz o personalidad en Atlas.
 
 ## Evidencia del dataset
 
@@ -88,14 +88,60 @@ ECAPA no decide la ronda: no mide español de España, pronunciación, emoción 
 
 B1–B3 prueban una capa sólo de inferencia —Jak→Yak, Atlas→Átlas, Daxter→Dákster, Home Assistant→Joum Asístent y Telegram→Télegram— y verbalización de números conocidos. Son hipótesis acústicas reversibles; `metadata_daxter_final.csv` permanece intacto.
 
-El laboratorio `voice_lab_round_b` incluye `BLIND_LISTENING_PLAYER.html`, 136 copias de audio con nombres ciegos, `HUMAN_LISTENING_TEST_ROUND_B.csv`, `BLIND_KEY.json`, métricas, incidencias y sumas SHA-256. REDACTED_2c7b6821719d elegirá el candidato final después de escucharlo; este documento no declara ganador de Ronda B.
+El laboratorio `voice_lab_round_b` incluye `BLIND_LISTENING_PLAYER.html`, 136 copias de audio con nombres ciegos, `HUMAN_LISTENING_TEST_ROUND_B.csv`, `BLIND_KEY.json`, métricas, incidencias y sumas SHA-256.
+
+## Cierre humano de Ronda B
+
+Las 136 muestras fueron puntuadas en las nueve dimensiones previstas. La clave ciega se cruzó mediante `blind_code` sin alterar el CSV humano (`SHA-256 00f54cb95bffc8be670b65272b41490c5a41b42c9719d90fde49b7f74dfb30ba`).
+
+| Candidato | Media global | Similitud global | Media corregida | Similitud corregida | Pronunciación corregida | Inicio corregido |
+|---|---:|---:|---:|---:|---:|---:|
+| B0 | 4,3529 | 4,0882 | 4,3757 | 4,0952 | 4,3810 | 4,6190 |
+| B1 | **4,4347** | **4,0882** | **4,4815** | **4,2381** | 4,6667 | 4,9048 |
+| B2 | 4,2222 | 3,7647 | 4,2222 | 3,7143 | 4,7143 | 5,0000 |
+| B3 | 4,3660 | 3,4412 | 4,3439 | 3,3333 | 4,7619 | 4,9524 |
+
+B1 gana porque lidera simultáneamente similitud y media humana en la batería corregida, conserva la similitud global de B0, mejora pronunciación/inicios y mantiene cero anomalías automáticas corregidas. B0 queda segundo: conserva ventajas de naturalidad y emoción en la batería original, pero rinde peor en los casos operativos corregidos.
+
+El perfil reproducible se congela en `voice_profiles/daxter_es_jak2.json`: Chatterbox Multilingual V2 0.1.7, referencia diversa Jak II, `language_id="es"`, CFG 0,35, temperatura 0,8, penalización de repetición 2,0, `min_p=0,05` y `top_p=1,0`. Continúa siendo conditioning/inferencia; no existe ni se declara un checkpoint entrenado.
+
+Normalizaciones aceptadas:
+
+- `Jak→Yak`: en tres casos mejora todas las dimensiones prioritarias frente a B0;
+- verbalización de fechas y números: en la comparación original eleva inteligibilidad 2→4, pronunciación 1→4 y español de España 1→4.
+
+Normalizaciones rechazadas:
+
+- `Atlas→Átlas`: empeora pronunciación y español de España; el Atlas aislado de B0 obtuvo 5/5;
+- `Home Assistant→Joum Asístent` y `Telegram→Télegram`: no mejoran el caso técnico y reducen similitud;
+- `Daxter→Dákster`: no existe comparación humana directa, por lo que no se acepta sin evidencia.
+
+Los resultados completos están en `ROUND_B_HUMAN_RESULTS.json`, `ROUND_B_HUMAN_RESULTS.md` y `ROUND_B_FINAL_DECISION.json` dentro del laboratorio local.
+
+## Sistema emocional provisional
+
+`voice_profiles/DAXTER_EMOTION_CATALOG.json` contiene las quince expresiones oficiales y sus estadísticas reales. El maestro aporta evidencia directa para catorce; `sonoliento` tiene cero muestras y cae de forma explícita a `cansado`. La intensidad usa un único eje parametrizado: 0,45 baja, 0,55 media y 0,65 alta; los extremos proceden de B1 y el punto medio queda pendiente de escucha.
+
+La capa `VoiceStyleSelector` resuelve emoción, intensidad, energía y fallbacks sin conocer el proveedor. `ChatterboxStyleAdapter` traduce después ese estilo a los únicos controles reales de V2. El fallo de referencia vuelve a la referencia diversa ganadora.
+
+El laboratorio `voice_lab_emotions` contiene 38 WAV ciegos: dos estrategias de referencia para cada emoción y calibraciones baja/alta en neutral, emocionado, asustado y travieso. Los 38 son PCM mono de 16 bits y, tras conservar y repetir tres intentos anómalos, no quedan avisos automáticos en las muestras seleccionadas. Para risa se sintetiza sólo una interjección breve; no se inventa una carcajada larga.
+
+La primera ejecución refrescó la caché oficial de Chatterbox desde Hugging Face antes de generar. No se subieron datos ni audios. El runner fuerza ahora `HF_HUB_OFFLINE=1` y `TRANSFORMERS_OFFLINE=1`; las repeticiones verificadas usaron sólo la caché local.
+
+## Personalidad conversacional v1
+
+El análisis de las 1.300 transcripciones está en `docs/DAXTER_PERSONALITY_ANALYSIS.md` y el perfil estructurado en `conversation/profiles/DAXTER_PERSONALITY_PROFILE.json`. El dataset respalda, entre otros, entusiasmo, impulsividad, dramatismo, lealtad, humor, ingenio, queja, fanfarronería, burla, sarcasmo, curiosidad y afecto; cada rasgo conserva conteo y `sample_id` de evidencia.
+
+`PersonalityAdapter` conserva literalmente la respuesta base de Atlas y sólo añade una marca breve original cuando el contexto lo permite. Privacidad, seguridad, conducción y emergencia fuerzan personalidad `low`; hechos, cifras, permisos, incertidumbre y resultado de acciones nunca se reescriben. No se usa el banco de diálogos del juego como motor y no se ha entrenado ningún LLM.
+
+El laboratorio `personality_lab` contiene 40 situaciones offline con respuesta base, respuesta Daxter, emoción, intensidad y nivel efectivo. La evaluación humana permanece vacía y separada de la escucha emocional.
 
 ## Límites y seguridad
 
 - El dataset, las referencias, los modelos y los WAV generados permanecen locales y están excluidos por `.gitignore`.
 - Los scripts no integran aún ningún motor en Atlas y no cambian su fallback de voz.
 - No se aceptaron en nombre del usuario licencias o términos adicionales; por ello XTTS-v2 no se ejecutó.
-- No se declara ganador de Ronda B ni cierre global de la Fase 6.
+- B1 es ganador de Ronda B; no se declara aprobado todavía el sistema emocional ni la personalidad conversacional.
 - El intento inicial contra `04_normalizados` se conserva separado como evidencia de raíz inválida; sus hashes no correspondían al maestro de 48 kHz.
 
 ## Verificación del código
