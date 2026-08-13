@@ -152,7 +152,7 @@ def main() -> int:
         "reference_file": args.reference.name, "reference_sha256": hashlib.sha256(args.reference.read_bytes()).hexdigest(),
         "visible_normalization": "NFC y verbalización horaria común", "postprocess": "sin recorte inicial; recorte final conservador, 80 ms de margen y fade de 5 ms",
         "shared_controls": {"language_id": "es", "exaggeration": 0.45, "cfg_weight": 0.35, "temperature": 0.8},
-        "generation_safety": "techo común por longitud: min(250, max(90, caracteres*2.0)); sustituye el límite upstream fijo en 1000 y marca salidas que rozan el techo",
+        "generation_safety": "techo común por longitud: min(110, max(90, caracteres*1.5)); sustituye el límite upstream fijo en 1000 y marca salidas que rozan el techo",
         "control_difference": "V2/V3 general admiten repetition_penalty=2.0, min_p=0.05 y top_p=1.0; el cargador oficial es-ES no expone esos controles.",
         "groups": groups, "all_audio_generated": files_ok,
     }

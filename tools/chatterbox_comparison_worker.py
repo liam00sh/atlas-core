@@ -90,7 +90,10 @@ def main() -> int:
         target = Path(item["output"])
         target.parent.mkdir(parents=True, exist_ok=True)
         normalized = ChatterboxStyleAdapter.normalize_text(item["text"])
-        token_limit = min(250, max(90, round(len(normalized) * 2.0)))
+        # Los decodificadores oficiales pueden entrar en continuaciones muy
+        # costosas con frases largas. El techo común mantiene la comparación
+        # terminable en una GPU de 8 GiB y expone cualquier posible corte.
+        token_limit = min(110, max(90, round(len(normalized) * 1.5)))
         if target.is_file() and target.stat().st_size > 44:
             try:
                 with wave.open(str(target), "rb") as wav:
