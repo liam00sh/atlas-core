@@ -148,7 +148,7 @@ def test_medium_sensitive_command_never_reaches_core_or_memory():
     response = process_stt_result(result, lambda text: calls.append(text))
     assert calls == []
     assert "no la ejecutaré" in response
-    assert "Corrígeme" in response
+    assert "¿Es correcto?" in response
 
 
 def test_low_confidence_noise_never_reaches_core():

@@ -73,11 +73,6 @@ class PersonalityAdapter:
         "greeting": "Todo listo para movernos.",
         "general": "Lo importante queda claro; seguimos.",
     }
-    _LOW_MICRO_IDENTITY_ALLOWED = {
-        "general", "question", "technical", "error", "warning", "home_assistant",
-        "action_result", "success", "casual", "greeting",
-    }
-
     def __init__(
         self,
         policy: ResponseStylePolicy | None = None,
@@ -168,7 +163,8 @@ class PersonalityAdapter:
 
         key = self._request_key(context.request_type)
         styled = self._join_short_clauses(base.text)
-        use_marker = strength != PersonalityStrength.LOW or key in self._LOW_MICRO_IDENTITY_ALLOWED
+        # LOW significa claridad literal: sin prefijo, muletilla ni remate.
+        use_marker = strength != PersonalityStrength.LOW
         if use_marker:
             marker = self._choice(
                 self._MARKERS.get(key, self._MARKERS["general"]),

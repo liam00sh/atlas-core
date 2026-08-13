@@ -237,7 +237,7 @@ def _voice_message(tmp_path):
     )
 
 
-def test_medium_transcript_waits_for_typed_confirmation_then_processes_once(tmp_path):
+def test_medium_innocuous_transcript_processes_without_confirmation(tmp_path):
     class Service:
         def transcribe(self, *_args, **_kwargs):
             return STTResult("qué tiempo hace", "es", confidence=STTConfidence.MEDIUM), {}
@@ -248,8 +248,8 @@ def test_medium_transcript_waits_for_typed_confirmation_then_processes_once(tmp_
     context = _media_context()
     first = processor.process(_voice_message(tmp_path), context, core)
     confirmed = processor.process_text_followup("Sí", context, core)
-    assert first is not None and first.text
-    assert confirmed is not None and confirmed.text == "respuesta"
+    assert first is not None and first.text == "respuesta"
+    assert confirmed is None
     assert calls == ["qué tiempo hace"]
 
 
@@ -289,7 +289,7 @@ def test_pending_stt_state_is_isolated_by_session_and_expires(tmp_path):
 
     class Service:
         def transcribe(self, *_args, **_kwargs):
-            return STTResult("qué tiempo hace", "es", confidence=STTConfidence.MEDIUM), {}
+            return STTResult("apaga la luz", "es", confidence=STTConfidence.MEDIUM), {}
 
     calls = []
     core = SimpleNamespace(process=lambda text, context: calls.append((text, context.session_id)))
@@ -305,7 +305,7 @@ def test_pending_stt_state_is_isolated_by_session_and_expires(tmp_path):
     assert calls == []
 
 
-def test_gateway_routes_typed_stt_confirmation_to_same_core_once(tmp_path, gateway, linker):
+def test_gateway_processes_innocuous_medium_stt_without_confirmation(tmp_path, gateway, linker):
     link_user(linker, atlas_user="REDACTED_bc04a68d9192")
 
     class Service:
@@ -321,5 +321,5 @@ def test_gateway_routes_typed_stt_confirmation_to_same_core_once(tmp_path, gatew
     )
     first = gateway.handle(voice)
     confirmed = gateway.handle(make_message("sí", update_id=2, message_id=11))
-    assert "He entendido" in first.text
-    assert confirmed.text == "REDACTED_bc04a68d9192:qué tiempo hace"
+    assert first.text == "REDACTED_bc04a68d9192:qué tiempo hace"
+    assert confirmed.text == "REDACTED_bc04a68d9192:sí"

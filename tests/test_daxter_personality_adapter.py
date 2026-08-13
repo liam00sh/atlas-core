@@ -30,7 +30,7 @@ def test_low_normal_high_and_seed_are_deterministic():
     normal = adapter.adapt(base, ResponseStyleContext(request_type="success"), seed=4)
     high_context = ResponseStyleContext(request_type="success", personality_strength=PersonalityStrength.HIGH)
     high = adapter.adapt(base, high_context, seed=4)
-    assert low.styled_text != base
+    assert low.styled_text == base
     assert low.facts_preserved is True
     assert normal.styled_text != base
     assert len(high.styled_text) > len(normal.styled_text)

@@ -30,9 +30,15 @@ CONTEXT_HOTWORDS = {
 }
 
 
-def contextual_hotwords(context_hint: str, fallback: str = "") -> str:
+def contextual_hotwords(
+    context_hint: str,
+    fallback: str = "",
+    *,
+    vocabulary: tuple[str, ...] = (),
+) -> str:
     selected = CONTEXT_HOTWORDS.get(str(context_hint).strip().casefold())
-    return selected or fallback
+    values = [selected or fallback, *vocabulary]
+    return " ".join(dict.fromkeys(" ".join(values).split()))
 
 
 def _repair_utf8_mojibake(value: str) -> str:

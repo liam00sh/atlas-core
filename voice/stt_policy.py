@@ -225,12 +225,11 @@ class STTInputPolicy:
                 "No estoy seguro de haber entendido lo que has dicho. ¿Puedes repetirlo un poco más despacio?",
                 **common,
             )
-        if result.confidence is STTConfidence.MEDIUM:
-            prefix = "Es una orden sensible y no la ejecutaré todavía. " if sensitive else ""
+        if result.confidence is STTConfidence.MEDIUM and sensitive:
             return STTDecision(
                 STTDecisionKind.CONFIRM,
                 text,
-                f"{prefix}He entendido «{text}». Corrígeme si no era eso.",
+                f"Es una orden sensible y no la ejecutaré todavía. He entendido «{text}». ¿Es correcto?",
                 **common,
             )
         if intent.confidence is not IntentConfidence.HIGH:

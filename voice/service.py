@@ -14,6 +14,7 @@ from voice.player import WavePlayer
 from voice.providers.chatterbox_daxter_provider import ChatterboxDaxterProvider
 from voice.providers.kokoro_provider import KokoroProvider
 from voice.resolver.voice_resolver import VoiceResolver
+from voice.segmentation import split_for_speech
 
 
 class VoiceService:
@@ -126,8 +127,9 @@ class VoiceService:
             timings["wav_duration_ms"] = result.wav_duration_ms
             if play_audio and result.output_path is not None:
                 playback_started = time.perf_counter()
+                playback_ticket = None
                 if queue_audio:
-                    self.playback_queue.enqueue(result.output_path)
+                    playback_ticket = self.playback_queue.enqueue(result.output_path)
                 elif not self.player.play(result.output_path):
                     elapsed_ms = round((time.perf_counter() - playback_started) * 1000, 3)
                     timings["playback"] = elapsed_ms
@@ -193,6 +195,7 @@ class VoiceService:
                     playback_duration_ms=playback_duration_ms,
                     playback_completed=playback_completed,
                     playback_interrupted=playback_interrupted,
+                    playback_ticket=playback_ticket,
                 )
             return result
         detail = "; ".join(failures) if failures else "ninguna voz local compatible está disponible"
@@ -200,6 +203,50 @@ class VoiceService:
             False, None, requested, "text", f"{detail}; usar salida textual",
             requested_voice_id=requested, selection_reason="fallback textual",
             emotion=emotion, intensity=intensity,
+        )
+
+    def speak_segmented(self, text: str, **kwargs) -> SynthesisResult:
+        """Sintetiza N+1 mientras la cola reproduce N, conservando el orden."""
+        segments = split_for_speech(self.clean_console_text(text))
+        if len(segments) <= 1:
+            return self.speak(text, **kwargs)
+        results: list[SynthesisResult] = []
+        for segment in segments:
+            result = self.speak(segment, queue_audio=True, **kwargs)
+            results.append(result)
+            if not result.success:
+                self.stop_current_audio()
+                self.clear_queue()
+                return result
+        last = results[-1]
+        tickets = [item.playback_ticket for item in results if item.playback_ticket is not None]
+        timeout = max(10.0, sum(item.wav_duration_ms for item in results) / 1000.0 + 10.0)
+        playback_completed = all(ticket.wait(timeout) and ticket.completed for ticket in tickets)
+        playback_interrupted = any(ticket.interrupted for ticket in tickets)
+        playback_duration_ms = sum(ticket.duration_ms for ticket in tickets)
+        return SynthesisResult(
+            success=True,
+            output_path=last.output_path,
+            voice_id=last.voice_id,
+            provider_id=last.provider_id,
+            requested_voice_id=last.requested_voice_id,
+            fallback_used=any(item.fallback_used for item in results),
+            selection_reason=last.selection_reason,
+            cache_hit=all(item.cache_hit for item in results),
+            latency_ms=sum(item.latency_ms or 0.0 for item in results),
+            emotion=last.emotion,
+            intensity=last.intensity,
+            chars_sent_to_tts=sum(item.chars_sent_to_tts for item in results),
+            chars_synthesized=sum(item.chars_synthesized for item in results),
+            synthesized_samples=sum(item.synthesized_samples for item in results),
+            wav_duration_ms=sum(item.wav_duration_ms for item in results),
+            playback_duration_ms=playback_duration_ms,
+            playback_completed=playback_completed,
+            playback_interrupted=playback_interrupted,
+            segment_count=len(segments),
+            segment_texts=segments,
+            segment_chars=tuple(len(item) for item in segments),
+            segment_wav_durations_ms=tuple(item.wav_duration_ms for item in results),
         )
 
     def _is_voice_available(self, definition) -> bool:

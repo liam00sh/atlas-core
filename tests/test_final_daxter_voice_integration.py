@@ -168,12 +168,13 @@ def test_manual_turn_keeps_session_alive_after_empty_audio(tmp_path):
     assert "vuelve a intentarlo" in result.response
 
 
-def test_spoken_text_is_short_and_removes_visual_only_content():
+def test_spoken_text_is_complete_and_removes_visual_only_content():
     visible = "\U0001f680 Resultado completo. Segundo dato. Tercer dato. Cuarto dato. `codigo` C:\\privado\\dato.txt"
     spoken = SpeechTextNormalizer.normalize(visible)
     assert "\U0001f680" not in spoken
     assert "C:\\" not in spoken
-    assert "Cuarto" not in spoken
+    assert "Cuarto" in spoken
+    assert "consola" not in spoken.casefold()
     assert visible.startswith("\U0001f680")
 
 

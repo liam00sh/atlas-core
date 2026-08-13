@@ -25,8 +25,8 @@ class SpeechTextNormalizer:
         cls,
         text: str,
         *,
-        max_sentences: int = 2,
-        max_chars: int = 360,
+        max_sentences: int | None = None,
+        max_chars: int | None = None,
     ) -> str:
         value = unicodedata.normalize("NFC", str(text))
         value = cls._CODE_BLOCK.sub(" Se omite un bloque de codigo en la locucion. ", value)
@@ -43,10 +43,14 @@ class SpeechTextNormalizer:
         if not value:
             return ""
         sentences = [match.group(0).strip() for match in cls._SENTENCE.finditer(value) if match.group(0).strip()]
-        sentence_limit = max(1, int(max_sentences))
-        char_limit = max(120, int(max_chars))
         if not sentences:
             return ""
+        if max_sentences is None and max_chars is None:
+            if value[-1] not in ".!?":
+                value += "."
+            return value
+        sentence_limit = max(1, int(max_sentences or len(sentences)))
+        char_limit = max(120, int(max_chars or len(value)))
         if len(sentences[0]) > char_limit:
             return cls._LONG_CLOSURE
 
@@ -84,7 +88,13 @@ class ContextualTranscriptNormalizer:
     }
 
     @classmethod
-    def normalize(cls, result: STTResult, *, pending_confirmation: bool = False) -> STTResult:
+    def normalize(
+        cls,
+        result: STTResult,
+        *,
+        pending_confirmation: bool = False,
+        known_names: tuple[str, ...] = (),
+    ) -> STTResult:
         text = unicodedata.normalize("NFC", " ".join(result.text.split())).strip()
         text = re.sub(r"^(?:oye\s+)?daxter[\s,.:;-]+", "", text, flags=re.IGNORECASE)
         confidence = result.confidence
@@ -96,10 +106,36 @@ class ContextualTranscriptNormalizer:
         if result.confidence is STTConfidence.HIGH:
             for source, target in cls._SAFE_WORDS.items():
                 text = re.sub(rf"\b{re.escape(source)}\b", target, text, flags=re.IGNORECASE)
+        text = cls._correct_contextual_name(text, known_names)
         values = {name: getattr(result, name) for name in result.__dataclass_fields__}
         values["text"] = text
         values["confidence"] = confidence
         return STTResult(**values)
+
+    @classmethod
+    def _correct_contextual_name(cls, text: str, known_names: tuple[str, ...]) -> str:
+        match = re.search(
+            r"\b(?:saluda|saludar|presenta|presentar)\s+(?:a\s+)?([A-Za-zÁÉÍÓÚÜÑáéíóúüñ-]+)\b",
+            text,
+            flags=re.IGNORECASE,
+        )
+        if match is None or not known_names:
+            return text
+        heard = match.group(1)
+        scored = sorted(
+            (
+                (SequenceMatcher(None, cls._plain(heard), cls._plain(name)).ratio(), name)
+                for name in known_names
+                if name.strip()
+            ),
+            reverse=True,
+        )
+        if not scored or scored[0][0] < 0.72:
+            return text
+        best_score, best_name = scored[0]
+        if len(scored) > 1 and best_score - scored[1][0] < 0.08:
+            return text
+        return text[: match.start(1)] + best_name + text[match.end(1) :]
 
     @staticmethod
     def _plain(text: str) -> str:

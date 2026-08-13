@@ -63,3 +63,8 @@ class SynthesisResult:
     playback_duration_ms: float = 0.0
     playback_completed: bool | None = None
     playback_interrupted: bool = False
+    segment_count: int = 1
+    segment_texts: tuple[str, ...] = ()
+    segment_chars: tuple[int, ...] = ()
+    segment_wav_durations_ms: tuple[float, ...] = ()
+    playback_ticket: object | None = None
