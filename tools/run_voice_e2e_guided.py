@@ -14,9 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from main import build_atlas
 from automation.home_assistant_factory import load_env_file
-from tools.run_daxter_voice_pc import choose_microphone
 from voice.end_to_end import ManualVoiceSession
 from voice.microphone import ManualMicrophoneRecorder
 from voice.service import VoiceService
@@ -43,6 +41,11 @@ def save(path: Path, report: dict) -> None:
 
 
 def main() -> int:
+    # Estas dependencias cargan el Atlas completo; se retrasan para que las
+    # plantillas y validadores sigan siendo importables en el checkout público.
+    from main import build_atlas
+    from tools.run_daxter_voice_pc import choose_microphone
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--home-assistant-env", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)

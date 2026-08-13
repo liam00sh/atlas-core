@@ -18,7 +18,6 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.evaluate_stt_conversation_battery import write_reports
-from tools.run_daxter_voice_pc import choose_microphone
 from voice.microphone import ManualMicrophoneRecorder
 from voice.stt import AudioConverter, FasterWhisperSTTProvider, STTConfig, STTService
 from voice.text_normalizer import ContextualTranscriptNormalizer
@@ -31,6 +30,27 @@ class RouterObservation:
     command: bool = False
     safe_action: bool = False
     confirmation_required: bool = False
+
+
+def choose_microphone(recorder: ManualMicrophoneRecorder, *, input_func=input) -> str:
+    """Selecciona un dispositivo sin cargar Atlas ni sus ejecutores."""
+    if recorder.device_name:
+        return recorder.device_name
+    devices = recorder.list_devices()
+    if not devices:
+        return recorder.selected_device()
+    if len(devices) == 1:
+        recorder.device_name = devices[0]
+        return devices[0]
+    print("Micrófonos detectados:")
+    for index, device in enumerate(devices, 1):
+        print(f"  {index}. {device}")
+    while True:
+        selected = input_func("Elige el número del micrófono: ").strip()
+        if selected.isdigit() and 1 <= int(selected) <= len(devices):
+            recorder.device_name = devices[int(selected) - 1]
+            return recorder.device_name
+        print("Selección no válida.")
 
 
 def plain(text: str) -> str:
