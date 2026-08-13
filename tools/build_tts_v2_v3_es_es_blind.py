@@ -65,18 +65,22 @@ def _write_player(path: Path, groups: list[dict]) -> None:
 def _run_worker(args, candidate: str, requests: list[dict]) -> dict:
     source = args.spain_source if candidate == "es_es" else args.general_source
     model_dir = args.spain_model_dir if candidate == "es_es" else args.general_model_dir
+    result_path = args.output_dir / f".worker-{candidate}.json"
+    result_path.unlink(missing_ok=True)
     completed = subprocess.run(
         [str(args.python), str(WORKER), "--candidate", candidate, "--source", str(source),
-         "--model-dir", str(model_dir), "--reference", str(args.reference)],
+         "--model-dir", str(model_dir), "--reference", str(args.reference), "--result", str(result_path)],
         input=json.dumps(requests, ensure_ascii=False), text=True, encoding="utf-8",
         capture_output=True, timeout=args.timeout_seconds, check=False,
     )
     if completed.returncode not in (0, 2):
         raise RuntimeError(f"Worker {candidate} terminó con {completed.returncode}: {completed.stderr[-2000:]}")
+    if not result_path.is_file():
+        raise RuntimeError(f"Worker {candidate} no dejó métricas: {completed.stderr[-2000:]}")
     try:
-        return json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
-        raise RuntimeError(f"Worker {candidate} no devolvió JSON: {completed.stderr[-2000:]}") from exc
+        return json.loads(result_path.read_text(encoding="utf-8"))
+    finally:
+        result_path.unlink(missing_ok=True)
 
 
 def main() -> int:

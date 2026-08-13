@@ -73,6 +73,7 @@ def main() -> int:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--model-dir", type=Path, required=True)
     parser.add_argument("--reference", type=Path, required=True)
+    parser.add_argument("--result", type=Path, required=True)
     args = parser.parse_args()
     for path in (args.source, args.model_dir, args.reference):
         if not path.exists():
@@ -137,7 +138,11 @@ def main() -> int:
         except Exception as exc:
             target.unlink(missing_ok=True)
             results.append({"blind_id": item["blind_id"], "success": False, "error": f"{type(exc).__name__}: {exc}"})
-    json.dump({"candidate": args.candidate, "device": str(device), "results": results}, sys.stdout, ensure_ascii=False)
+    payload = {"candidate": args.candidate, "device": str(device), "results": results}
+    args.result.parent.mkdir(parents=True, exist_ok=True)
+    temporary = args.result.with_suffix(args.result.suffix + ".tmp")
+    temporary.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    temporary.replace(args.result)
     return 0 if all(row["success"] for row in results) else 2
 
 
