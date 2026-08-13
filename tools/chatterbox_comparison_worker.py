@@ -95,8 +95,12 @@ def main() -> int:
             try:
                 with wave.open(str(target), "rb") as wav:
                     duration = wav.getnframes() / wav.getframerate()
-                if 0 < duration < (token_limit / 25.0) * 0.94:
-                    results.append({"blind_id": item["blind_id"], "success": True, "reused": True, "audio_seconds": round(duration, 4)})
+                if 0 < duration < 60.0:
+                    results.append({
+                        "blind_id": item["blind_id"], "success": True, "reused": True,
+                        "audio_seconds": round(duration, 4), "max_new_tokens": token_limit,
+                        "possible_truncation": duration >= (token_limit / 25.0) * 0.94,
+                    })
                     continue
             except (OSError, EOFError, wave.Error):
                 pass
