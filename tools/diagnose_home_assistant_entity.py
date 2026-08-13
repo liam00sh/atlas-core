@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import json
 from pathlib import Path
 import sys
+import threading
 import time
 
 
@@ -57,6 +58,22 @@ def sample_after_service(client, entity_id: str, service: str, *, sleep=time.sle
     }
 
 
+def start_physical_timer(expected: str) -> tuple[threading.Thread, dict]:
+    """Registra el Enter humano en paralelo a las lecturas API de 0 a 10 s."""
+    observation: dict = {"timer_started": time.perf_counter(), "enter_seconds": None}
+
+    def wait_for_enter() -> None:
+        input(
+            f"Pulsa Enter EN CUANTO la luz esté {expected}; "
+            "si no cambia, pulsa Enter después de la lectura de 10 s…"
+        )
+        observation["enter_seconds"] = round(time.perf_counter() - observation["timer_started"], 4)
+
+    thread = threading.Thread(target=wait_for_enter, daemon=True)
+    thread.start()
+    return thread, observation
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compara el estado físico, la UI y la API de Home Assistant.")
     parser.add_argument("--env", type=Path, required=True)
@@ -93,8 +110,10 @@ def main() -> int:
         report["actions_executed"] = True
         for service, expected in (("turn_on", "encendida"), ("turn_off", "apagada")):
             print(f"Enviando {service}. Observa la luz y la interfaz de Home Assistant.")
+            observer, physical_timing = start_physical_timer(expected)
             run = sample_after_service(client, entity_id, service)
-            input(f"Pulsa Enter cuando hayas comprobado físicamente que la luz está {expected} (o que no cambió)…")
+            observer.join()
+            run["physical_enter_seconds_from_action_start"] = physical_timing["enter_seconds"]
             run["physical_observation"] = input("Estado físico [on/off/no_cambio/desconocido]: ").strip().casefold()
             run["home_assistant_ui_observation"] = input("Estado visible en la UI [on/off/unavailable/desconocido]: ").strip().casefold()
             run["observation_notes"] = input("Notas breves: ").strip()
