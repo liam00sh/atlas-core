@@ -1,0 +1,145 @@
+"""Worker local para una sola variante de la comparativa TTS privada."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+import random
+import sys
+from time import perf_counter
+import wave
+
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from tools.chatterbox_worker import _trim_and_fade
+from voice.providers.chatterbox_style_adapter import ChatterboxStyleAdapter
+
+
+def _seed_everything(seed: int) -> None:
+    import numpy as np
+    import torch
+
+    random.seed(seed)
+    np.random.seed(seed % (2**32 - 1))
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
+
+def _load(args):
+    import torch
+
+    source = args.source.resolve()
+    source_path = source / ("chatterbox/src" if args.candidate == "es_es" else "src")
+    sys.path.insert(0, str(source_path))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if args.candidate == "es_es":
+        from chatterbox.tts import ChatterboxTTS
+
+        model = ChatterboxTTS.from_local(
+            args.model_dir, device, t3_filename="t3_es_es.safetensors",
+            s3gen_filename="s3gen_v3.pt",
+        )
+        _cap_generation(model)
+        return model, device
+    from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+
+    version = "v2" if args.candidate == "v2" else "v3"
+    model = ChatterboxMultilingualTTS.from_local(args.model_dir, device, t3_model=version)
+    _cap_generation(model)
+    return model, device
+
+
+def _cap_generation(model) -> None:
+    """Evita continuaciones anómalas; el upstream fija 1000 sin exponer control."""
+    original = model.t3.inference
+
+    def bounded(*args, **kwargs):
+        limit = int(getattr(model, "_atlas_max_new_tokens", 300))
+        kwargs["max_new_tokens"] = min(int(kwargs.get("max_new_tokens", limit)), limit)
+        return original(*args, **kwargs)
+
+    model.t3.inference = bounded
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--candidate", choices=("v2", "v3", "es_es"), required=True)
+    parser.add_argument("--source", type=Path, required=True)
+    parser.add_argument("--model-dir", type=Path, required=True)
+    parser.add_argument("--reference", type=Path, required=True)
+    args = parser.parse_args()
+    for path in (args.source, args.model_dir, args.reference):
+        if not path.exists():
+            parser.error(f"No existe: {path}")
+
+    os.environ.update({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "NO_PROXY": "*"})
+    requests = json.load(sys.stdin)
+    model, device = _load(args)
+    import torch
+    import torchaudio
+
+    results = []
+    for item in requests:
+        target = Path(item["output"])
+        target.parent.mkdir(parents=True, exist_ok=True)
+        normalized = ChatterboxStyleAdapter.normalize_text(item["text"])
+        token_limit = min(250, max(90, round(len(normalized) * 2.0)))
+        if target.is_file() and target.stat().st_size > 44:
+            try:
+                with wave.open(str(target), "rb") as wav:
+                    duration = wav.getnframes() / wav.getframerate()
+                if 0 < duration < (token_limit / 25.0) * 0.94:
+                    results.append({"blind_id": item["blind_id"], "success": True, "reused": True, "audio_seconds": round(duration, 4)})
+                    continue
+            except (OSError, EOFError, wave.Error):
+                pass
+        _seed_everything(int(item["seed"]))
+        if device.type == "cuda":
+            torch.cuda.reset_peak_memory_stats()
+            torch.cuda.synchronize()
+        started = perf_counter()
+        kwargs = dict(
+            audio_prompt_path=str(args.reference), exaggeration=0.45,
+            cfg_weight=0.35, temperature=0.8, language_id="es",
+        )
+        if args.candidate != "es_es":
+            kwargs.update(repetition_penalty=2.0, min_p=0.05, top_p=1.0)
+        try:
+            model._atlas_max_new_tokens = token_limit
+            print(f"START {item['blind_id']} max_new_tokens={token_limit}", file=sys.stderr, flush=True)
+            audio = model.generate(normalized, **kwargs)
+            print(f"TOKENS_DONE {item['blind_id']}", file=sys.stderr, flush=True)
+            audio = _trim_and_fade(audio, model.sr, {
+                "trim_start": False, "trim_end": True, "threshold": 0.0005,
+                "end_padding_ms": 80, "ensure_end_padding": True, "fade_ms": 5,
+            })
+            torchaudio.save(str(target), audio.cpu(), model.sr, encoding="PCM_S", bits_per_sample=16)
+            if device.type == "cuda":
+                torch.cuda.synchronize()
+            elapsed = perf_counter() - started
+            with wave.open(str(target), "rb") as wav:
+                duration = wav.getnframes() / wav.getframerate()
+            results.append({
+                "blind_id": item["blind_id"], "success": True,
+                "generation_seconds": round(elapsed, 4), "audio_seconds": round(duration, 4),
+                "rtf": round(elapsed / duration, 4) if duration else None,
+                "peak_vram_bytes": int(torch.cuda.max_memory_allocated()) if device.type == "cuda" else 0,
+                "normalized_text": normalized, "max_new_tokens": token_limit,
+                "possible_truncation": duration >= (token_limit / 25.0) * 0.94,
+            })
+            print(f"DONE {item['blind_id']} seconds={duration:.4f}", file=sys.stderr, flush=True)
+        except Exception as exc:
+            target.unlink(missing_ok=True)
+            results.append({"blind_id": item["blind_id"], "success": False, "error": f"{type(exc).__name__}: {exc}"})
+    json.dump({"candidate": args.candidate, "device": str(device), "results": results}, sys.stdout, ensure_ascii=False)
+    return 0 if all(row["success"] for row in results) else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

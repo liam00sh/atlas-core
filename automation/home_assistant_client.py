@@ -192,6 +192,25 @@ class HomeAssistantHttpClient(BaseHomeAssistantClient):
             last_updated=str(data.get("last_updated")) if data.get("last_updated") else None,
         )
 
+    def list_states(self) -> list[HomeEntityState]:
+        """Lista estados para diagnósticos de solo lectura, sin exponer el token."""
+        data = self._read_request("/api/states")
+        if not isinstance(data, list):
+            raise HomeAssistantClientError(
+                HomeAssistantErrorCode.INVALID_RESPONSE,
+                "Home Assistant no devolvió una lista de estados.",
+            )
+        return [
+            HomeEntityState(
+                entity_id=str(item["entity_id"]), state=str(item["state"]),
+                attributes=dict(item.get("attributes", {})),
+                last_changed=str(item.get("last_changed")) if item.get("last_changed") else None,
+                last_updated=str(item.get("last_updated")) if item.get("last_updated") else None,
+            )
+            for item in data
+            if isinstance(item, dict) and "entity_id" in item and "state" in item
+        ]
+
     def call_service(
         self,
         domain: str,
