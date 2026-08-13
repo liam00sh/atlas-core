@@ -84,13 +84,15 @@ def _adapter(states):
         allowed_services=frozenset({"turn_on", "turn_off"}),
         required_permission="home.control.switch",
     ))
-    return HomeAssistantAdapter(_DelayedTransport(states), registry)
+    return HomeAssistantAdapter(_DelayedTransport(states), registry, sleep=lambda _seconds: None)
 
 
 def test_home_action_retries_and_returns_verified_state(monkeypatch):
     monkeypatch.setattr("automation.home_assistant_adapter.time.sleep", lambda _seconds: None)
     result = _adapter(["off", "on"]).turn_on("switch.test")
     assert result["state"] == "on"
+    assert result["atlas_trace"]["verified"] is True
+    assert result["atlas_trace"]["before"]["state"] == "off"
 
 
 def test_home_action_never_claims_unverified_state(monkeypatch):
@@ -102,10 +104,15 @@ def test_home_action_never_claims_unverified_state(monkeypatch):
 def test_voice_reminder_creates_a_real_queue_side_effect():
     class Queue:
         request = None
+        stored = []
 
         def enqueue(self, owner, request):
             self.request = (owner, request)
+            self.stored = [{"id": "reminder-1", "target_user_id": owner}]
             return {"ok": True, "id": "reminder-1"}
+
+        def list_pending(self, owner):
+            return self.stored
 
     class Daily(AtlasDailyMixin):
         def __init__(self):
@@ -131,3 +138,10 @@ def test_voice_reminder_creates_a_real_queue_side_effect():
     assert daily.queue.request is not None
     assert state["last_reminder_id"] == "reminder-1"
     assert "recordar" in daily.messages[0].casefold()
+
+
+def test_voice_reminder_accepts_acuerdame_variant():
+    parser = PersonalReminderParser("UTC")
+    parsed = parser.parse("acuérdame mañana a las 18:30 revisar Atlas")
+    assert parsed is not None
+    assert parsed.message == "revisar Atlas"

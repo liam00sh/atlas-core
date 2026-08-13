@@ -19,9 +19,14 @@ class HomeAssistantAdapter:
         self,
         transport: HomeAssistantTransport,
         registry: HomeDeviceRegistry,
+        *,
+        sleep=time.sleep,
+        verification_delays: tuple[float, ...] = (0.25, 0.5, 1.0, 2.0, 5.0),
     ) -> None:
         self.transport = transport
         self.registry = registry
+        self.sleep = sleep
+        self.verification_delays = verification_delays
 
     def health(self) -> dict[str, Any]:
         return {
@@ -66,6 +71,7 @@ class HomeAssistantAdapter:
             raise HomeAssistantPolicyError(
                 f"El servicio '{service}' no está autorizado para '{entity_id}'."
             )
+        before = self.transport.get_state(entity.entity_id)
         state: HomeEntityState = self.transport.call_service(
             entity.domain,
             service,
@@ -73,18 +79,28 @@ class HomeAssistantAdapter:
             data=service_data,
         )
         expected = "on" if service == "turn_on" else "off"
+        observations = [{"after_seconds": 0.0, "state": state.to_dict()}]
         last_state = state
-        for attempt in range(3):
+        previous_delay = 0.0
+        for delay in self.verification_delays:
+            self.sleep(max(0.0, delay - previous_delay))
+            previous_delay = delay
             try:
                 last_state = self.transport.get_state(entity.entity_id)
             except Exception:
-                if attempt == 2:
-                    raise
+                observations.append({"after_seconds": delay, "error": "state_read_failed"})
             else:
+                observations.append({"after_seconds": delay, "state": last_state.to_dict()})
                 if str(last_state.state).strip().casefold() == expected:
-                    return last_state.to_dict()
-            if attempt < 2:
-                time.sleep(0.2)
+                    result = last_state.to_dict()
+                    result["atlas_trace"] = {
+                        "before": before.to_dict(),
+                        "service_response": state.to_dict(),
+                        "observations": observations,
+                        "expected_state": expected,
+                        "verified": True,
+                    }
+                    return result
         raise RuntimeError(
             "He enviado la orden, pero el dispositivo sigue apareciendo "
             + ("apagado." if expected == "on" else "encendido.")

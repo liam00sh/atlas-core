@@ -65,6 +65,8 @@ class HomeEntityState:
     entity_id: str
     state: str
     attributes: dict[str, Any] = field(default_factory=dict)
+    last_changed: str | None = None
+    last_updated: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

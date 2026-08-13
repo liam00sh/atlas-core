@@ -182,32 +182,15 @@ class HomeIntentService:
         intent_type: HomeIntentType,
         entity_id: str,
     ) -> str | None:
-        if intent_type not in (
-            HomeIntentType.TURN_ON_LIGHT,
+        # Las lecturas previas pueden estar obsoletas: una orden explícita e
+        # idempotente se envía siempre y se verifica después en el adaptador.
+        if intent_type in (
             HomeIntentType.TURN_OFF_LIGHT,
-            HomeIntentType.TURN_ON_SWITCH,
             HomeIntentType.TURN_OFF_SWITCH,
+            HomeIntentType.TURN_ON_LIGHT,
+            HomeIntentType.TURN_ON_SWITCH,
         ):
             return None
-
-        try:
-            current = self.environment.adapter.get_state(entity_id)
-        except Exception:
-            return None
-
-        state = str(current.get("state", "")).strip().casefold()
-        if intent_type in (
-            HomeIntentType.TURN_ON_LIGHT,
-            HomeIntentType.TURN_ON_SWITCH,
-        ) and state == "on":
-            return self._already_on_message()
-
-        if intent_type in (
-            HomeIntentType.TURN_OFF_LIGHT,
-            HomeIntentType.TURN_OFF_SWITCH,
-        ) and state == "off":
-            return self._already_off_message()
-
         return None
 
     def handle(

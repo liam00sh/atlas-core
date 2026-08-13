@@ -188,6 +188,8 @@ class HomeAssistantHttpClient(BaseHomeAssistantClient):
             entity_id=str(data["entity_id"]),
             state=str(data["state"]),
             attributes=dict(data.get("attributes", {})),
+            last_changed=str(data.get("last_changed")) if data.get("last_changed") else None,
+            last_updated=str(data.get("last_updated")) if data.get("last_updated") else None,
         )
 
     def call_service(
@@ -211,6 +213,8 @@ class HomeAssistantHttpClient(BaseHomeAssistantClient):
                         entity_id=entity_id,
                         state=str(item.get("state", "unknown")),
                         attributes=dict(item.get("attributes", {})),
+                        last_changed=str(item.get("last_changed")) if item.get("last_changed") else None,
+                        last_updated=str(item.get("last_updated")) if item.get("last_updated") else None,
                     )
         return self.get_state(entity_id)
 

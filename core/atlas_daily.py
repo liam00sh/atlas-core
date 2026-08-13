@@ -234,9 +234,14 @@ class PersonalReminderParser:
         original = " ".join(text.strip().split())
         original = re.sub(r"^(?:oye\s+)?daxter[\s,.:;-]+", "", original, flags=re.I)
         plain = self.plain(original)
-        if not re.match(r"^(?:recuerdame|avisame)\b", plain):
+        if not re.match(r"^(?:recuerdame|acuerdame|avisame)\b", plain):
             return None
-        tail_original = re.sub(r"^(?:recuérdame|recuerdame|avísame|avisame)\s+", "", original, flags=re.I)
+        tail_original = re.sub(
+            r"^(?:recuérdame|recuerdame|acuérdame|acuerdame|avísame|avisame)\s+",
+            "",
+            original,
+            flags=re.I,
+        )
         tail_original = re.sub(
             r"^que\s+(?=(?:hoy|ma\u00f1ana|manana)\b)",
             "",
@@ -715,6 +720,13 @@ class AtlasDailyMixin:
             result = queue.enqueue(owner, request)
             if not result.get("ok"):
                 self._print("No puedo programarlo todavía porque tu usuario no está vinculado a un chat de Telegram.")
+                return True
+            persisted = {
+                str(item.get("id")): item
+                for item in queue.list_pending(owner)
+            }.get(str(result.get("id")))
+            if persisted is None:
+                self._print("No he podido verificar que el recordatorio haya quedado guardado. No lo doy por programado.")
                 return True
             state["last_reminder_id"] = result["id"]
             local = parsed.due_at_utc.astimezone(self.personal_reminder_parser.timezone)

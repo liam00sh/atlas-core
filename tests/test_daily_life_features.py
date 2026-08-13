@@ -43,6 +43,14 @@ def test_core_reminder_parser_accepts_voice_vocative_and_dotted_time():
     assert result.due_at_utc.isoformat().startswith("2026-08-11T06:30:00")
 
 
+def test_core_reminder_parser_accepts_acuerdame():
+    parser = CorePersonalReminderParser("UTC")
+    now = datetime.fromisoformat("2026-08-11T05:00:00+00:00")
+    result = parser.parse("Acuérdame mañana a las 18:30 revisar Atlas", now=now)
+    assert result is not None
+    assert result.message == "revisar Atlas"
+
+
 def test_personal_lists(tmp_path):
     service = PersonalListService(DailyLifeStorage(tmp_path / "daily.json"))
     assert service.create("REDACTED_2c7b6821719d", "farmacia")

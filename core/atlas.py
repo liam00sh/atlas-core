@@ -109,6 +109,7 @@ from core.user_manager import UserManager
 from core.version import ASSISTANT_NAME
 from core.version import PROJECT_NAME
 from core.version import VERSION
+from core.system_grounding import grounded_docker_status
 
 
 # =============================================================================
@@ -1033,6 +1034,31 @@ class Atlas(AtlasAIMixin,
         # Sprint 18.1: mensajes y recordatorios entre usuarios vinculados.
         # Se resuelven de forma determinista y funcionan igual desde CLI y Telegram.
         if self._handle_interuser_request(original_text):
+            return True
+
+        # Estado de infraestructura: debe comprobarse, nunca inferirse ni
+        # confundirse con una entidad doméstica.
+        infrastructure_text = normalize_text(original_text)
+        if "docker" in infrastructure_text and any(
+            word in infrastructure_text for word in ("funciona", "funcionando", "estado", "disponible")
+        ):
+            print()
+            print(grounded_docker_status())
+            return True
+        if "home assistant" in infrastructure_text and any(
+            word in infrastructure_text for word in ("conectado", "conexion", "disponible", "funciona")
+        ):
+            try:
+                health = self.stage_e_environment.adapter.health()
+                available = bool(health.get("available"))
+            except Exception:
+                available = False
+            print()
+            print(
+                "Home Assistant está conectado y responde."
+                if available else
+                "No puedo confirmar ahora mismo una conexión activa con Home Assistant."
+            )
             return True
 
         # Etapa E: órdenes domésticas deterministas. Deben resolverse antes

@@ -667,6 +667,7 @@ class AtlasToolsMixin:
                 action_type="tool",
                 action_name=selection.tool_name,
                 arguments=selection.arguments,
+                dangerous=bool(tool.is_destructive),
             )
 
             print()

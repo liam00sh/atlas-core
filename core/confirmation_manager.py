@@ -85,6 +85,7 @@ class ConfirmationManager:
         action_type: str,
         action_name: str,
         arguments: dict,
+        dangerous: bool = False,
     ) -> None:
         """
         Registra una nueva confirmación pendiente.
@@ -99,6 +100,12 @@ class ConfirmationManager:
             "action_name": action_name,
 
             "arguments": arguments,
+
+            "confirmation_state": (
+                "dangerous_action_confirmation"
+                if dangerous
+                else "action_confirmation"
+            ),
 
             "created_at": datetime.now(),
 
