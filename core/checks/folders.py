@@ -14,7 +14,9 @@ Descripción:
     - ai/
     - memory/
     - automation/
-    - api/
+    - core/
+    - monitoring/
+    - commands/
     - utils/
     - tests/
 
@@ -27,7 +29,9 @@ Ejemplo:
         "ai": True,
         "memory": True,
         "automation": True,
-        "api": True,
+        "core": True,
+        "monitoring": True,
+        "commands": True,
         "utils": True,
         "tests": True,
     }
@@ -89,7 +93,11 @@ def check_project_folders():
 
         "automation",
 
-        "api",
+        "core",
+
+        "monitoring",
+
+        "commands",
 
         "utils",
 

@@ -23,7 +23,6 @@ un paquete adicional aumentaría el riesgo sin mejorar el contrato público.
 ```text
 atlas_core/
 ├── ai/                    modelos, proveedor local y router explicable
-├── api/                   contratos internos de API
 ├── assistant_identity/    identidades del asistente y modos
 ├── atlas_dataset_studio/  aplicación local e independiente de revisión
 ├── authorization/         decisiones y políticas de autorización
