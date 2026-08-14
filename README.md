@@ -46,6 +46,10 @@ Si no se aportan esos datos, Atlas arranca con colecciones privadas vacías y un
 
 Consulta [docs/PRIVACY_ARCHITECTURE.md](docs/PRIVACY_ARCHITECTURE.md) para el contrato de separación y [SECURITY.md](SECURITY.md) para comunicar vulnerabilidades.
 
+El mapa de responsabilidades entre la copia operativa, GitHub y Google Drive,
+así como las rutas que deben conservar compatibilidad, está en
+[docs/architecture/PROJECT_STRUCTURE.md](docs/architecture/PROJECT_STRUCTURE.md).
+
 ## Arquitectura
 
 ```text
@@ -53,16 +57,22 @@ atlas_core/
 ├── ai/                  Router, proveedores locales, prompts y herramientas
 ├── assistant_identity/  Identidades Daxter/Coco y modos
 ├── automation/          Automatización segura y adaptadores simulables
+├── authorization/       Decisiones y políticas de autorización
 ├── capabilities/        Catálogo de capacidades disponibles
 ├── commands/            Comandos y confirmaciones
+├── console/             Interfaz de consola
+├── conversation/        Contexto y continuidad conversacional
 ├── core/                Coordinación principal
+├── daily_life/          Funciones cotidianas desacopladas
 ├── identity/            Modelos y motores; sin datos personales incluidos
+├── knowledge/           Recuperación y conocimiento
 ├── memory/              Persistencia y visibilidad
 ├── monitoring/          Salud, incidencias y recuperación autorizada
 ├── telegram_interface/  Canal desacoplado del núcleo
 ├── atlas_dataset_studio/ Herramienta local de revisión de dataset
 ├── examples/            Datos enteramente ficticios
 ├── scripts/             Diagnóstico, validación y controles preventivos
+├── tools/               Herramientas registradas y adaptadores
 └── tests/               Pruebas aisladas y sin servicios de pago
 ```
 
