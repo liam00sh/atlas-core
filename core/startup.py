@@ -43,21 +43,21 @@ def initialize():
 
 
     for folder, status in check_project_folders().items():
-        print(f"{'✓' if status else '✗'} {folder}")
+        print(f"{'[OK]' if status else '[ERROR]'} {folder}")
         time.sleep(0.1)
 
 
     print()
     print("Comprobando Docker...")
     time.sleep(0.3)
-    print("✓ Docker encontrado" if check_docker() else "⚠ Docker no encontrado")
+    print("[OK] Docker encontrado" if check_docker() else "[AVISO] Docker no encontrado")
     time.sleep(0.3)
     print()
-    print("✓ Configuración cargada")
+    print("[OK] Configuración cargada")
     time.sleep(0.2)
-    print("✓ Logger iniciado")
+    print("[OK] Logger iniciado")
     time.sleep(0.2)
-    print("✓ Sistema preparado")
+    print("[OK] Sistema preparado")
     time.sleep(0.2)
     print()
 
