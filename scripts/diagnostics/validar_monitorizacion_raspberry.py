@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+
 from monitoring.env_loader import load_monitoring_env
 from monitoring.raspberry_probe import (
     RaspberryMonitor,
