@@ -116,7 +116,11 @@ data/voice/stt/
 data/face/
 data/biometrics/
 data/private/
+data/memory_workflow/
 /private_runtime/
+
+# Estado operativo local. Nunca se publica en GitHub.
+/runtime/
 
 # Estado cotidiano y ubicación temporal por usuario (datos locales privados)
 data/daily_life/state.json
