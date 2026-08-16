@@ -14,13 +14,24 @@ Fuentes primarias:
 
 ## Decisión
 
-B1 se mantiene como referencia reproducible, no como ganador. No se harán sustituciones fonéticas arbitrarias ni una búsqueda indefinida de parámetros. La siguiente comparación humana pequeña será:
+La comparación humana ciega ya se completó. `es-ES` gana por español de España,
+media global, ausencia de artefactos/cortes y número de primeros puestos. V2
+queda segundo y conserva una ventaja pequeña de parecido con Daxter. La
+configuración compartida de `es-ES` se congela como candidata reproducible; no
+se harán sustituciones fonéticas arbitrarias ni una búsqueda indefinida de
+parámetros.
+
+Configuraciones comparadas:
 
 1. B1 actual (V2 multilingüe).
 2. V3 multilingüe general, si el checkpoint está disponible localmente.
 3. V3 monolingüe `es-ES`, si el checkpoint está disponible localmente.
 
-La descarga de modelos queda desactivada por defecto. El laboratorio debe recibir una ruta local explícita y registrar modelo, revisión, SHA256, semilla y configuración. Ninguna alternativa se convierte en voz oficial sin escucha humana ciega.
+La descarga de modelos queda desactivada por defecto. El laboratorio debe recibir una ruta local explícita y registrar modelo, revisión, SHA256, semilla y configuración.
+
+La selección humana no cierra Fase 6: las palabras con tilde y los cortes
+puntuales requieren una regresión dirigida, y todavía falta completar STT
+160/160 y el E2E posterior.
 
 ## Estrategia para términos ingleses
 
