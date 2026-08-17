@@ -86,8 +86,11 @@ class _FakeChatterbox(ChatterboxDaxterProvider):
 def test_chatterbox_cache_key_and_reuse_include_emotion_and_profile(tmp_path):
     reference = tmp_path / "reference.wav"
     _write_wav(reference)
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"profile_id": "daxter_es_jak2", "version": "1.0.0", "reference_file": "private.wav"}), encoding="utf-8")
+    catalog = tmp_path / "catalog.json"; catalog.write_text("{}", encoding="utf-8")
     provider = _FakeChatterbox(
-        reference_path=reference,
+        profile_path=profile, catalog_path=catalog, reference_path=reference,
         worker_command=[sys.executable, str(ROOT / "tools" / "chatterbox_worker.py")],
         cache_dir=tmp_path / "cache",
     )

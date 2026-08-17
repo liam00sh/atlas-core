@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+import json
 import sys
 
 from ai.prompts.system_prompt import BASE_SYSTEM_PROMPT
@@ -162,9 +163,13 @@ def test_generation_seed_is_independent_from_trim_and_fade(tmp_path):
 def test_es_es_provider_requires_local_source_and_model_and_separates_cache(tmp_path):
     reference = tmp_path / "reference.wav"
     reference.write_bytes(b"RIFF")
+    profile = tmp_path / "profile.json"
+    profile.write_text(json.dumps({"profile_id": "daxter_es_jak2", "version": "1.0.0", "reference_file": "private.wav"}), encoding="utf-8")
+    catalog = tmp_path / "catalog.json"; catalog.write_text("{}", encoding="utf-8")
     worker = [sys.executable, str(Path(__file__).resolve().parents[1] / "tools" / "chatterbox_worker.py")]
     missing = ChatterboxDaxterProvider(
-        candidate="es_es", reference_path=reference, worker_command=worker,
+        candidate="es_es", profile_path=profile, catalog_path=catalog,
+        reference_path=reference, worker_command=worker,
         cache_dir=tmp_path / "cache",
     )
     assert missing.is_available() is False
@@ -172,7 +177,8 @@ def test_es_es_provider_requires_local_source_and_model_and_separates_cache(tmp_
     source.mkdir(); model.mkdir()
     selected = ChatterboxDaxterProvider(
         candidate="es_es", source_path=source, model_dir=model,
-        reference_path=reference, worker_command=worker, cache_dir=tmp_path / "cache",
+        profile_path=profile, catalog_path=catalog, reference_path=reference,
+        worker_command=worker, cache_dir=tmp_path / "cache",
     )
     request = SynthesisRequest(
         text="Prueba local.", voice_id="daxter_official", provider_voice_id="daxter_es_jak2",
@@ -180,7 +186,8 @@ def test_es_es_provider_requires_local_source_and_model_and_separates_cache(tmp_
         profile_version="1.0.0",
     )
     general = ChatterboxDaxterProvider(
-        reference_path=reference, worker_command=worker, cache_dir=tmp_path / "cache",
+        profile_path=profile, catalog_path=catalog, reference_path=reference,
+        worker_command=worker, cache_dir=tmp_path / "cache",
     )
     assert selected.is_available() is True
     assert selected.health()["candidate"] == "es_es"
