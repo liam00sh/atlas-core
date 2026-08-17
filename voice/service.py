@@ -120,6 +120,7 @@ class VoiceService:
                 chars_synthesized=raw.chars_synthesized,
                 synthesized_samples=raw.synthesized_samples,
                 wav_duration_ms=raw.wav_duration_ms,
+                segment_output_paths=(raw.output_path,) if raw.output_path else (),
             )
             timings["spoken_chars"] = result.chars_sent_to_tts
             timings["chars_synthesized"] = result.chars_synthesized
@@ -247,6 +248,9 @@ class VoiceService:
             segment_texts=segments,
             segment_chars=tuple(len(item) for item in segments),
             segment_wav_durations_ms=tuple(item.wav_duration_ms for item in results),
+            segment_output_paths=tuple(
+                path for item in results for path in item.segment_output_paths
+            ),
         )
 
     def _is_voice_available(self, definition) -> bool:

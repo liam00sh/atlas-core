@@ -1,4 +1,4 @@
-"""Proveedor B1 mediante worker Python 3.11 persistente y completamente local."""
+"""Proveedor Chatterbox local persistente para la voz Daxter validada."""
 
 from __future__ import annotations
 
@@ -38,6 +38,9 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         timeout_seconds: float = VOICE_PROVIDER_TIMEOUT_SECONDS,
         postprocess: bool = True,
         postprocess_options: dict[str, object] | None = None,
+        candidate: str | None = None,
+        source_path: Path | None = None,
+        model_dir: Path | None = None,
     ) -> None:
         root = Path(__file__).resolve().parents[2]
         self.profile_path = Path(profile_path or root / "voice_profiles" / "daxter_es_jak2.json")
@@ -47,6 +50,14 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         lab_root = Path(os.getenv("ATLAS_DAXTER_VOICE_LAB_ROOT", str(default_lab)))
         relative_reference = Path(self.profile["reference_file"])
         self.reference_path = Path(reference_path or lab_root / relative_reference)
+        candidate = (candidate or os.getenv("ATLAS_CHATTERBOX_CANDIDATE", "v2")).strip().casefold()
+        if candidate not in {"v2", "es_es"}:
+            raise ValueError("La variante Chatterbox debe ser 'v2' o 'es_es'.")
+        self.candidate = candidate
+        configured_source = source_path or os.getenv("ATLAS_CHATTERBOX_SOURCE", "").strip()
+        configured_model = model_dir or os.getenv("ATLAS_CHATTERBOX_MODEL_DIR", "").strip()
+        self.source_path = Path(configured_source) if configured_source else None
+        self.model_dir = Path(configured_model) if configured_model else None
         python = os.getenv("ATLAS_CHATTERBOX_PYTHON", "").strip()
         self._explicit_worker = worker_command is not None or bool(python)
         if worker_command is not None:
@@ -78,6 +89,10 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             and self.reference_path.is_file()
             and Path(self.worker_command[-1]).is_file()
             and (self._explicit_worker or importlib.util.find_spec("chatterbox") is not None)
+            and (self.candidate != "es_es" or bool(
+                self.source_path and self.source_path.is_dir()
+                and self.model_dir and self.model_dir.is_dir()
+            ))
         )
 
     def supports_voice(self, provider_voice_id: str) -> bool:
@@ -92,6 +107,8 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "profile_version": request.profile_version,
             "synthesis_version": "semantic-units-v2",
             "postprocess_version": self.postprocess_options if self.postprocess else "none",
+            "candidate": self.candidate,
+            "model_revision": self.model_dir.name if self.model_dir else "bundled",
         }
         encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
@@ -126,7 +143,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
     def synthesize(self, request: SynthesisRequest) -> SynthesisResult:
         started = perf_counter()
         if not self.is_available():
-            return SynthesisResult(False, None, request.voice_id, self.provider_id, "Chatterbox B1 local no está configurado.")
+            return SynthesisResult(False, None, request.voice_id, self.provider_id, "Chatterbox local no está configurado.")
         if not self.supports_voice(request.provider_voice_id):
             return SynthesisResult(False, None, request.voice_id, self.provider_id, "Perfil Daxter no soportado.")
         key = self._cache_key(request)
@@ -135,7 +152,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         if self._valid_wav(cached):
             shutil.copy2(cached, request.output_path)
             samples, duration_ms = self._wav_metrics(request.output_path)
-            logger.info("TTS B1 cache hit key=%s", key[:12])
+            logger.info("TTS Chatterbox cache hit candidate=%s key=%s", self.candidate, key[:12])
             return SynthesisResult(
                 True, request.output_path, request.voice_id, self.provider_id,
                 cache_hit=True, latency_ms=round((perf_counter() - started) * 1000, 3),
@@ -160,7 +177,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             response = self._request_worker(payload)
         except (OSError, RuntimeError, TimeoutError) as exc:
             request.output_path.unlink(missing_ok=True)
-            logger.warning("TTS B1 failed key=%s error=%s", key[:12], type(exc).__name__)
+            logger.warning("TTS Chatterbox failed candidate=%s key=%s error=%s", self.candidate, key[:12], type(exc).__name__)
             return SynthesisResult(False, None, request.voice_id, self.provider_id, str(exc))
         if not response.get("success") or not self._valid_wav(request.output_path):
             request.output_path.unlink(missing_ok=True)
@@ -170,7 +187,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         shutil.copy2(request.output_path, temporary)
         temporary.replace(cached)
         samples, duration_ms = self._wav_metrics(request.output_path)
-        logger.info("TTS B1 generated key=%s latency_ms=%.3f", key[:12], (perf_counter() - started) * 1000)
+        logger.info("TTS Chatterbox generated candidate=%s key=%s latency_ms=%.3f", self.candidate, key[:12], (perf_counter() - started) * 1000)
         return SynthesisResult(
             True, request.output_path, request.voice_id, self.provider_id,
             cache_hit=False, latency_ms=round((perf_counter() - started) * 1000, 3),
@@ -215,6 +232,11 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         env["NO_PROXY"] = "*"
         env["PYTHONIOENCODING"] = "utf-8"
         env["PYTHONUTF8"] = "1"
+        env["ATLAS_CHATTERBOX_CANDIDATE"] = self.candidate
+        if self.source_path is not None:
+            env["ATLAS_CHATTERBOX_SOURCE"] = str(self.source_path.resolve())
+        if self.model_dir is not None:
+            env["ATLAS_CHATTERBOX_MODEL_DIR"] = str(self.model_dir.resolve())
         self._process = subprocess.Popen(
             self.worker_command,
             stdin=subprocess.PIPE,
@@ -226,13 +248,13 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             env=env,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         )
-        logger.info("TTS B1 worker started offline=true")
+        logger.info("TTS Chatterbox worker started candidate=%s offline=true", self.candidate)
         return self._process
 
     def cancel_current(self) -> None:
         with self._lock:
             if self._process is not None and self._process.poll() is None:
-                logger.info("TTS B1 worker cancellation requested")
+                logger.info("TTS Chatterbox worker cancellation requested")
                 self._process.terminate()
                 try:
                     self._process.wait(timeout=3.0)
@@ -248,6 +270,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "available": self.is_available(),
             "profile": self.profile["profile_id"],
             "profile_version": self.profile["version"],
+            "candidate": self.candidate,
             "reference_local": self.reference_path.is_file(),
             "offline": True,
             "worker_loaded": self._process is not None and self._process.poll() is None,

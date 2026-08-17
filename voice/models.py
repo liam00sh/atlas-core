@@ -67,4 +67,5 @@ class SynthesisResult:
     segment_texts: tuple[str, ...] = ()
     segment_chars: tuple[int, ...] = ()
     segment_wav_durations_ms: tuple[float, ...] = ()
+    segment_output_paths: tuple[Path, ...] = ()
     playback_ticket: object | None = None

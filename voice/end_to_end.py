@@ -202,8 +202,11 @@ class ManualVoiceSession:
         timings["total_without_recording"] = round((perf_counter() - total_started) * 1000, 3)
         error = None if synthesis is None or synthesis.success else synthesis.error
         trace = {
+            "atlas_base_response": base_text,
             "visible_text": styled.styled_text,
             "spoken_text": spoken_response,
+            "emotion": styled.emotion,
+            "intensity": styled.intensity,
             "chars_sent_to_tts": len(spoken_response),
             "chars_synthesized": getattr(synthesis, "chars_synthesized", 0) if synthesis else 0,
             "synthesized_samples": getattr(synthesis, "synthesized_samples", 0) if synthesis else 0,
@@ -214,6 +217,7 @@ class ManualVoiceSession:
             "segments": list(getattr(synthesis, "segment_texts", ())) if synthesis else [],
             "segment_chars": list(getattr(synthesis, "segment_chars", ())) if synthesis else [],
             "segment_wav_durations_ms": list(getattr(synthesis, "segment_wav_durations_ms", ())) if synthesis else [],
+            "segment_output_paths": [str(path) for path in getattr(synthesis, "segment_output_paths", ())] if synthesis else [],
             "confirmation_state": self._confirmation_state().value,
             "conversation_memory": self.memory.public_trace(),
             "stt": {
@@ -251,6 +255,12 @@ class ManualVoiceSession:
             "confirmation_state": confirmation_state.value,
             "conversation_memory": self.memory.public_trace(),
             "stt_corrections": list(self.last_stt_corrections),
+            "stt": {
+                "raw": self.memory.last_raw_transcript,
+                "normalized": self.memory.last_normalized_transcript,
+                "corrections": list(self.last_stt_corrections),
+                "context": "confirmation" if confirmation_state is not VoiceConfirmationState.NONE else "general",
+            },
         }
 
     def _known_names(self) -> tuple[str, ...]:

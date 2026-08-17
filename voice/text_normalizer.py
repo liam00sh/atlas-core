@@ -146,16 +146,23 @@ class ContextualTranscriptNormalizer:
     @classmethod
     def _confirmation_word(cls, text: str) -> str | None:
         value = cls._plain(text)
+        value = re.sub(r"\s+(?:por favor|ahora)$", "", value).strip()
         exact = {
             "si": "si",
+            "si es correcto": "si",
             "confirmar": "confirmar",
             "confirmo": "confirmar",
+            "confirma la accion": "confirmar",
+            "confirmo la accion": "confirmar",
             "adelante": "confirmar",
             "no": "no",
+            "no no era eso": "no",
+            "no era eso": "no",
             "cancelar": "cancelar",
             "cancelado": "cancelar",
             "cancelada": "cancelar",
             "cancela": "cancelar",
+            "cancela y dejalo": "cancelar",
             "dejalo": "cancelar",
         }
         if value in exact:

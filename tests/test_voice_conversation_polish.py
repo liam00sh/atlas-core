@@ -51,6 +51,19 @@ def test_known_name_is_corrected_only_in_explicit_social_context():
     assert unrelated.text == "Nubia aparece en el mapa"
 
 
+def test_pending_confirmation_accepts_polite_and_temporal_suffixes():
+    for text, expected in (
+        ("Sí, es correcto por favor", "si"),
+        ("No, no era eso ahora", "no"),
+        ("Confirma la acción ahora", "confirmar"),
+        ("Cancela y déjalo por favor", "cancelar"),
+    ):
+        normalized = ContextualTranscriptNormalizer.normalize(
+            STTResult(text), pending_confirmation=True,
+        )
+        assert normalized.text == expected
+
+
 def test_repeat_user_uses_previous_turn_not_repeat_command():
     from voice.end_to_end import ManualVoiceSession
 

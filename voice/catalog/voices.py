@@ -17,7 +17,7 @@ VOICE_CATALOG: dict[str, VoiceDefinition] = {
         region="ES",
         is_official=True,
         enabled=True,
-        metadata={"status": "human_validated_b1", "profile": "voice_profiles/daxter_es_jak2.json"},
+        metadata={"status": "human_validated_es_es", "profile": "voice_profiles/daxter_es_jak2.json"},
     ),
     "daxter_alex": VoiceDefinition(
         voice_id="daxter_alex",

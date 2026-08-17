@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 from types import SimpleNamespace
+import sys
 
 from ai.prompts.system_prompt import BASE_SYSTEM_PROMPT
 from automation.home_intent_resolver import HomeIntentResolver
 from automation.home_intent_service import HomeIntentService
 from conversation.daxter_personality import PersonalityStrength
 from conversation.response_pipeline import DaxterResponsePipeline
-from tools.chatterbox_worker import _split_tts_units
+from tools.chatterbox_worker import _split_tts_units, generation_controls
 from voice.models import AssistantIdentity, SynthesisRequest, SynthesisResult
 from voice.providers.chatterbox_daxter_provider import ChatterboxDaxterProvider
 from voice.providers.chatterbox_style_adapter import ChatterboxStyleAdapter
@@ -125,6 +126,18 @@ def test_worker_splits_long_text_into_bounded_ordered_units():
     assert units[-1] == "Tercera frase completa."
 
 
+def test_es_es_worker_uses_frozen_human_winner_controls():
+    controls = {
+        "language_id": "other", "exaggeration": 0.9, "cfg_weight": 0.9,
+        "temperature": 0.2, "repetition_penalty": 2.0, "min_p": 0.05, "top_p": 1.0,
+    }
+    selected = generation_controls(controls, "reference.wav", candidate="es_es")
+    assert selected == {
+        "language_id": "es", "audio_prompt_path": "reference.wav",
+        "exaggeration": 0.45, "cfg_weight": 0.35, "temperature": 0.8,
+    }
+
+
 def test_generation_seed_is_independent_from_trim_and_fade(tmp_path):
     request = SynthesisRequest(
         text="Hola, usuario.",
@@ -144,6 +157,34 @@ def test_generation_seed_is_independent_from_trim_and_fade(tmp_path):
         profile_version=request.profile_version,
     )
     assert ChatterboxDaxterProvider._generation_seed(changed_output) == seed
+
+
+def test_es_es_provider_requires_local_source_and_model_and_separates_cache(tmp_path):
+    reference = tmp_path / "reference.wav"
+    reference.write_bytes(b"RIFF")
+    worker = [sys.executable, str(Path(__file__).resolve().parents[1] / "tools" / "chatterbox_worker.py")]
+    missing = ChatterboxDaxterProvider(
+        candidate="es_es", reference_path=reference, worker_command=worker,
+        cache_dir=tmp_path / "cache",
+    )
+    assert missing.is_available() is False
+    source, model = tmp_path / "source", tmp_path / "model"
+    source.mkdir(); model.mkdir()
+    selected = ChatterboxDaxterProvider(
+        candidate="es_es", source_path=source, model_dir=model,
+        reference_path=reference, worker_command=worker, cache_dir=tmp_path / "cache",
+    )
+    request = SynthesisRequest(
+        text="Prueba local.", voice_id="daxter_official", provider_voice_id="daxter_es_jak2",
+        output_path=tmp_path / "output.wav", voice_profile_id="daxter_es_jak2",
+        profile_version="1.0.0",
+    )
+    general = ChatterboxDaxterProvider(
+        reference_path=reference, worker_command=worker, cache_dir=tmp_path / "cache",
+    )
+    assert selected.is_available() is True
+    assert selected.health()["candidate"] == "es_es"
+    assert selected._cache_key(request) != general._cache_key(request)
 
 
 def test_final_lab_definition_is_capped_at_forty_and_has_every_required_folder():

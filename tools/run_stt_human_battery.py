@@ -57,62 +57,71 @@ def choose_microphone(recorder: ManualMicrophoneRecorder, *, input_func=input) -
 
 
 def plain(text: str) -> str:
-    value = unicodedata.normalize("NFKD", text.casefold())
-    return "".join(char for char in value if not unicodedata.combining(char)).strip()
+    # Preserve spoken identifiers while tolerating punctuation, CamelCase and
+    # letter/number boundaries produced by local STT engines.
+    value = re.sub(r"(?<=[a-záéíóúüñ])(?=[A-ZÁÉÍÓÚÜÑ])", " ", str(text))
+    value = unicodedata.normalize("NFKD", value.casefold())
+    value = "".join(char for char in value if not unicodedata.combining(char))
+    value = re.sub(r"(?<=[a-z])(?=\d)|(?<=\d)(?=[a-z])", " ", value)
+    return " ".join(re.sub(r"[^a-z0-9]+", " ", value).split())
+
+
+def _without_discourse_suffix(value: str) -> str:
+    return re.sub(r"\s+(?:por favor|ahora)$", "", value).strip()
 
 
 def inspect_router_only(text: str) -> RouterObservation:
     """Contrato diagnóstico puro: no importa Atlas, adaptadores ni ejecutores."""
     value = plain(text)
-    suffix = re.sub(r"\s+(?:por favor|ahora)$", "", value)
-    if "luz del acuario pequeno" in value:
-        if value.startswith(("enciende", "encender")):
+    core = _without_discourse_suffix(value)
+    if "luz del acuario pequeno" in core:
+        if core.startswith(("enciende", "encender")):
             return RouterObservation("home.turn_on", "luz del acuario pequeño", True, True)
-        if value.startswith(("apaga", "apagar")):
+        if core.startswith(("apaga", "apagar")):
             return RouterObservation("home.turn_off", "luz del acuario pequeño", True, True)
         return RouterObservation("home.state", "luz del acuario pequeño")
-    if "home assistant" in value:
+    if "home assistant" in core:
         return RouterObservation("infrastructure.status", "Home Assistant")
-    if "docker" in value or "telegram esta" in value or "ollama" in value:
-        entity = "Docker" if "docker" in value else ("Telegram" if "telegram" in value else "Ollama")
+    if "docker" in core or "telegram esta" in core or "ollama" in core:
+        entity = "Docker" if "docker" in core else ("Telegram" if "telegram" in core else "Ollama")
         return RouterObservation("infrastructure.status", entity)
-    if value.startswith("reinicia telegram"):
+    if core.startswith("reinicia telegram"):
         return RouterObservation("telegram.restart", "Telegram", True, True, True)
-    if value.startswith("abre la calculadora"):
+    if core.startswith("abre la calculadora"):
         return RouterObservation("windows.open", "calculadora", True, True)
-    if value.startswith("cierra la calculadora"):
+    if core.startswith("cierra la calculadora"):
         return RouterObservation("windows.close", "calculadora", True, True)
-    if value.startswith(("cancela la operacion",)):
+    if core.startswith(("cancela la operacion",)):
         return RouterObservation("cancel", "operación", True, True)
-    if value.startswith(("acuerdame", "recuerdame")):
-        entity = "comprar pan" if "comprar pan" in value else "Atlas"
+    if core.startswith(("acuerdame", "recuerdame")):
+        entity = "comprar pan" if "comprar pan" in core else "Atlas"
         return RouterObservation("reminder.create", entity, True, True)
-    if "recordatorios tengo" in value:
+    if "recordatorios tengo" in core:
         return RouterObservation("reminder.list")
-    if value.startswith("cancela el recordatorio"):
+    if core.startswith("cancela el recordatorio"):
         return RouterObservation("reminder.cancel", "Atlas", True, True)
-    people = (("persona conocida uno", "persona_conocida_1"), ("persona conocida dos", "persona_conocida_2"))
-    for phrase, entity in people:
-        if phrase in value:
-            intent = "people.greet" if value.startswith("saluda") else "people.introduce" if value.startswith("presenta") else "people.farewell" if value.startswith("despidete") else "people.presence"
+    people = ((r"persona conocida (?:uno|1)", "persona_conocida_1"), (r"persona conocida (?:dos|2)", "persona_conocida_2"))
+    for pattern, entity in people:
+        if re.search(rf"\b{pattern}\b", core):
+            intent = "people.greet" if core.startswith("saluda") else "people.introduce" if core.startswith("presenta") else "people.farewell" if core.startswith("despidete") else "people.presence"
             return RouterObservation(intent, entity)
-    if "estado de atlas" in value:
+    if "estado de atlas" in core:
         return RouterObservation("system.status", "Atlas")
-    if value.startswith(("si, es correcto", "confirma la accion")):
+    if core in {"si es correcto", "confirma la accion"}:
         return RouterObservation("confirmation.accept")
-    if value.startswith(("no, no era eso", "cancela y dejalo")):
+    if core in {"no no era eso", "cancela y dejalo"}:
         return RouterObservation("confirmation.reject")
-    if value.startswith("repite tu respuesta"):
+    if core == "repite tu respuesta":
         return RouterObservation("repeat.response")
-    if value.startswith("repite lo que he dicho"):
+    if core == "repite lo que he dicho":
         return RouterObservation("repeat.user")
-    if value.startswith("que has entendido"):
+    if core == "que has entendido":
         return RouterObservation("repeat.transcript")
-    if value.startswith("explicamelo"):
+    if core.startswith("explicamelo"):
         return RouterObservation("continuity.followup")
-    if value.startswith("dime algo divertido"):
+    if core.startswith("dime algo divertido"):
         return RouterObservation("humor")
-    if "tiempo hace" in value:
+    if "tiempo hace" in core:
         return RouterObservation("weather")
     return RouterObservation("conversation")
 

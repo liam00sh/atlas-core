@@ -19,6 +19,35 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 _MODEL = None
+_CANDIDATE = os.getenv("ATLAS_CHATTERBOX_CANDIDATE", "v2").strip().casefold()
+
+
+def _cap_generation(model) -> None:
+    original = model.t3.inference
+
+    def bounded(*args, **kwargs):
+        limit = int(getattr(model, "_atlas_max_new_tokens", 300))
+        kwargs["max_new_tokens"] = min(int(kwargs.get("max_new_tokens", limit)), limit)
+        return original(*args, **kwargs)
+
+    model.t3.inference = bounded
+
+
+def generation_controls(controls: dict, reference_path: str, *, candidate: str | None = None) -> dict:
+    selected = _CANDIDATE if candidate is None else candidate
+    kwargs = {
+        "language_id": "es" if selected == "es_es" else controls["language_id"],
+        "audio_prompt_path": reference_path,
+        "exaggeration": 0.45 if selected == "es_es" else controls["exaggeration"],
+        "cfg_weight": 0.35 if selected == "es_es" else controls["cfg_weight"],
+        "temperature": 0.8 if selected == "es_es" else controls["temperature"],
+    }
+    if selected != "es_es":
+        kwargs.update(
+            repetition_penalty=controls["repetition_penalty"],
+            min_p=controls["min_p"], top_p=controls["top_p"],
+        )
+    return kwargs
 
 
 def _split_tts_units(text: str, *, max_chars: int = 220) -> list[str]:
@@ -112,14 +141,25 @@ def synthesize(payload: dict) -> dict:
     import numpy as np
     import torch
     import torchaudio
-    from chatterbox.mtl_tts import ChatterboxMultilingualTTS
-
     from voice.providers.chatterbox_style_adapter import ChatterboxStyleAdapter
     from voice.style import VoiceStyleSelector
 
     if _MODEL is None:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        _MODEL = ChatterboxMultilingualTTS.from_pretrained(device=device)
+        if _CANDIDATE == "es_es":
+            source = Path(os.environ["ATLAS_CHATTERBOX_SOURCE"]).resolve()
+            model_dir = Path(os.environ["ATLAS_CHATTERBOX_MODEL_DIR"]).resolve()
+            sys.path.insert(0, str(source / "chatterbox" / "src"))
+            from chatterbox.tts import ChatterboxTTS
+
+            _MODEL = ChatterboxTTS.from_local(
+                model_dir, device, t3_filename="t3_es_es.safetensors",
+                s3gen_filename="s3gen_v3.pt",
+            )
+            _cap_generation(_MODEL)
+        else:
+            from chatterbox.mtl_tts import ChatterboxMultilingualTTS
+            _MODEL = ChatterboxMultilingualTTS.from_pretrained(device=device)
     seed = int(payload["seed"])
     random.seed(seed)
     np.random.seed(seed % (2**32 - 1))
@@ -144,17 +184,10 @@ def synthesize(payload: dict) -> dict:
         torch.manual_seed(unit_seed)
         if torch.cuda.is_available():
             torch.cuda.manual_seed_all(unit_seed)
-        generated.append(_MODEL.generate(
-            unit,
-            language_id=controls["language_id"],
-            audio_prompt_path=payload["reference_path"],
-            exaggeration=controls["exaggeration"],
-            cfg_weight=controls["cfg_weight"],
-            temperature=controls["temperature"],
-            repetition_penalty=controls["repetition_penalty"],
-            min_p=controls["min_p"],
-            top_p=controls["top_p"],
-        ))
+        kwargs = generation_controls(controls, payload["reference_path"])
+        if _CANDIDATE == "es_es":
+            _MODEL._atlas_max_new_tokens = min(110, max(90, round(len(unit) * 1.5)))
+        generated.append(_MODEL.generate(unit, **kwargs))
     gap = torch.zeros((generated[0].shape[0], int(_MODEL.sr * 0.06)), device=generated[0].device)
     parts = []
     for index, item in enumerate(generated):
