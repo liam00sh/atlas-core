@@ -5,7 +5,7 @@ import pytest
 
 from tools.run_voice_e2e_guided import (
     case_payload, collect_human_evaluation, combine_wavs, load_or_initialize,
-    phrases, replay_audio, successful_playback,
+    phrases, preflight, replay_audio, successful_playback,
 )
 from voice.models import SynthesisResult
 
@@ -75,3 +75,32 @@ def test_repeat_audio_uses_saved_wav_without_tts():
     saved = Path("case_001.wav")
     assert replay_audio(player, saved) is True
     assert calls == [saved]
+
+
+def test_preflight_reports_exact_tts_runtime_and_root_exception():
+    provider = SimpleNamespace(
+        worker_command=["private-python.exe", "worker.py"], source_path=Path("source-es-es"),
+        reference_path=Path("reference.wav"),
+        health=lambda: {"model_requested": "download-model", "model_effective": "runtime-model"},
+    )
+    voice_service = SimpleNamespace(
+        provider=provider,
+        player=SimpleNamespace(is_available=lambda: True),
+        speak=lambda *args, **kwargs: SimpleNamespace(
+            success=False, playback_completed=False, error="FileNotFoundError: ve.pt"
+        ),
+    )
+    atlas = SimpleNamespace(
+        process=lambda text: text,
+        stage_e_environment=SimpleNamespace(adapter=SimpleNamespace(health=lambda: {"available": True})),
+        _queue=lambda: SimpleNamespace(list_pending=lambda user: []), get_user=lambda: "test",
+    )
+    recorder = SimpleNamespace(is_available=lambda: True, selected_device=lambda: "microphone")
+    stt_provider = SimpleNamespace(health=lambda: {"available": True})
+
+    checks = preflight(atlas, recorder, stt_provider, voice_service)
+
+    assert checks["tts"]["status"] == "ERROR"
+    assert checks["tts"]["error"] == "FileNotFoundError: ve.pt"
+    assert checks["tts"]["python"] == "private-python.exe"
+    assert checks["tts"]["model_effective"] == "runtime-model"

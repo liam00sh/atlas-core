@@ -17,6 +17,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from tools.chatterbox_worker import _trim_and_fade
+from tools.chatterbox_es_es_runtime import cap_generation, load_es_es_model
 from voice.providers.chatterbox_style_adapter import ChatterboxStyleAdapter
 
 
@@ -39,32 +40,14 @@ def _load(args):
     sys.path.insert(0, str(source_path))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.candidate == "es_es":
-        from chatterbox.tts import ChatterboxTTS
-
-        model = ChatterboxTTS.from_local(
-            args.model_dir, device, t3_filename="t3_es_es.safetensors",
-            s3gen_filename="s3gen_v3.pt",
-        )
-        _cap_generation(model)
+        model, _route = load_es_es_model(source=source, model_dir=args.model_dir, device=device)
         return model, device
     from chatterbox.mtl_tts import ChatterboxMultilingualTTS
 
     version = "v2" if args.candidate == "v2" else "v3"
     model = ChatterboxMultilingualTTS.from_local(args.model_dir, device, t3_model=version)
-    _cap_generation(model)
+    cap_generation(model)
     return model, device
-
-
-def _cap_generation(model) -> None:
-    """Evita continuaciones anómalas; el upstream fija 1000 sin exponer control."""
-    original = model.t3.inference
-
-    def bounded(*args, **kwargs):
-        limit = int(getattr(model, "_atlas_max_new_tokens", 300))
-        kwargs["max_new_tokens"] = min(int(kwargs.get("max_new_tokens", limit)), limit)
-        return original(*args, **kwargs)
-
-    model.t3.inference = bounded
 
 
 def main() -> int:

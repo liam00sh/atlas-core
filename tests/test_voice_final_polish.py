@@ -175,6 +175,10 @@ def test_es_es_provider_requires_local_source_and_model_and_separates_cache(tmp_
     assert missing.is_available() is False
     source, model = tmp_path / "source", tmp_path / "model"
     source.mkdir(); model.mkdir()
+    source_module = source / "chatterbox" / "src" / "chatterbox" / "tts.py"
+    source_module.parent.mkdir(parents=True); source_module.write_text("", encoding="utf-8")
+    for name in ("ve.pt", "conds.pt", "grapheme_mtl_merged_expanded_v1.json", "s3gen_v3.pt", "t3_es_es.safetensors"):
+        (model / name).write_bytes(b"local")
     selected = ChatterboxDaxterProvider(
         candidate="es_es", source_path=source, model_dir=model,
         profile_path=profile, catalog_path=catalog, reference_path=reference,

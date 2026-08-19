@@ -155,9 +155,16 @@ def preflight(atlas, recorder, stt_provider, voice_service) -> dict:
         emotion="neutral", intensity="baja", play_audio=True,
     )
     ready = bool(probe.success and probe.playback_completed is True)
+    provider = getattr(voice_service, "provider", None)
+    provider_health = provider.health() if provider is not None else {}
     checks["tts"] = {
         "ready": ready, "provider": "es-ES", "voice_reference": "Daxter",
-        "status": "READY" if ready else "NO DISPONIBLE", "error": probe.error,
+        "status": "READY" if ready else "ERROR", "error": probe.error,
+        "python": str(provider.worker_command[0]) if provider is not None else None,
+        "source": str(getattr(provider, "source_path", "") or ""),
+        "model_requested": provider_health.get("model_requested"),
+        "model_effective": provider_health.get("model_effective"),
+        "reference": str(getattr(provider, "reference_path", "") or ""),
     }
     return checks
 
@@ -165,6 +172,10 @@ def preflight(atlas, recorder, stt_provider, voice_service) -> dict:
 def successful_playback(result) -> bool:
     return bool(result.recoverable_error is None and result.synthesis and result.synthesis.success
                 and result.synthesis.playback_completed is True)
+
+
+def preflight_has_fatal_failure(checks: dict[str, dict]) -> bool:
+    return any(not checks[key]["ready"] for key in ("microphone", "stt", "atlas", "audio_output", "tts"))
 
 
 def diagnose_turn(atlas, text: str, *, pending_confirmation: bool) -> dict:
@@ -238,23 +249,47 @@ def collect_human_evaluation(case: dict, *, input_func=input) -> None:
 
 
 def main() -> int:
-    from main import build_atlas
-    from tools.run_daxter_voice_pc import choose_microphone
-
     parser = argparse.ArgumentParser(description="Prueba humana E2E real y reanudable de Daxter.")
-    parser.add_argument("--home-assistant-env", type=Path, required=True)
-    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--home-assistant-env", type=Path)
+    parser.add_argument("--output", type=Path)
     parser.add_argument("--device"); parser.add_argument("--known-name", default="persona conocida")
-    parser.add_argument("--stt-model-path", type=Path, required=True)
-    parser.add_argument("--tts-python", type=Path, required=True)
-    parser.add_argument("--tts-source", type=Path, required=True)
-    parser.add_argument("--tts-model-dir", type=Path, required=True)
-    parser.add_argument("--tts-reference", type=Path, required=True)
+    parser.add_argument("--stt-model-path", type=Path)
+    parser.add_argument("--tts-python", type=Path)
+    parser.add_argument("--tts-source", type=Path)
+    parser.add_argument("--tts-model-dir", type=Path)
+    parser.add_argument("--tts-reference", type=Path)
     parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument("--check-tts", action="store_true")
     args = parser.parse_args()
+
+    tts_paths = (args.tts_python, args.tts_source, args.tts_model_dir, args.tts_reference)
+    if args.check_tts:
+        if any(path is None for path in tts_paths):
+            parser.error("--check-tts requiere --tts-python, --tts-source, --tts-model-dir y --tts-reference.")
+        from tools.check_daxter_es_es_tts import run_check
+
+        check_output = (
+            args.output.parent / "TTS_CHECK_DAXTER_ES_ES.wav"
+            if args.output is not None else Path.cwd() / "TTS_CHECK_DAXTER_ES_ES.wav"
+        )
+        check_args = argparse.Namespace(
+            tts_python=args.tts_python, tts_source=args.tts_source,
+            tts_model_dir=args.tts_model_dir, tts_reference=args.tts_reference,
+            output=check_output, no_play=False,
+        )
+        report = run_check(check_args)
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return 0 if report["success"] else 2
+
+    required = (args.home_assistant_env, args.output, args.stt_model_path, *tts_paths)
+    if any(path is None for path in required):
+        parser.error("Faltan dependencias locales requeridas para la E2E.")
     if (not all(path.is_file() for path in (args.home_assistant_env, args.tts_python, args.tts_reference))
             or not all(path.is_dir() for path in (args.stt_model_path, args.tts_source, args.tts_model_dir))):
         parser.error("Falta al menos una dependencia privada local requerida.")
+
+    from main import build_atlas
+    from tools.run_daxter_voice_pc import choose_microphone
 
     os.environ.update(load_env_file(args.home_assistant_env))
     recorder = ManualMicrophoneRecorder(device_name=args.device)
@@ -281,9 +316,16 @@ def main() -> int:
     print("Atlas: " + report["preflight"]["atlas"]["status"])
     print("Audio output: " + report["preflight"]["audio_output"]["status"])
     print("TTS provider: es-ES\nvoice reference: Daxter\nstatus: " + report["preflight"]["tts"]["status"])
+    print("Python: " + str(report["preflight"]["tts"].get("python") or "[no configurado]"))
+    print("source: " + str(report["preflight"]["tts"].get("source") or "[no configurado]"))
+    print("model_dir requested: " + str(report["preflight"]["tts"].get("model_requested") or "[no configurado]"))
+    print("model_dir effective: " + str(report["preflight"]["tts"].get("model_effective") or "[no configurado]"))
+    print("reference: " + str(report["preflight"]["tts"].get("reference") or "[no configurado]"))
+    if report["preflight"]["tts"].get("error"):
+        print("cause: " + str(report["preflight"]["tts"]["error"]))
     print("Home Assistant: " + report["preflight"]["home_assistant"]["status"])
     print("Recordatorios: " + report["preflight"]["reminders"]["status"])
-    fatal = any(not report["preflight"][key]["ready"] for key in ("microphone", "stt", "atlas", "audio_output", "tts"))
+    fatal = preflight_has_fatal_failure(report["preflight"])
     if fatal or args.preflight_only:
         session.close(); return 2 if fatal else 0
 

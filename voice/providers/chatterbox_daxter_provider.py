@@ -20,6 +20,8 @@ from voice.models import SynthesisRequest, SynthesisResult
 from voice.providers.base_tts_provider import BaseTTSProvider
 from voice.config import VOICE_PROVIDER_TIMEOUT_SECONDS
 
+from tools.chatterbox_es_es_runtime import resolve_es_es_model_dir
+
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +59,15 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         configured_source = source_path or os.getenv("ATLAS_CHATTERBOX_SOURCE", "").strip()
         configured_model = model_dir or os.getenv("ATLAS_CHATTERBOX_MODEL_DIR", "").strip()
         self.source_path = Path(configured_source) if configured_source else None
+        self.source_module = (
+            self.source_path / "chatterbox" / "src" / "chatterbox" / "tts.py"
+            if self.source_path is not None else None
+        )
         self.model_dir = Path(configured_model) if configured_model else None
+        self.model_route = (
+            resolve_es_es_model_dir(self.model_dir)
+            if self.candidate == "es_es" and self.model_dir is not None else None
+        )
         python = os.getenv("ATLAS_CHATTERBOX_PYTHON", "").strip()
         self._explicit_worker = worker_command is not None or bool(python)
         if worker_command is not None:
@@ -79,6 +89,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         })
         self._process: subprocess.Popen[str] | None = None
         self._lock = threading.RLock()
+        self.last_worker_diagnostics: dict[str, object] = {}
 
     def is_available(self) -> bool:
         executable = Path(self.worker_command[0])
@@ -90,8 +101,8 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             and Path(self.worker_command[-1]).is_file()
             and (self._explicit_worker or importlib.util.find_spec("chatterbox") is not None)
             and (self.candidate != "es_es" or bool(
-                self.source_path and self.source_path.is_dir()
-                and self.model_dir and self.model_dir.is_dir()
+                self.source_module and self.source_module.is_file()
+                and self.model_route and self.model_route.ready
             ))
         )
 
@@ -179,6 +190,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             request.output_path.unlink(missing_ok=True)
             logger.warning("TTS Chatterbox failed candidate=%s key=%s error=%s", self.candidate, key[:12], type(exc).__name__)
             return SynthesisResult(False, None, request.voice_id, self.provider_id, str(exc))
+        self.last_worker_diagnostics = dict(response.get("runtime") or {})
         if not response.get("success") or not self._valid_wav(request.output_path):
             request.output_path.unlink(missing_ok=True)
             return SynthesisResult(False, None, request.voice_id, self.provider_id, str(response.get("error") or "Chatterbox no generó un WAV válido."))
@@ -236,7 +248,8 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         if self.source_path is not None:
             env["ATLAS_CHATTERBOX_SOURCE"] = str(self.source_path.resolve())
         if self.model_dir is not None:
-            env["ATLAS_CHATTERBOX_MODEL_DIR"] = str(self.model_dir.resolve())
+            effective = self.model_route.effective if self.model_route is not None else self.model_dir.resolve()
+            env["ATLAS_CHATTERBOX_MODEL_DIR"] = str(effective)
         self._process = subprocess.Popen(
             self.worker_command,
             stdin=subprocess.PIPE,
@@ -274,4 +287,8 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "reference_local": self.reference_path.is_file(),
             "offline": True,
             "worker_loaded": self._process is not None and self._process.poll() is None,
+            "model_requested": str(self.model_route.requested) if self.model_route else None,
+            "model_effective": str(self.model_route.effective) if self.model_route else None,
+            "missing_model_files": list(self.model_route.missing_effective) if self.model_route else [],
+            "source_module": str(self.source_module) if self.source_module else None,
         }

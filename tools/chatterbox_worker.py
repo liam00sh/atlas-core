@@ -21,16 +21,7 @@ if str(ROOT) not in sys.path:
 _MODEL = None
 _CANDIDATE = os.getenv("ATLAS_CHATTERBOX_CANDIDATE", "v2").strip().casefold()
 
-
-def _cap_generation(model) -> None:
-    original = model.t3.inference
-
-    def bounded(*args, **kwargs):
-        limit = int(getattr(model, "_atlas_max_new_tokens", 300))
-        kwargs["max_new_tokens"] = min(int(kwargs.get("max_new_tokens", limit)), limit)
-        return original(*args, **kwargs)
-
-    model.t3.inference = bounded
+from tools.chatterbox_es_es_runtime import cap_generation, load_es_es_model
 
 
 def generation_controls(controls: dict, reference_path: str, *, candidate: str | None = None) -> dict:
@@ -149,14 +140,7 @@ def synthesize(payload: dict) -> dict:
         if _CANDIDATE == "es_es":
             source = Path(os.environ["ATLAS_CHATTERBOX_SOURCE"]).resolve()
             model_dir = Path(os.environ["ATLAS_CHATTERBOX_MODEL_DIR"]).resolve()
-            sys.path.insert(0, str(source / "chatterbox" / "src"))
-            from chatterbox.tts import ChatterboxTTS
-
-            _MODEL = ChatterboxTTS.from_local(
-                model_dir, device, t3_filename="t3_es_es.safetensors",
-                s3gen_filename="s3gen_v3.pt",
-            )
-            _cap_generation(_MODEL)
+            _MODEL, _route = load_es_es_model(source=source, model_dir=model_dir, device=device)
         else:
             from chatterbox.mtl_tts import ChatterboxMultilingualTTS
             _MODEL = ChatterboxMultilingualTTS.from_pretrained(device=device)
@@ -206,6 +190,14 @@ def synthesize(payload: dict) -> dict:
         "synthesized_samples": int(audio.shape[-1]),
         "wav_duration_ms": round(audio.shape[-1] / _MODEL.sr * 1000, 3),
         "tts_units": len(units),
+        "runtime": {
+            "python": sys.executable,
+            "source": str(Path(os.environ.get("ATLAS_CHATTERBOX_SOURCE", "")).resolve()),
+            "model_dir": str(Path(os.environ.get("ATLAS_CHATTERBOX_MODEL_DIR", "")).resolve()),
+            "module": str(Path(sys.modules[_MODEL.__class__.__module__].__file__).resolve()),
+            "device": str(_MODEL.device),
+            "offline": True,
+        },
     }
 
 
