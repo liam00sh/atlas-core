@@ -5,7 +5,8 @@ import pytest
 
 from tools.run_voice_e2e_guided import (
     case_payload, collect_human_evaluation, combine_wavs, load_or_initialize,
-    phrases, preflight, replay_audio, successful_playback,
+    limited_phrases, phrases, played_audio_sources, preflight,
+    preserve_played_audio, replay_audio, successful_playback, TurnAudioError,
 )
 from voice.models import SynthesisResult
 
@@ -41,6 +42,67 @@ def test_guided_e2e_combines_exact_played_segments(tmp_path):
     combine_wavs((first, second), target)
     with wave.open(str(target), "rb") as audio:
         assert audio.getnframes() == 250
+
+
+def _turn(*, spoken="Respuesta.", success=True, playback=True, paths=(), error=None):
+    synthesis = SynthesisResult(
+        success, paths[-1] if paths else None, "daxter_official", "fake", error,
+        playback_completed=playback, segment_output_paths=tuple(paths),
+    )
+    return SimpleNamespace(spoken_response=spoken, synthesis=synthesis)
+
+
+def test_exact_sources_empty_regression_is_rejected_with_contract_error():
+    with pytest.raises(TurnAudioError, match="perdió segment_output_paths"):
+        played_audio_sources(_turn(paths=()))
+
+
+@pytest.mark.parametrize(
+    ("turn", "message"),
+    [
+        (_turn(spoken=""), "texto hablado está vacío"),
+        (_turn(success=False, playback=False, error="worker failed"), "TTS falló: worker failed"),
+        (_turn(playback=False, error="speaker failed"), "Playback no completado"),
+    ],
+)
+def test_invalid_tts_turns_never_reach_human_review(turn, message):
+    with pytest.raises(TurnAudioError, match=message):
+        played_audio_sources(turn)
+
+
+def test_disappeared_segment_is_reported(tmp_path):
+    missing = tmp_path / "deleted.wav"
+    with pytest.raises(TurnAudioError, match="ya no existe"):
+        played_audio_sources(_turn(paths=(missing,)))
+
+
+def test_one_and_multiple_played_segments_are_preserved(tmp_path):
+    first, second = tmp_path / "first.wav", tmp_path / "second.wav"
+    _wav(first, 100); _wav(second, 150)
+    one = preserve_played_audio(played_audio_sources(_turn(paths=(first,))), tmp_path / "one.wav")
+    assert one.read_bytes() == first.read_bytes()
+    multiple = preserve_played_audio(
+        played_audio_sources(_turn(paths=(first, second))), tmp_path / "multiple.wav"
+    )
+    with wave.open(str(multiple), "rb") as audio:
+        assert audio.getnframes() == 250
+
+
+def test_smoke_scope_selects_only_real_case_one():
+    selected = limited_phrases(known_name="persona de prueba", max_items=1)
+    assert selected == ("Hola Daxter, ¿qué tal estás?",)
+
+
+def test_automated_one_case_smoke_preserves_exact_played_audio(tmp_path):
+    played = tmp_path / "played.wav"
+    _wav(played, 240)
+    turn = _turn(spoken="Estoy bien y lista para ayudarte.", paths=(played,))
+
+    sources = played_audio_sources(turn)
+    preserved = preserve_played_audio(sources, tmp_path / "case_001.wav")
+
+    assert sources == (played,)
+    assert preserved.read_bytes() == played.read_bytes()
 
 
 def test_failed_turn_is_never_human_ratable():

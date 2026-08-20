@@ -8,6 +8,7 @@ from io import StringIO
 from pathlib import Path
 from time import perf_counter
 from types import SimpleNamespace
+from typing import Callable
 from uuid import uuid4
 
 from ai.context.context_manager import AIContextManager
@@ -38,7 +39,11 @@ class VoiceTurnResult:
 
 
 class ManualVoiceSession:
-    def __init__(self, *, atlas, recorder, stt, voice_service, response_pipeline=None, work_dir="runtime/voice/input") -> None:
+    def __init__(
+        self, *, atlas, recorder, stt, voice_service, response_pipeline=None,
+        work_dir="runtime/voice/input",
+        trace_callback: Callable[[str, dict[str, object]], None] | None = None,
+    ) -> None:
         self.atlas = atlas
         self.recorder = recorder
         self.stt = stt
@@ -51,6 +56,7 @@ class ManualVoiceSession:
         self.last_stt_corrections: tuple[dict[str, str], ...] = ()
         self.session_id = f"pc_voice:{uuid4().hex}"
         self.stt_policy = STTInputPolicy()
+        self.trace_callback = trace_callback
         self._ai_context = AIContextManager(
             max_messages=getattr(atlas, "ai_context_max_messages", 10)
         )
@@ -60,9 +66,12 @@ class ManualVoiceSession:
         source = self.work_dir / "manual_capture.wav"
         started = perf_counter()
         try:
+            self._emit_trace("recording", recording_path=str(source))
             self.recorder.record_on_enter(source, input_func=input_func)
             recording_ms = (perf_counter() - started) * 1000
-            return self.process_recording(source, recording_ms=recording_ms)
+            result = self.process_recording(source, recording_ms=recording_ms)
+            result.trace.setdefault("recording_path", str(source))
+            return result
         finally:
             source.unlink(missing_ok=True)
 
@@ -103,6 +112,11 @@ class ManualVoiceSession:
         self.memory.last_user_utterance = raw_transcript
         self.memory.last_raw_transcript = raw_transcript
         self.memory.last_normalized_transcript = normalized.text
+        self._emit_trace(
+            "transcription",
+            raw_transcript=raw_transcript,
+            normalized_transcript=normalized.text,
+        )
         if self.pending_transcript is not None:
             decision, immediate_response = self._resolve_transcript_confirmation(normalized.text)
             if immediate_response is not None:
@@ -163,6 +177,7 @@ class ManualVoiceSession:
             reset_request_timing(timing_token)
         ai_ms = (perf_counter() - ai_started) * 1000
         base_text = VoiceService.clean_console_text(captured.getvalue())
+        self._emit_trace("atlas", atlas_response=base_text)
         self.memory.last_base_response = base_text
         timings["atlas"] = round(ai_ms, 3)
         timings.update({f"atlas.{key}": value for key, value in atlas_timing.snapshot().items()})
@@ -187,6 +202,17 @@ class ManualVoiceSession:
             max_chars=360 if self._asks_for_brief(decision.text) else None,
         )
         self.memory.last_spoken_response = spoken_response
+        segment_planner = getattr(self.voice_service, "segments_for_text", None)
+        planned_segments = (
+            segment_planner(spoken_response)
+            if callable(segment_planner) else ((spoken_response,) if spoken_response else ())
+        )
+        self._emit_trace(
+            "speech",
+            styled_response=styled.styled_text,
+            spoken_text=spoken_response,
+            number_of_tts_segments_expected=len(planned_segments),
+        )
         timings["speech.normalize"] = round((perf_counter() - speech_started) * 1000, 3)
         tts_started = perf_counter()
         tts_stages: dict[str, float] = {}
@@ -195,6 +221,14 @@ class ManualVoiceSession:
             emotion=styled.emotion,
             intensity=styled.intensity,
             timings=tts_stages,
+        )
+        self._emit_trace(
+            "tts",
+            number_of_tts_segments_generated=len(getattr(synthesis, "segment_output_paths", ())) if synthesis else 0,
+            generated_wav_paths=[str(path) for path in getattr(synthesis, "segment_output_paths", ())] if synthesis else [],
+            playback_paths=[str(path) for path in getattr(synthesis, "segment_output_paths", ())] if synthesis else [],
+            playback_completed=getattr(synthesis, "playback_completed", None) if synthesis else None,
+            error=getattr(synthesis, "error", None) if synthesis else "empty spoken text",
         )
         timings.update({f"tts.{key}": value for key, value in tts_stages.items()})
         timings["tts_and_playback"] = round((perf_counter() - tts_started) * 1000, 3)
@@ -214,6 +248,7 @@ class ManualVoiceSession:
             "playback_duration_ms": getattr(synthesis, "playback_duration_ms", 0.0) if synthesis else 0.0,
             "playback_completed": getattr(synthesis, "playback_completed", None) if synthesis else None,
             "playback_interrupted": getattr(synthesis, "playback_interrupted", False) if synthesis else False,
+            "number_of_tts_segments_expected": len(planned_segments),
             "segments": list(getattr(synthesis, "segment_texts", ())) if synthesis else [],
             "segment_chars": list(getattr(synthesis, "segment_chars", ())) if synthesis else [],
             "segment_wav_durations_ms": list(getattr(synthesis, "segment_wav_durations_ms", ())) if synthesis else [],
@@ -232,6 +267,10 @@ class ManualVoiceSession:
             decision.text, styled.styled_text, spoken_response, running,
             synthesis, timings, error, trace,
         )
+
+    def _emit_trace(self, stage: str, **payload: object) -> None:
+        if self.trace_callback is not None:
+            self.trace_callback(stage, payload)
 
     def _has_pending_confirmation(self) -> bool:
         confirmations = getattr(self.atlas, "confirmations", None)

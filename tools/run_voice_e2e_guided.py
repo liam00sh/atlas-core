@@ -88,6 +88,88 @@ def combine_wavs(sources: tuple[Path, ...], target: Path) -> Path:
     return target
 
 
+class TurnAudioError(RuntimeError):
+    """El turno no conserva un artefacto que corresponda al playback real."""
+
+
+def played_audio_sources(result) -> tuple[Path, ...]:
+    if not str(getattr(result, "spoken_response", "") or "").strip():
+        raise TurnAudioError("El texto hablado está vacío; TTS no debía ejecutarse.")
+    synthesis = getattr(result, "synthesis", None)
+    if synthesis is None:
+        raise TurnAudioError("El turno terminó sin resultado TTS.")
+    if not synthesis.success:
+        raise TurnAudioError(f"TTS falló: {synthesis.error or 'causa no informada'}")
+    if synthesis.playback_completed is not True:
+        raise TurnAudioError(
+            f"Playback no completado: {synthesis.error or 'sin confirmación de reproducción'}"
+        )
+    sources = tuple(Path(path) for path in synthesis.segment_output_paths)
+    if not sources:
+        raise TurnAudioError(
+            "TTS y playback terminaron correctamente, pero el resultado perdió segment_output_paths."
+        )
+    missing = tuple(path for path in sources if not path.is_file())
+    if missing:
+        raise TurnAudioError(
+            "El WAV reproducido ya no existe: " + ", ".join(str(path) for path in missing)
+        )
+    return sources
+
+
+def preserve_played_audio(sources: tuple[Path, ...], target: Path) -> Path:
+    if not sources:
+        raise TurnAudioError("No hay rutas de playback que conservar.")
+    if len(sources) > 1:
+        try:
+            return combine_wavs(sources, target)
+        except (OSError, EOFError, ValueError, wave.Error) as exc:
+            raise TurnAudioError(f"No se pudieron conservar los segmentos reproducidos: {exc}") from exc
+    source = sources[0]
+    try:
+        with wave.open(str(source), "rb") as audio:
+            if audio.getnframes() <= 0:
+                raise TurnAudioError(f"El WAV reproducido está vacío: {source}")
+    except (OSError, EOFError, wave.Error) as exc:
+        raise TurnAudioError(f"El WAV reproducido no es legible: {source}") from exc
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        temporary = target.with_suffix(".tmp.wav")
+        shutil.copy2(source, temporary)
+        temporary.replace(target)
+    except OSError as exc:
+        raise TurnAudioError(f"No se pudo conservar el WAV reproducido: {exc}") from exc
+    return target
+
+
+def limited_phrases(*, known_name: str, max_items: int | None) -> tuple[str, ...]:
+    selected = phrases(known_name=known_name)
+    return selected if max_items is None else selected[:max_items]
+
+
+def print_voice_trace(stage: str, payload: dict[str, object]) -> None:
+    if stage == "recording":
+        print("Recording: " + str(payload.get("recording_path") or "[sin ruta]"))
+    elif stage == "transcription":
+        raw = str(payload.get("raw_transcript") or "")
+        normalized = str(payload.get("normalized_transcript") or "")
+        print("Tú dijiste: " + (raw or "[sin transcripción]"))
+        if normalized != raw:
+            print("Interpretado como: " + normalized)
+    elif stage == "atlas":
+        print("Atlas: " + str(payload.get("atlas_response") or "[sin respuesta]"))
+    elif stage == "speech":
+        print("Daxter: " + str(payload.get("styled_response") or "[sin respuesta]"))
+        print("Texto hablado: " + str(payload.get("spoken_text") or "[vacío]"))
+        print("Segmentos TTS esperados: " + str(payload.get("number_of_tts_segments_expected", 0)))
+    elif stage == "tts":
+        print("Segmentos TTS generados: " + str(payload.get("number_of_tts_segments_generated", 0)))
+        print("WAV generados: " + json.dumps(payload.get("generated_wav_paths", []), ensure_ascii=False))
+        print("Rutas de playback: " + json.dumps(payload.get("playback_paths", []), ensure_ascii=False))
+        if payload.get("error"):
+            print("TTS cause: " + str(payload["error"]))
+
+
 def case_payload(index: int, expected: str, result, audio_path: Path | None) -> dict:
     trace = dict(result.trace or {})
     stt_trace = dict(trace.get("stt") or {})
@@ -119,6 +201,14 @@ def case_payload(index: int, expected: str, result, audio_path: Path | None) -> 
         "playback_interrupted": getattr(synthesis, "playback_interrupted", False),
         "recoverable_error": result.recoverable_error,
         "audio_path": str(audio_path) if audio_path else None,
+        "recording_path": trace.get("recording_path"),
+        "number_of_tts_segments_expected": int(trace.get("number_of_tts_segments_expected", 0)),
+        "number_of_tts_segments_generated": len(getattr(synthesis, "segment_output_paths", ())) if synthesis else 0,
+        "generated_wav_paths": [str(path) for path in getattr(synthesis, "segment_output_paths", ())] if synthesis else [],
+        "playback_paths": [str(path) for path in getattr(synthesis, "segment_output_paths", ())] if synthesis else [],
+        "sources_passed_to_combine": [],
+        "audio_preservation_error": None,
+        "turn_status": "PENDING",
         "side_effect": None, "state_before": None, "state_after": None, "rated": False,
     }
 
@@ -260,7 +350,10 @@ def main() -> int:
     parser.add_argument("--tts-reference", type=Path)
     parser.add_argument("--preflight-only", action="store_true")
     parser.add_argument("--check-tts", action="store_true")
+    parser.add_argument("--max-items", type=int)
     args = parser.parse_args()
+    if args.max_items is not None and args.max_items < 1:
+        parser.error("--max-items debe ser mayor que cero.")
 
     tts_paths = (args.tts_python, args.tts_source, args.tts_model_dir, args.tts_reference)
     if args.check_tts:
@@ -307,8 +400,10 @@ def main() -> int:
     )
     voice_service = VoiceService(provider=provider, output_dir=args.output.parent / "e2e_tts_segments")
     atlas = build_atlas()
-    session = ManualVoiceSession(atlas=atlas, recorder=recorder, stt=stt, voice_service=voice_service,
-                                 work_dir=args.output.parent / "e2e_audio_input")
+    session = ManualVoiceSession(
+        atlas=atlas, recorder=recorder, stt=stt, voice_service=voice_service,
+        work_dir=args.output.parent / "e2e_audio_input", trace_callback=print_voice_trace,
+    )
     report = load_or_initialize(args.output, microphone=selected)
     report["preflight"] = preflight(atlas, recorder, stt_provider, voice_service)
     report["updated_at"] = datetime.now(timezone.utc).isoformat(); save(args.output, report)
@@ -329,7 +424,8 @@ def main() -> int:
     if fatal or args.preflight_only:
         session.close(); return 2 if fatal else 0
 
-    guided = phrases(known_name=args.known_name)
+    guided = limited_phrases(known_name=args.known_name, max_items=args.max_items)
+    report["run_scope"] = {"max_items": args.max_items, "planned_cases": len(guided)}
     completed_indexes = {int(case["index"]) for case in report["cases"] if case.get("rated")}
     try:
         for index, phrase in enumerate(guided, 1):
@@ -341,16 +437,29 @@ def main() -> int:
                 state_before = home_state_snapshot(atlas, phrase)
                 reminders_before = reminder_ids(atlas)
                 result = session.capture_turn(); audio_path = None
+                case = case_payload(index, phrase, result, audio_path)
+                diagnosis = diagnose_turn(atlas, case["normalized_transcript"] or phrase, pending_confirmation=pending_before)
+                case.update(diagnosis)
+                preservation_error = None
+                try:
+                    sources = played_audio_sources(result)
+                    case["sources_passed_to_combine"] = [str(path) for path in sources]
+                    print("Sources para conservar: " + json.dumps(case["sources_passed_to_combine"], ensure_ascii=False))
+                    audio_path = preserve_played_audio(
+                        sources, args.output.parent / "e2e_audio" / f"case_{index:03d}.wav"
+                    )
+                    case["audio_path"] = str(audio_path)
+                    case["turn_status"] = "READY_FOR_HUMAN_REVIEW"
+                    print("Audio: " + str(audio_path))
+                except TurnAudioError as exc:
+                    preservation_error = str(exc)
+                    case["audio_preservation_error"] = preservation_error
+                    case["turn_status"] = "ERROR"
+                    print("Turno ERROR: " + preservation_error)
                 if state_before is not None:
                     time.sleep(0.6)
                 state_after = home_state_snapshot(atlas, phrase)
                 reminders_after = reminder_ids(atlas)
-                if successful_playback(result):
-                    sources = tuple(Path(path) for path in result.synthesis.segment_output_paths)
-                    audio_path = combine_wavs(sources, args.output.parent / "e2e_audio" / f"case_{index:03d}.wav")
-                case = case_payload(index, phrase, result, audio_path)
-                diagnosis = diagnose_turn(atlas, case["normalized_transcript"] or phrase, pending_confirmation=pending_before)
-                case.update(diagnosis)
                 case["state_before"] = state_before
                 case["state_after"] = state_after
                 if state_before is not None:
@@ -369,16 +478,11 @@ def main() -> int:
                 report["cases"] = [row for row in report["cases"] if int(row["index"]) != index] + [case]
                 report["cases"].sort(key=lambda row: int(row["index"]))
                 report["updated_at"] = datetime.now(timezone.utc).isoformat(); save(args.output, report)
-                print("Tú dijiste: " + (case["raw_transcript"] or "[sin transcripción]"))
-                if case["normalized_transcript"] != case["raw_transcript"]:
-                    print("Interpretado como: " + case["normalized_transcript"])
                 print("Intent: " + str(case["intent"] or "no identificado"))
                 if case["entity"]:
                     print("Entidad: " + str(case["entity"]))
-                if case["styled_response"]:
-                    print("Daxter: " + case["styled_response"])
-                if not successful_playback(result):
-                    print("Turno no evaluable: no hubo recorrido completo con reproducción confirmada.")
+                if preservation_error is not None or not successful_playback(result):
+                    print("Turno no evaluable: " + (preservation_error or "no hubo reproducción completa."))
                     if input("[R] repetir turno / [Q] guardar y salir: ").strip().casefold() == "q":
                         return 0
                     continue
@@ -393,8 +497,14 @@ def main() -> int:
                         collect_human_evaluation(case)
                         save(args.output, report); break
                 if case.get("rated"): break
-        report["completed"] = all(any(int(case["index"]) == index and case.get("rated") for case in report["cases"])
-                                  for index in range(1, len(guided) + 1))
+        scope_completed = all(
+            any(int(case["index"]) == index and case.get("rated") for case in report["cases"])
+            for index in range(1, len(guided) + 1)
+        )
+        report["scope_completed"] = scope_completed
+        report["completed"] = bool(
+            scope_completed and len(guided) == len(phrases(known_name=args.known_name))
+        )
         report["updated_at"] = datetime.now(timezone.utc).isoformat(); save(args.output, report)
     finally:
         session.close()

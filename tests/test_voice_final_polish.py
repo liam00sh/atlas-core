@@ -4,6 +4,7 @@ from pathlib import Path
 from types import SimpleNamespace
 import json
 import sys
+import wave
 
 from ai.prompts.system_prompt import BASE_SYSTEM_PROMPT
 from automation.home_intent_resolver import HomeIntentResolver
@@ -257,4 +258,56 @@ def test_voice_service_exposes_synthesis_and_blocking_playback_completion(tmp_pa
     assert result.wav_duration_ms == 1000.0
     assert result.playback_completed is True
     assert result.playback_interrupted is False
+    assert result.segment_texts == ("Respuesta completa.",)
+    assert result.segment_output_paths == (result.output_path,)
     assert timings["playback_completed"] is True
+
+
+def test_segmented_service_preserves_every_generated_playback_path(tmp_path):
+    class Provider:
+        provider_id = "kokoro"
+
+        def is_available(self):
+            return True
+
+        def supports_voice(self, voice_id):
+            return voice_id == "em_alex"
+
+        def synthesize(self, request):
+            request.output_path.parent.mkdir(parents=True, exist_ok=True)
+            with wave.open(str(request.output_path), "wb") as audio:
+                audio.setnchannels(1); audio.setsampwidth(2); audio.setframerate(24000)
+                audio.writeframes(b"\x00\x00" * 240)
+            return SynthesisResult(
+                True, request.output_path, request.voice_id, self.provider_id,
+                chars_synthesized=len(request.text), synthesized_samples=240,
+                wav_duration_ms=10.0,
+            )
+
+    class Player:
+        last_playback_duration_ms = 10.0
+        last_playback_completed = True
+        last_playback_interrupted = False
+
+        def is_available(self):
+            return True
+
+        def play(self, path):
+            return path.is_file()
+
+        def stop(self):
+            pass
+
+    service = VoiceService(provider=Provider(), player=Player(), output_dir=tmp_path)
+    text = ("Primera respuesta suficientemente clara. " * 8).strip() + " Segunda parte final."
+    try:
+        result = service.speak_segmented(
+            text, identity=AssistantIdentity.DAXTER, requested_voice_id="daxter_alex"
+        )
+    finally:
+        service.close()
+
+    assert result.success is True and result.playback_completed is True
+    assert result.segment_count == len(result.segment_texts) >= 2
+    assert len(result.segment_output_paths) == result.segment_count
+    assert all(path.is_file() for path in result.segment_output_paths)

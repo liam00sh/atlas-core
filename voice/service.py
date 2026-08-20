@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from pathlib import Path
 import re
 import time
@@ -120,6 +121,10 @@ class VoiceService:
                 chars_synthesized=raw.chars_synthesized,
                 synthesized_samples=raw.synthesized_samples,
                 wav_duration_ms=raw.wav_duration_ms,
+                segment_count=1,
+                segment_texts=(clean_text,),
+                segment_chars=(len(clean_text),),
+                segment_wav_durations_ms=(raw.wav_duration_ms,),
                 segment_output_paths=(raw.output_path,) if raw.output_path else (),
             )
             timings["spoken_chars"] = result.chars_sent_to_tts
@@ -137,23 +142,10 @@ class VoiceService:
                     timings["playback_duration_ms"] = elapsed_ms
                     timings["playback_completed"] = False
                     timings["playback_interrupted"] = False
-                    return SynthesisResult(
+                    return replace(
+                        result,
                         success=False,
-                        output_path=result.output_path,
-                        voice_id=result.voice_id,
-                        provider_id=result.provider_id,
                         error="No se pudo reproducir el WAV.",
-                        requested_voice_id=requested,
-                        fallback_used=result.fallback_used,
-                        selection_reason=result.selection_reason,
-                        cache_hit=result.cache_hit,
-                        latency_ms=result.latency_ms,
-                        emotion=result.emotion,
-                        intensity=result.intensity,
-                        chars_sent_to_tts=result.chars_sent_to_tts,
-                        chars_synthesized=result.chars_synthesized,
-                        synthesized_samples=result.synthesized_samples,
-                        wav_duration_ms=result.wav_duration_ms,
                         playback_duration_ms=elapsed_ms,
                         playback_completed=False,
                     )
@@ -176,23 +168,8 @@ class VoiceService:
                 timings["playback_duration_ms"] = playback_duration_ms
                 timings["playback_completed"] = playback_completed
                 timings["playback_interrupted"] = playback_interrupted
-                result = SynthesisResult(
-                    success=result.success,
-                    output_path=result.output_path,
-                    voice_id=result.voice_id,
-                    provider_id=result.provider_id,
-                    error=result.error,
-                    requested_voice_id=result.requested_voice_id,
-                    fallback_used=result.fallback_used,
-                    selection_reason=result.selection_reason,
-                    cache_hit=result.cache_hit,
-                    latency_ms=result.latency_ms,
-                    emotion=result.emotion,
-                    intensity=result.intensity,
-                    chars_sent_to_tts=result.chars_sent_to_tts,
-                    chars_synthesized=result.chars_synthesized,
-                    synthesized_samples=result.synthesized_samples,
-                    wav_duration_ms=result.wav_duration_ms,
+                result = replace(
+                    result,
                     playback_duration_ms=playback_duration_ms,
                     playback_completed=playback_completed,
                     playback_interrupted=playback_interrupted,
@@ -208,7 +185,7 @@ class VoiceService:
 
     def speak_segmented(self, text: str, **kwargs) -> SynthesisResult:
         """Sintetiza N+1 mientras la cola reproduce N, conservando el orden."""
-        segments = split_for_speech(self.clean_console_text(text))
+        segments = self.segments_for_text(text)
         if len(segments) <= 1:
             return self.speak(text, **kwargs)
         results: list[SynthesisResult] = []
@@ -252,6 +229,10 @@ class VoiceService:
                 path for item in results for path in item.segment_output_paths
             ),
         )
+
+    @staticmethod
+    def segments_for_text(text: str) -> tuple[str, ...]:
+        return split_for_speech(VoiceService.clean_console_text(text))
 
     def _is_voice_available(self, definition) -> bool:
         provider = self.providers.get(definition.provider_id)
