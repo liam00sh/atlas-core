@@ -51,6 +51,17 @@ def test_core_reminder_parser_accepts_acuerdame():
     assert result.message == "revisar Atlas"
 
 
+def test_core_reminder_parser_accepts_human_e2e_word_order():
+    parser = CorePersonalReminderParser("UTC")
+    now = datetime.fromisoformat("2026-08-21T05:00:00+00:00")
+    result = parser.parse(
+        "Recuérdame mañana que a las 18.30 revise Atlas", now=now
+    )
+    assert result is not None
+    assert result.message == "revise Atlas"
+    assert result.due_at_utc.isoformat().startswith("2026-08-22T18:30:00")
+
+
 def test_personal_lists(tmp_path):
     service = PersonalListService(DailyLifeStorage(tmp_path / "daily.json"))
     assert service.create("REDACTED_2c7b6821719d", "farmacia")

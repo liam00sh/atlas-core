@@ -965,6 +965,15 @@ class Atlas(AtlasAIMixin,
         if self._handle_self_knowledge(original_text):
             return True
 
+        # Las peticiones sociales dirigidas (p. ej. «Saluda a Lidia») deben
+        # conservar su destinatario antes del emparejamiento difuso del
+        # catálogo, que también contiene el comando genérico «saludar».
+        if re.match(
+            r"^(?:saluda(?:la|lo)?|saludale|dile hola|presentate(?:\s+a)?)\b",
+            normalize_text(original_text),
+        ) and self._handle_social_conversation(original_text):
+            return True
+
         # Los comandos simples y la ayuda deben resolverse antes de los
         # manejadores conversacionales. De lo contrario, palabras como «ayuda»
         # pueden ser absorbidas por la conversación general y no ejecutar el

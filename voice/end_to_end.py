@@ -253,6 +253,10 @@ class ManualVoiceSession:
             "segment_chars": list(getattr(synthesis, "segment_chars", ())) if synthesis else [],
             "segment_wav_durations_ms": list(getattr(synthesis, "segment_wav_durations_ms", ())) if synthesis else [],
             "segment_output_paths": [str(path) for path in getattr(synthesis, "segment_output_paths", ())] if synthesis else [],
+            "generation_tokens_budgeted": getattr(synthesis, "generation_tokens_budgeted", 0) if synthesis else 0,
+            "generation_tokens_used": getattr(synthesis, "generation_tokens_used", 0) if synthesis else 0,
+            "reached_generation_limit": getattr(synthesis, "reached_generation_limit", False) if synthesis else False,
+            "generation_units": list(getattr(synthesis, "generation_units", ())) if synthesis else [],
             "confirmation_state": self._confirmation_state().value,
             "conversation_memory": self.memory.public_trace(),
             "stt": {

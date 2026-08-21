@@ -126,6 +126,10 @@ class VoiceService:
                 segment_chars=(len(clean_text),),
                 segment_wav_durations_ms=(raw.wav_duration_ms,),
                 segment_output_paths=(raw.output_path,) if raw.output_path else (),
+                generation_tokens_budgeted=raw.generation_tokens_budgeted,
+                generation_tokens_used=raw.generation_tokens_used,
+                reached_generation_limit=raw.reached_generation_limit,
+                generation_units=raw.generation_units,
             )
             timings["spoken_chars"] = result.chars_sent_to_tts
             timings["chars_synthesized"] = result.chars_synthesized
@@ -227,6 +231,12 @@ class VoiceService:
             segment_wav_durations_ms=tuple(item.wav_duration_ms for item in results),
             segment_output_paths=tuple(
                 path for item in results for path in item.segment_output_paths
+            ),
+            generation_tokens_budgeted=sum(item.generation_tokens_budgeted for item in results),
+            generation_tokens_used=sum(item.generation_tokens_used for item in results),
+            reached_generation_limit=any(item.reached_generation_limit for item in results),
+            generation_units=tuple(
+                unit for item in results for unit in item.generation_units
             ),
         )
 

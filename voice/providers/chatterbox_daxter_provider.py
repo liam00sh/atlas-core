@@ -43,6 +43,9 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         candidate: str | None = None,
         source_path: Path | None = None,
         model_dir: Path | None = None,
+        generation_policy: dict[str, object] | None = None,
+        diagnostic_raw_dir: Path | None = None,
+        cache_enabled: bool = True,
     ) -> None:
         root = Path(__file__).resolve().parents[2]
         self.profile_path = Path(profile_path or root / "voice_profiles" / "daxter_es_jak2.json")
@@ -83,10 +86,17 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "trim_start": False,
             "trim_end": True,
             "threshold": 0.0005,
-            "end_padding_ms": 80,
+            "end_padding_ms": 200,
             "ensure_end_padding": True,
+            "pre_roll_ms": 40,
             "fade_ms": 5,
         })
+        self.generation_policy = dict(generation_policy or {
+            "floor": 120, "ceiling": 260, "tokens_per_char": 2.0,
+            "punctuation_bonus": 4, "digit_bonus": 2,
+        })
+        self.diagnostic_raw_dir = Path(diagnostic_raw_dir) if diagnostic_raw_dir else None
+        self.cache_enabled = bool(cache_enabled)
         self._process: subprocess.Popen[str] | None = None
         self._lock = threading.RLock()
         self.last_worker_diagnostics: dict[str, object] = {}
@@ -116,8 +126,9 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "emotion": request.emotion,
             "intensity": request.intensity,
             "profile_version": request.profile_version,
-            "synthesis_version": "semantic-units-v2",
+            "synthesis_version": "complete-boundaries-v1",
             "postprocess_version": self.postprocess_options if self.postprocess else "none",
+            "generation_policy": self.generation_policy,
             "candidate": self.candidate,
             "model_revision": self.model_dir.name if self.model_dir else "bundled",
         }
@@ -160,16 +171,26 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         key = self._cache_key(request)
         cached = self.cache_dir / f"{key}.wav"
         request.output_path.parent.mkdir(parents=True, exist_ok=True)
-        if self._valid_wav(cached):
+        cache_metadata = cached.with_suffix(".json")
+        if self.cache_enabled and self._valid_wav(cached):
             shutil.copy2(cached, request.output_path)
             samples, duration_ms = self._wav_metrics(request.output_path)
             logger.info("TTS Chatterbox cache hit candidate=%s key=%s", self.candidate, key[:12])
+            metadata = {}
+            try:
+                metadata = json.loads(cache_metadata.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                pass
             return SynthesisResult(
                 True, request.output_path, request.voice_id, self.provider_id,
                 cache_hit=True, latency_ms=round((perf_counter() - started) * 1000, 3),
                 emotion=request.emotion, intensity=request.intensity,
                 chars_sent_to_tts=len(request.text), chars_synthesized=len(request.text),
                 synthesized_samples=samples, wav_duration_ms=duration_ms,
+                generation_tokens_budgeted=int(metadata.get("generation_tokens_budgeted", 0)),
+                generation_tokens_used=int(metadata.get("generation_tokens_used", 0)),
+                reached_generation_limit=bool(metadata.get("reached_generation_limit", False)),
+                generation_units=tuple(metadata.get("generation_units") or ()),
             )
 
         payload = {
@@ -183,7 +204,12 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "seed": self._generation_seed(request),
             "postprocess": self.postprocess,
             "postprocess_options": self.postprocess_options,
+            "generation_policy": self.generation_policy,
         }
+        if self.diagnostic_raw_dir is not None:
+            payload["diagnostic_raw_output_path"] = str(
+                (self.diagnostic_raw_dir / request.output_path.name).resolve()
+            )
         try:
             response = self._request_worker(payload)
         except (OSError, RuntimeError, TimeoutError) as exc:
@@ -194,10 +220,17 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         if not response.get("success") or not self._valid_wav(request.output_path):
             request.output_path.unlink(missing_ok=True)
             return SynthesisResult(False, None, request.voice_id, self.provider_id, str(response.get("error") or "Chatterbox no generó un WAV válido."))
-        self.cache_dir.mkdir(parents=True, exist_ok=True)
-        temporary = self.cache_dir / f".{key}.{os.getpid()}.tmp"
-        shutil.copy2(request.output_path, temporary)
-        temporary.replace(cached)
+        if self.cache_enabled:
+            self.cache_dir.mkdir(parents=True, exist_ok=True)
+            temporary = self.cache_dir / f".{key}.{os.getpid()}.tmp"
+            shutil.copy2(request.output_path, temporary)
+            temporary.replace(cached)
+            cache_metadata.write_text(json.dumps({
+                "generation_tokens_budgeted": response.get("generation_tokens_budgeted", 0),
+                "generation_tokens_used": response.get("generation_tokens_used", 0),
+                "reached_generation_limit": response.get("reached_generation_limit", False),
+                "generation_units": response.get("generation_units") or [],
+            }, ensure_ascii=False), encoding="utf-8")
         samples, duration_ms = self._wav_metrics(request.output_path)
         logger.info("TTS Chatterbox generated candidate=%s key=%s latency_ms=%.3f", self.candidate, key[:12], (perf_counter() - started) * 1000)
         return SynthesisResult(
@@ -208,6 +241,10 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             chars_synthesized=int(response.get("chars_synthesized", len(request.text))),
             synthesized_samples=int(response.get("synthesized_samples", samples)),
             wav_duration_ms=float(response.get("wav_duration_ms", duration_ms)),
+            generation_tokens_budgeted=int(response.get("generation_tokens_budgeted", 0)),
+            generation_tokens_used=int(response.get("generation_tokens_used", 0)),
+            reached_generation_limit=bool(response.get("reached_generation_limit", False)),
+            generation_units=tuple(response.get("generation_units") or ()),
         )
 
     def _request_worker(self, payload: dict) -> dict:

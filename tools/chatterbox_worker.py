@@ -93,6 +93,23 @@ def _split_tts_units(text: str, *, max_chars: int = 220) -> list[str]:
     return units or [text.strip()]
 
 
+def generation_budget(text: str, policy: dict | None = None) -> int:
+    """Presupuesta voz a 25 tokens/s sin volver al techo abierto de 1000."""
+    policy = dict(policy or {})
+    fixed = policy.get("fixed_max_new_tokens")
+    if fixed is not None:
+        return max(1, int(fixed))
+    floor = max(1, int(policy.get("floor", 120)))
+    ceiling = max(floor, int(policy.get("ceiling", 260)))
+    tokens_per_char = max(0.1, float(policy.get("tokens_per_char", 2.0)))
+    punctuation_bonus = max(0, int(policy.get("punctuation_bonus", 4)))
+    digit_bonus = max(0, int(policy.get("digit_bonus", 2)))
+    punctuation = sum(text.count(mark) for mark in ".,;:!?¡¿")
+    digits = sum(ch.isdigit() for ch in text)
+    estimated = round(len(text) * tokens_per_char) + punctuation * punctuation_bonus + digits * digit_bonus
+    return min(ceiling, max(floor, estimated))
+
+
 def _trim_and_fade(audio, sample_rate: int, options: dict | None = None):
     """Conservatively protect phonemes and only fade inside retained padding."""
     import torch
@@ -104,6 +121,7 @@ def _trim_and_fade(audio, sample_rate: int, options: dict | None = None):
     start_padding = int(sample_rate * max(0.0, float(options.get("start_padding_ms", 80))) / 1000)
     end_padding = int(sample_rate * max(0.0, float(options.get("end_padding_ms", 80))) / 1000)
     ensure_end_padding = bool(options.get("ensure_end_padding", True))
+    pre_roll = int(sample_rate * max(0.0, float(options.get("pre_roll_ms", 0))) / 1000)
     fade_ms = max(0.0, float(options.get("fade_ms", 5)))
     if audio.ndim == 1:
         audio = audio.unsqueeze(0)
@@ -120,6 +138,11 @@ def _trim_and_fade(audio, sample_rate: int, options: dict | None = None):
                 (audio, torch.zeros((audio.shape[0], missing), device=audio.device)),
                 dim=-1,
             )
+    if pre_roll:
+        audio = torch.cat(
+            (torch.zeros((audio.shape[0], pre_roll), device=audio.device), audio),
+            dim=-1,
+        )
     fade = min(int(sample_rate * fade_ms / 1000), audio.shape[-1] // 2)
     if fade > 1:
         audio[:, :fade] *= torch.linspace(0.0, 1.0, fade, device=audio.device)
@@ -161,6 +184,7 @@ def synthesize(payload: dict) -> dict:
     normalized_text = adapter.normalize_text(payload["text"])
     units = _split_tts_units(normalized_text)
     generated = []
+    generation_units = []
     for index, unit in enumerate(units):
         unit_seed = seed + index
         random.seed(unit_seed)
@@ -170,8 +194,14 @@ def synthesize(payload: dict) -> dict:
             torch.cuda.manual_seed_all(unit_seed)
         kwargs = generation_controls(controls, payload["reference_path"])
         if _CANDIDATE == "es_es":
-            _MODEL._atlas_max_new_tokens = min(110, max(90, round(len(unit) * 1.5)))
+            _MODEL._atlas_max_new_tokens = generation_budget(
+                unit, payload.get("generation_policy")
+            )
+            _MODEL._atlas_last_generation = None
         generated.append(_MODEL.generate(unit, **kwargs))
+        metrics = dict(getattr(_MODEL, "_atlas_last_generation", None) or {})
+        metrics.update({"unit_index": index, "chars": len(unit)})
+        generation_units.append(metrics)
     gap = torch.zeros((generated[0].shape[0], int(_MODEL.sr * 0.06)), device=generated[0].device)
     parts = []
     for index, item in enumerate(generated):
@@ -179,6 +209,11 @@ def synthesize(payload: dict) -> dict:
             parts.append(gap)
         parts.append(item)
     audio = torch.cat(parts, dim=-1)
+    raw_output = payload.get("diagnostic_raw_output_path")
+    if raw_output:
+        raw_path = Path(str(raw_output))
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        torchaudio.save(str(raw_path), audio.cpu(), _MODEL.sr, encoding="PCM_S", bits_per_sample=16)
     if payload.get("postprocess", True):
         audio = _trim_and_fade(audio, _MODEL.sr, payload.get("postprocess_options"))
     torchaudio.save(str(output), audio.cpu(), _MODEL.sr, encoding="PCM_S", bits_per_sample=16)
@@ -190,6 +225,10 @@ def synthesize(payload: dict) -> dict:
         "synthesized_samples": int(audio.shape[-1]),
         "wav_duration_ms": round(audio.shape[-1] / _MODEL.sr * 1000, 3),
         "tts_units": len(units),
+        "generation_units": generation_units,
+        "generation_tokens_budgeted": sum(int(item.get("tokens_budgeted", 0)) for item in generation_units),
+        "generation_tokens_used": sum(int(item.get("tokens_used", 0)) for item in generation_units),
+        "reached_generation_limit": any(bool(item.get("reached_generation_limit")) for item in generation_units),
         "runtime": {
             "python": sys.executable,
             "source": str(Path(os.environ.get("ATLAS_CHATTERBOX_SOURCE", "")).resolve()),

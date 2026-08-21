@@ -11,9 +11,10 @@ from automation.home_intent_resolver import HomeIntentResolver
 from automation.home_intent_service import HomeIntentService
 from conversation.daxter_personality import PersonalityStrength
 from conversation.response_pipeline import DaxterResponsePipeline
-from tools.chatterbox_worker import _split_tts_units, generation_controls
+from tools.chatterbox_worker import _split_tts_units, generation_budget, generation_controls
 from voice.models import AssistantIdentity, SynthesisRequest, SynthesisResult
 from voice.providers.chatterbox_daxter_provider import ChatterboxDaxterProvider
+from voice.segmentation import split_for_speech
 from voice.providers.chatterbox_style_adapter import ChatterboxStyleAdapter
 from voice.stt import STTConfidence, STTResult, contextual_hotwords
 from voice.stt_policy import STTDecisionKind, STTInputPolicy, STTIntentContext
@@ -311,3 +312,15 @@ def test_segmented_service_preserves_every_generated_playback_path(tmp_path):
     assert result.segment_count == len(result.segment_texts) >= 2
     assert len(result.segment_output_paths) == result.segment_count
     assert all(path.is_file() for path in result.segment_output_paths)
+def test_generation_budget_grows_and_remains_bounded():
+    assert generation_budget("Hola") == 120
+    assert generation_budget("x" * 90) == 180
+    assert generation_budget("x" * 300) == 260
+    assert generation_budget("texto", {"fixed_max_new_tokens": 160}) == 160
+
+
+def test_default_semantic_segmentation_uses_shorter_complete_units():
+    text = "Primera frase completa y natural. " * 8
+    segments = split_for_speech(text)
+    assert len(segments) > 1
+    assert all(len(segment) <= 120 for segment in segments)

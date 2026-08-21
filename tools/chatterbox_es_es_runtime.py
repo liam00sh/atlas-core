@@ -66,8 +66,16 @@ def cap_generation(model) -> None:
 
     def bounded(*args, **kwargs):
         limit = int(getattr(model, "_atlas_max_new_tokens", 300))
-        kwargs["max_new_tokens"] = min(int(kwargs.get("max_new_tokens", limit)), limit)
-        return original(*args, **kwargs)
+        applied = min(int(kwargs.get("max_new_tokens", limit)), limit)
+        kwargs["max_new_tokens"] = applied
+        result = original(*args, **kwargs)
+        used = int(result.shape[-1])
+        model._atlas_last_generation = {
+            "tokens_budgeted": applied,
+            "tokens_used": used,
+            "reached_generation_limit": used >= applied,
+        }
+        return result
 
     model.t3.inference = bounded
 

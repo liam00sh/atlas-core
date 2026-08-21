@@ -91,6 +91,7 @@ CONFIRMATION_ACCEPTED = {
     "continua",
     "continúa",
     "hazlo",
+    "confirmo reiniciar telegram",
 }
 
 CONFIRMATION_CANCELLED = {
@@ -377,6 +378,11 @@ class AtlasToolsMixin:
                     or "No he podido completar la acción doméstica."
                 )
             return True
+
+        if action_type == "telegram_restart":
+            from commands.restart_telegram import execute_confirmed
+
+            return execute_confirmed()
 
         if action_type != "tool":
 

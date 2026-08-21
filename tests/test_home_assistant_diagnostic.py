@@ -18,3 +18,4 @@ def test_alias_and_all_required_delays_are_used_even_if_state_matches():
     result = sample_after_service(client, resolved["entity_id"], "turn_on", sleep=lambda _: None)
     assert client.calls == [("switch", "turn_on", resolved["entity_id"])]
     assert [row["delay_seconds"] for row in result["api_samples"]] == list(DELAYS)
+    assert DELAYS == (0.0, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 15.0, 30.0)

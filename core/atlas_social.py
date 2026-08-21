@@ -709,7 +709,7 @@ class AtlasSocialMixin:
             original_text.casefold(),
         )
         direct_match = re.search(
-            r"^(?:saluda(?:la|lo)?|saludale|dile hola|presentate a)\s+"
+            r"^(?P<action>saluda(?:la|lo)?|saludale|dile hola|presentate)(?:\s+a)?\s+"
             r"(?P<name>[a-záéíóúüñ][a-záéíóúüñ -]{1,50})$",
             original_text.casefold().strip(),
         )

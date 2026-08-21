@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 
 
-def split_for_speech(text: str, *, max_chars: int = 280) -> tuple[str, ...]:
+def split_for_speech(text: str, *, max_chars: int = 120) -> tuple[str, ...]:
     value = " ".join(str(text).split()).strip()
     if not value:
         return ()

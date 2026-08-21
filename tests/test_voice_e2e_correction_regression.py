@@ -15,6 +15,7 @@ from core.atlas_ai import AtlasAIMixin
 from core.atlas_family import AtlasFamilyMixin
 from core.atlas_daily import AtlasDailyMixin, PersonalReminderParser
 from core.atlas_tools import CONFIRMATION_CANCELLED
+from core.atlas_social import AtlasSocialMixin
 
 
 class _Context:
@@ -145,3 +146,29 @@ def test_voice_reminder_accepts_acuerdame_variant():
     parsed = parser.parse("acuérdame mañana a las 18:30 revisar Atlas")
     assert parsed is not None
     assert parsed.message == "revisar Atlas"
+
+
+def test_directed_greeting_keeps_the_person_name(capsys):
+    class People:
+        @staticmethod
+        def find_people_by_name(_name):
+            return []
+
+    class Guests:
+        pending = None
+
+        def set_pending_guest(self, name):
+            self.pending = name
+
+    class Social(AtlasSocialMixin):
+        people_manager = People()
+        guest_sessions = Guests()
+
+        @staticmethod
+        def _handle_friend_fact_conversation(_text):
+            return False
+
+    social = Social()
+    assert social._handle_social_conversation("Saluda a Lidia") is True
+    assert "Hola, Lidia" in capsys.readouterr().out
+    assert social.guest_sessions.pending == "Lidia"

@@ -264,7 +264,7 @@ class PersonalReminderParser:
             return PersonalReminder(body[:1500], (current + delta).astimezone(UTC))
 
         absolute = re.match(
-            r"^(?:(hoy|manana)\s+)?(?:a\s+)?(?:las\s+)?([0-2]?\d)(?:(?::|\.)([0-5]\d))?\s*(?:h|horas?)?\s+(?:de\s+)?(?:que\s+)?(.+)$",
+            r"^(?:(hoy|manana)\s+(?:que\s+)?)?(?:a\s+)?(?:las\s+)?([0-2]?\d)(?:(?::|\.)([0-5]\d))?\s*(?:h|horas?)?\s+(?:de\s+)?(?:que\s+)?(.+)$",
             tail_plain,
         )
         if not absolute:

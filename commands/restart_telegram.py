@@ -60,22 +60,28 @@ def _start_restart_script() -> None:
     )
 
 
-def _is_confirmed() -> bool:
-    atlas = getattr(context, "atlas", None)
-    text = str(getattr(atlas, "last_original_text", "")).strip().casefold()
-    return text in _CONFIRMATIONS
-
-
 def execute():
     if not require_admin_user():
         return True
 
-    if not _is_confirmed():
-        print()
-        print("Este reinicio afecta al bot de Telegram y requiere confirmación reforzada.")
-        print("Escribe exactamente: confirmo reiniciar telegram")
+    atlas = getattr(context, "atlas", None)
+    if atlas is None or not hasattr(atlas, "confirmations"):
+        print("No puedo registrar de forma segura la confirmación del reinicio.")
         return True
+    atlas.confirmations.create_confirmation(
+        user=atlas.get_user(),
+        action_type="telegram_restart",
+        action_name="reiniciar Telegram",
+        arguments={},
+        dangerous=True,
+    )
+    print()
+    print("Este reinicio afecta al bot de Telegram y requiere confirmación reforzada.")
+    print("Escribe exactamente: confirmo reiniciar telegram, o cancelar para dejarlo como está.")
+    return True
 
+
+def execute_confirmed():
     print()
     print("De acuerdo. Voy a reiniciar únicamente el bot de Telegram.")
     print("El supervisor lo levantará de nuevo en unos segundos.")

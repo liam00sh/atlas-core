@@ -68,4 +68,8 @@ class SynthesisResult:
     segment_chars: tuple[int, ...] = ()
     segment_wav_durations_ms: tuple[float, ...] = ()
     segment_output_paths: tuple[Path, ...] = ()
+    generation_tokens_budgeted: int = 0
+    generation_tokens_used: int = 0
+    reached_generation_limit: bool = False
+    generation_units: tuple[Mapping[str, object], ...] = ()
     playback_ticket: object | None = None

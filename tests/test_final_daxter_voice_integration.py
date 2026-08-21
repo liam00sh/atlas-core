@@ -80,7 +80,13 @@ class _FakeChatterbox(ChatterboxDaxterProvider):
     def _request_worker(self, payload: dict) -> dict:
         self.calls += 1
         _write_wav(Path(payload["output_path"]))
-        return {"success": True}
+        return {
+            "success": True,
+            "generation_tokens_budgeted": 150,
+            "generation_tokens_used": 90,
+            "reached_generation_limit": False,
+            "generation_units": [{"tokens_budgeted": 150, "tokens_used": 90}],
+        }
 
 
 def test_chatterbox_cache_key_and_reuse_include_emotion_and_profile(tmp_path):
@@ -107,6 +113,9 @@ def test_chatterbox_cache_key_and_reuse_include_emotion_and_profile(tmp_path):
     assert second.success and second.cache_hit
     assert third.success and not third.cache_hit
     assert provider.calls == 2
+    assert first.generation_tokens_budgeted == second.generation_tokens_budgeted == 150
+    assert first.generation_tokens_used == second.generation_tokens_used == 90
+    assert second.generation_units[0]["tokens_used"] == 90
 
 
 class _Atlas:
