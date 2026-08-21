@@ -39,3 +39,19 @@ para la valoración, una clave ciega separada y un manifiesto técnico. Ninguno 
 privados se versiona.
 
 La Fase 6 permanece abierta hasta que la mini prueba ciega acepte una variante TTS.
+
+## Configuración final congelada
+
+La puerta humana de límites TTS acepta el candidato completo. La configuración productiva queda
+congelada como `FINAL TTS CANDIDATE ACCEPTED`:
+
+- presupuesto dinámico de 120–260 tokens por unidad;
+- segmentación semántica de hasta 120 caracteres;
+- pre-roll de 40 ms;
+- margen final de 200 ms;
+- `language=es`, `exaggeration=0.45`, `cfg_weight=0.35` y `temperature=0.8`;
+- referencia `reference_daxter_jak2_diverse.wav`.
+
+La pronunciación de `Home` permanece como limitación separada y no activa ninguna sustitución
+fonética global. La puerta TTS queda aceptada, pero la Fase 6 continúa abierta por la
+desincronización reproducida de Home Assistant.

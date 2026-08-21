@@ -82,7 +82,10 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
         self.cache_dir = Path(cache_dir or os.getenv("ATLAS_TTS_CACHE_DIR", root / "runtime" / "voice" / "cache"))
         self.timeout_seconds = timeout_seconds
         self.postprocess = bool(postprocess)
-        self.postprocess_options = dict(postprocess_options or {
+        accepted_boundary = dict(self.profile.get("final_boundary_policy") or {})
+        accepted_postprocess = dict(accepted_boundary.get("postprocess") or {})
+        accepted_generation = dict(accepted_boundary.get("generation_policy") or {})
+        self.postprocess_options = dict(postprocess_options or accepted_postprocess or {
             "trim_start": False,
             "trim_end": True,
             "threshold": 0.0005,
@@ -91,7 +94,7 @@ class ChatterboxDaxterProvider(BaseTTSProvider):
             "pre_roll_ms": 40,
             "fade_ms": 5,
         })
-        self.generation_policy = dict(generation_policy or {
+        self.generation_policy = dict(generation_policy or accepted_generation or {
             "floor": 120, "ceiling": 260, "tokens_per_char": 2.0,
             "punctuation_bonus": 4, "digit_bonus": 2,
         })

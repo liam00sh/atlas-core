@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import re
 
+DEFAULT_MAX_SPEECH_CHARS = 120
 
-def split_for_speech(text: str, *, max_chars: int = 120) -> tuple[str, ...]:
+
+def split_for_speech(
+    text: str, *, max_chars: int = DEFAULT_MAX_SPEECH_CHARS
+) -> tuple[str, ...]:
     value = " ".join(str(text).split()).strip()
     if not value:
         return ()

@@ -6,6 +6,8 @@ import json
 import sys
 import wave
 
+import pytest
+
 from ai.prompts.system_prompt import BASE_SYSTEM_PROMPT
 from automation.home_intent_resolver import HomeIntentResolver
 from automation.home_intent_service import HomeIntentService
@@ -14,7 +16,7 @@ from conversation.response_pipeline import DaxterResponsePipeline
 from tools.chatterbox_worker import _split_tts_units, generation_budget, generation_controls
 from voice.models import AssistantIdentity, SynthesisRequest, SynthesisResult
 from voice.providers.chatterbox_daxter_provider import ChatterboxDaxterProvider
-from voice.segmentation import split_for_speech
+from voice.segmentation import DEFAULT_MAX_SPEECH_CHARS, split_for_speech
 from voice.providers.chatterbox_style_adapter import ChatterboxStyleAdapter
 from voice.stt import STTConfidence, STTResult, contextual_hotwords
 from voice.stt_policy import STTDecisionKind, STTInputPolicy, STTIntentContext
@@ -324,3 +326,37 @@ def test_default_semantic_segmentation_uses_shorter_complete_units():
     segments = split_for_speech(text)
     assert len(segments) > 1
     assert all(len(segment) <= 120 for segment in segments)
+
+
+def test_accepted_boundary_policy_preserves_first_and_last_phoneme_samples():
+    torch = pytest.importorskip("torch")
+    from tools.chatterbox_worker import _trim_and_fade
+
+    original = torch.ones((1, 1000))
+    output = _trim_and_fade(original.clone(), 1000, {
+        "trim_start": False,
+        "trim_end": True,
+        "threshold": 0.0005,
+        "end_padding_ms": 200,
+        "ensure_end_padding": True,
+        "pre_roll_ms": 40,
+        "fade_ms": 5,
+    })
+    assert output.shape[-1] == 1240
+    assert torch.count_nonzero(output[:, :40]) == 0
+    assert torch.equal(output[:, 40:1040], original)
+    assert torch.count_nonzero(output[:, 1040:]) == 0
+
+
+def test_final_profile_freezes_human_accepted_boundary_policy():
+    profile_path = Path(__file__).resolve().parents[1] / "voice_profiles" / "daxter_es_jak2.json"
+    if not profile_path.is_file():
+        pytest.skip("El checkout público excluye el perfil privado de voz.")
+    profile = json.loads(profile_path.read_text(encoding="utf-8"))
+    policy = profile["final_boundary_policy"]
+    assert profile["status"] == "final_tts_candidate_accepted"
+    assert policy["generation_policy"]["floor"] == 120
+    assert policy["generation_policy"]["ceiling"] == 260
+    assert policy["segmentation_max_chars"] == DEFAULT_MAX_SPEECH_CHARS == 120
+    assert policy["postprocess"]["pre_roll_ms"] == 40
+    assert policy["postprocess"]["end_padding_ms"] == 200
