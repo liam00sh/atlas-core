@@ -110,7 +110,7 @@ def audit(source: Path, retries: tuple[int, ...]) -> dict[str, object]:
 
 
 def markdown(report: dict[str, object]) -> str:
-    return "\n".join((
+    lines = [
         "# Auditoría final E2E de voz",
         "",
         f"- Ejecución: {report['case_count']}/13 casos; {report['rated_cases']} valorados.",
@@ -135,7 +135,19 @@ def markdown(report: dict[str, object]) -> str:
         "Docker falló de forma segura por ausencia del ejecutable. Home Assistant reprodujo en ON la "
         "desincronización física/Tuya frente a UI/API; OFF fue coherente.",
         "",
-    ))
+    ]
+    lab = report.get("targeted_tts_lab")
+    if isinstance(lab, dict):
+        lines.extend((
+            "## Mini-laboratorio TTS",
+            "",
+            f"Se generaron {lab['clips']} clips ciegos para {lab['cases']} casos y {lab['variants']} variantes. "
+            f"El control fijo alcanzó el límite en {lab['fixed_limit_hits']}/{lab['cases']} casos; "
+            f"el candidato dinámico en {lab['candidate_limit_hits']}/{lab['cases']}.",
+            "La selección final no se automatiza: queda pendiente completar la revisión humana ciega.",
+            "",
+        ))
+    return "\n".join(lines)
 
 
 def main() -> int:
@@ -143,10 +155,31 @@ def main() -> int:
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--output-md", type=Path, required=True)
+    parser.add_argument("--lab-manifest", type=Path)
     parser.add_argument("--known-retry-cases", default=",".join(map(str, KNOWN_RETRY_CASES)))
     args = parser.parse_args()
     retries = tuple(int(item) for item in args.known_retry_cases.split(",") if item.strip())
     report = audit(args.input.resolve(), retries)
+    if args.lab_manifest:
+        manifest = json.loads(args.lab_manifest.read_text(encoding="utf-8"))
+        fixed = [row for row in manifest if row.get("variant") == "A_current_80_0_fixed110"]
+        candidate = [row for row in manifest if row.get("variant") == "E_candidate"]
+        report["targeted_tts_lab"] = {
+            "manifest": str(args.lab_manifest.resolve()),
+            "manifest_sha256": sha256(args.lab_manifest),
+            "clips": len(manifest),
+            "cases": len({row.get("case") for row in manifest}),
+            "variants": len({row.get("variant") for row in manifest}),
+            "fixed_limit_hits": sum(bool(row.get("reached_generation_limit")) for row in fixed),
+            "candidate_limit_hits": sum(bool(row.get("reached_generation_limit")) for row in candidate),
+            "candidate_policy": {
+                "generation_tokens": "dynamic 120-260 per unit",
+                "segmentation_max_chars": 120,
+                "pre_roll_ms": 40,
+                "end_padding_ms": 200,
+            },
+            "human_status": "PENDING_BLIND_REVIEW",
+        }
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
     args.output_md.write_text(markdown(report), encoding="utf-8")
